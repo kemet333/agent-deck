@@ -11,9 +11,15 @@ struct DeskKey: Codable, Identifiable, Equatable {
     var sendEnter: Bool = true
 }
 
-/// Las teclas, guardadas en ~/Library/Application Support/Agent Desk/keys.json.
+/// Cómo se presenta el Desk: una barra pegada al borde inferior (dock) o una tarjeta flotante.
+enum DeskMode: String, Codable, CaseIterable {
+    case dock, card
+}
+
+/// Las teclas, guardadas en ~/Library/Application Support/Agent Desk/keys.json; el modo en UserDefaults.
 final class DeskStore: ObservableObject {
     @Published var keys: [DeskKey] { didSet { save() } }
+    @Published var mode: DeskMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
     @Published var lastSent: String = ""
     @Published var editing: Bool = false
 
@@ -41,6 +47,7 @@ final class DeskStore: ObservableObject {
         } else {
             keys = DeskStore.defaults
         }
+        mode = DeskMode(rawValue: UserDefaults.standard.string(forKey: "mode") ?? "") ?? .dock
     }
 
     func save() {

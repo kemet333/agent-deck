@@ -2,7 +2,7 @@
 
 A Stream Deck for talking to AI. A floating palette of keys that type what you always type: *continue*, *next*, *do it*, *show me a preview first*, *stop*. One click, or ⌃⌥1…9, and the phrase lands in whatever chat is in front: Claude, ChatGPT, Cursor, Gemini, a terminal. Made by Kemet Capital.
 
-- Floating, always on top, on every desktop. Never steals the focus from your chat.
+- Dock mode: a slim bar at the bottom of the screen, centered, always on top, on every desktop. Or a floating card, from the menu bar. Never steals the focus from your chat.
 - Eight keys out of the box, yours in two clicks: label, text, Enter or not.
 - Global shortcuts ⌃⌥1…9; ⌃⌥D shows or hides the desk.
 - Lives in the menu bar. Opens at login if you want.

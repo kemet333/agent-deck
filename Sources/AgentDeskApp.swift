@@ -36,6 +36,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(withTitle: "Mostrar u ocultar el Desk", action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        let modeItem = NSMenuItem(title: "Modo", action: nil, keyEquivalent: "")
+        let modes = NSMenu()
+        let dock = NSMenuItem(title: "Dock (barra abajo)", action: #selector(setDock), keyEquivalent: ""); dock.target = self
+        let card = NSMenuItem(title: "Tarjeta flotante", action: #selector(setCard), keyEquivalent: ""); card.target = self
+        modes.addItem(dock); modes.addItem(card)
+        modeItem.submenu = modes
+        menu.addItem(modeItem)
         menu.addItem(.separator())
         let login = NSMenuItem(title: "Abrir al iniciar sesión", action: #selector(toggleLogin), keyEquivalent: "")
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -67,6 +74,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func restoreDefaults() { store.restoreDefaults() }
+    @objc func setDock() { store.mode = .dock }
+    @objc func setCard() { store.mode = .card }
     @objc func quit() { NSApp.terminate(nil) }
 
     // MARK: atajos globales ⌃⌥1…9 y ⌃⌥D

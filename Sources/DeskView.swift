@@ -25,7 +25,129 @@ struct VisualEffect: NSViewRepresentable {
     func updateNSView(_ view: NSVisualEffectView, context: Context) {}
 }
 
-struct DeskView: View {
+/// Cristal oscuro del Diego OS, común a los dos modos.
+struct Glass: ViewModifier {
+    var radius: CGFloat
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    VisualEffect()
+                    Palette.bg.opacity(0.78)
+                    LinearGradient(colors: [Color.white.opacity(0.07), Color.white.opacity(0.02), Color.white.opacity(0.01)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Color.white.opacity(0.10), lineWidth: 1))
+    }
+}
+
+/// Elige el modo. Es la raíz que el panel dibuja.
+struct DeskRoot: View {
+    @ObservedObject var store: DeskStore
+    var body: some View {
+        switch store.mode {
+        case .dock: DockView(store: store)
+        case .card: CardView(store: store)
+        }
+    }
+}
+
+// MARK: - Modo dock: una barra en el borde inferior
+
+struct DockView: View {
+    @ObservedObject var store: DeskStore
+    @State private var sheet: DeskKey? = nil
+    @State private var adding = false
+    @State private var accessibility = Sender.accessibilityGranted(prompt: false)
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle().fill(accessibility ? Palette.gold : Palette.mute).frame(width: 6, height: 6)
+                .padding(.leading, 6).padding(.trailing, 2)
+                .help(accessibility ? "Agent Desk" : "Falta el permiso de Accesibilidad: pulsa el icono de la mano")
+            if !accessibility {
+                Button(action: { _ = Sender.accessibilityGranted(prompt: true) }) {
+                    Image(systemName: "hand.raised.fill").font(.system(size: 12)).foregroundColor(Palette.gold)
+                }.buttonStyle(.plain).help("Permite Accesibilidad para que el Desk pueda escribir en el chat")
+            }
+            ForEach(store.keys) { key in
+                DockKey(key: key, editing: store.editing,
+                        press: { store.press(key) }, edit: { sheet = key }, remove: { store.remove(key) })
+            }
+            if store.editing {
+                Button(action: { adding = true }) {
+                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).foregroundColor(Palette.gold)
+                        .frame(width: 30, height: 30)
+                        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Palette.gold.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+                }.buttonStyle(.plain)
+            }
+            Rectangle().fill(Palette.line).frame(width: 1, height: 22).padding(.horizontal, 4)
+            Button(action: { store.editing.toggle() }) {
+                Image(systemName: store.editing ? "checkmark" : "slider.horizontal.3")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(store.editing ? Palette.gold : Palette.mute)
+                    .frame(width: 24, height: 24)
+            }
+            .buttonStyle(.plain)
+            .help(store.editing ? "Terminar edición" : "Editar teclas")
+            .padding(.trailing, 4)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 8)
+        .fixedSize()
+        .modifier(Glass(radius: 18))
+        .padding(10) // sitio para la sombra
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in
+            accessibility = Sender.accessibilityGranted(prompt: false)
+        }
+        .sheet(item: $sheet) { key in KeyEditor(key: key, isNew: false) { store.update($0) } }
+        .sheet(isPresented: $adding) {
+            KeyEditor(key: DeskKey(label: "", text: ""), isNew: true) { store.add(label: $0.label, text: $0.text, sendEnter: $0.sendEnter) }
+        }
+    }
+}
+
+struct DockKey: View {
+    let key: DeskKey
+    let editing: Bool
+    let press: () -> Void
+    let edit: () -> Void
+    let remove: () -> Void
+    @State private var hover = false
+    @State private var pressed = false
+
+    var body: some View {
+        Button(action: { editing ? edit() : press() }) {
+            HStack(spacing: 6) {
+                Text(key.label).font(.system(size: 12.5, weight: .medium)).foregroundColor(Palette.ink).lineLimit(1)
+                if let h = key.hotkey {
+                    Text("\(h)").font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundColor(Palette.faint)
+                }
+                if editing {
+                    Button(action: remove) {
+                        Image(systemName: "xmark").font(.system(size: 8, weight: .bold)).foregroundColor(Palette.mute)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 11).padding(.vertical, 7)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Palette.panel.opacity(hover ? 1 : 0.85)))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(hover || key.hotkey == 1 ? Palette.gold.opacity(hover ? 0.9 : 0.5) : Palette.line, lineWidth: 1))
+            .scaleEffect(pressed ? 0.94 : 1)
+            .animation(.easeOut(duration: 0.12), value: pressed)
+            .animation(.easeOut(duration: 0.15), value: hover)
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .pressEvents(onPress: { pressed = true }, onRelease: { pressed = false })
+        .help("⌃⌥\(key.hotkey.map(String.init) ?? "") · \(key.text)")
+    }
+}
+
+// MARK: - Modo tarjeta: la paleta flotante
+
+struct CardView: View {
     @ObservedObject var store: DeskStore
     @State private var target = Sender.targetName()
     @State private var sheet: DeskKey? = nil
@@ -51,16 +173,8 @@ struct DeskView: View {
         }
         .padding(16)
         .frame(width: 320)
-        .background(
-            ZStack {
-                VisualEffect()
-                Palette.bg.opacity(0.78)
-                LinearGradient(colors: [Color.white.opacity(0.07), Color.white.opacity(0.02), Color.white.opacity(0.01)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.10), lineWidth: 1))
+        .modifier(Glass(radius: 18))
+        .padding(10)
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in
             target = Sender.targetName()
             accessibility = Sender.accessibilityGranted(prompt: false)
@@ -147,14 +261,9 @@ struct Tile: View {
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Palette.panel.opacity(hover ? 1 : 0.85))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(hover || key.hotkey == 1 ? Palette.gold.opacity(hover ? 0.9 : 0.55) : Palette.line, lineWidth: 1)
-            )
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.panel.opacity(hover ? 1 : 0.85)))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(hover || key.hotkey == 1 ? Palette.gold.opacity(hover ? 0.9 : 0.55) : Palette.line, lineWidth: 1))
             .scaleEffect(pressed ? 0.96 : 1)
             .animation(.easeOut(duration: 0.12), value: pressed)
             .animation(.easeOut(duration: 0.15), value: hover)
@@ -165,6 +274,8 @@ struct Tile: View {
         .help(key.text)
     }
 }
+
+// MARK: - Editor de una tecla
 
 struct KeyEditor: View {
     @Environment(\.dismiss) private var dismiss
