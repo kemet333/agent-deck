@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self = self, let menu = self.status.menu else { return }
             menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
         }
-        store.hide = { [weak self] in self?.panel.orderOut(nil) }
+        store.hide = { [weak self] in self?.store.toggleCollapsed() }
         installHotkeys()
         _ = Sender.accessibilityGranted(prompt: true)
     }
@@ -39,7 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image?.isTemplate = true
         }
         let menu = NSMenu()
-        menu.addItem(withTitle: "Mostrar u ocultar el Desk", action: #selector(togglePanel), keyEquivalent: "d")
+        menu.addItem(withTitle: "Plegar o desplegar el Desk", action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: "Dictar al chat", action: #selector(dictate), keyEquivalent: "m")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
@@ -63,7 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func togglePanel() {
-        if panel.isVisible { panel.orderOut(nil) } else { panel.orderFrontRegardless() }
+        if !panel.isVisible { panel.orderFrontRegardless(); store.collapsed = false; return }
+        store.toggleCollapsed()
     }
 
     @objc func toggleLogin(_ sender: NSMenuItem) {

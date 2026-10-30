@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Una tecla del Desk: lo que se ve (label) y lo que se escribe en el chat (text).
@@ -52,6 +53,11 @@ final class DeskStore: ObservableObject {
     @Published var level: Float = 0
     @Published var dictationNote: String = ""
     private var dictation: Dictation?
+    /// Plegada a un orbe (el copiloto) o desplegada. Se recuerda entre sesiones.
+    @Published var collapsed: Bool { didSet { UserDefaults.standard.set(collapsed, forKey: "collapsed") } }
+    /// Cuenta pulsaciones para disparar la animación de la última tecla pulsada.
+    @Published var lastPressedId: UUID? = nil
+    @Published var pulse: Int = 0
 
     static let folder: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -82,6 +88,16 @@ final class DeskStore: ObservableObject {
             keys = DeskStore.defaults
         }
         mode = DeskMode(rawValue: UserDefaults.standard.string(forKey: "mode") ?? "") ?? .dock
+        collapsed = UserDefaults.standard.bool(forKey: "collapsed")
+    }
+
+    static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {
+        NSHapticFeedbackManager.defaultPerformer.perform(kind, performanceTime: .now)
+    }
+
+    func toggleCollapsed() {
+        DeskStore.haptic(.levelChange)
+        collapsed.toggle()
     }
 
     func save() {
@@ -96,6 +112,9 @@ final class DeskStore: ObservableObject {
     }
 
     func press(_ key: DeskKey) {
+        DeskStore.haptic()
+        lastPressedId = key.id
+        pulse += 1
         Sender.send(key.text, enter: key.sendEnter)
         let f = DateFormatter(); f.dateFormat = "HH:mm"
         lastSent = "\(f.string(from: Date())) · \(key.text)"
@@ -154,6 +173,24 @@ final class DeskStore: ObservableObject {
             dictation = d
         }
         if listening { dictation?.stop() } else { dictation?.start() }
+    }
+
+    /// Última nota de voz transcrita por el inbox de Telegram (la escribe inbox-telegram.py).
+    static let lastVoice = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/diego-inbox/last-voice.txt")
+
+    /// Tecla Inbox: manda al chat la última transcripción y la marca como usada.
+    func sendInbox() {
+        DeskStore.haptic()
+        guard let text = try? String(contentsOf: DeskStore.lastVoice, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
+            dictationNote = "Inbox vacío"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self.dictationNote = "" }
+            return
+        }
+        Sender.send(text, enter: true)
+        let f = DateFormatter(); f.dateFormat = "HH:mm"
+        lastSent = "\(f.string(from: Date())) · \(text)"
+        try? "".write(to: DeskStore.lastVoice, atomically: true, encoding: .utf8)
     }
 
     /// Lo pone el AppDelegate: abre el menú de la app desde el engranaje de la barra.
