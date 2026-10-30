@@ -30,6 +30,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = Sender.accessibilityGranted(prompt: true)
     }
 
+    // MARK: URL scheme: agentdesk://toggle · dictate · press?n=3 · send?text=hola · show
+    // Para Atajos, Raycast, un Stream Deck físico o un script: `open "agentdesk://press?n=1"`.
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            switch url.host {
+            case "toggle": togglePanel()
+            case "show": panel.orderFrontRegardless(); store.collapsed = false
+            case "dictate": DispatchQueue.main.async { self.store.toggleDictation() }
+            case "press":
+                if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
+            case "send":
+                if let t = q.first(where: { $0.name == "text" })?.value, !t.isEmpty {
+                    Sender.send(t, enter: (q.first { $0.name == "enter" }?.value ?? "1") != "0")
+                }
+            default: break
+            }
+        }
+    }
+
     // MARK: barra de menús
 
     func installStatusItem() {

@@ -4,7 +4,10 @@ A Stream Deck for talking to AI. A floating palette of keys that type what you a
 
 - Dock mode: a slim bar at the bottom of the screen, centered, always on top, on every desktop. Or a floating card, from the menu bar. Never steals the focus from your chat.
 - Eight keys out of the box, yours in two clicks: label, text, Enter or not.
-- Global shortcuts ⌃⌥1…9; ⌃⌥D shows or hides the desk.
+- Folds into a small glass orb that stays on screen; one click or ⌃⌥D brings the bar back.
+- Dictate (⌃⌥M): speak, see the words appear, release and they land in the chat. On-device Spanish recognition, nothing recorded.
+- Global shortcuts ⌃⌥1…9 for the keys, ⌃⌥D to fold or unfold.
+- A URL scheme for Shortcuts, Raycast or a hardware Stream Deck: `open "agentdesk://press?n=1"`, `agentdesk://dictate`, `agentdesk://toggle`, `agentdesk://send?text=continue`.
 - Lives in the menu bar. Opens at login if you want.
 - Your keys stay in `~/Library/Application Support/Agent Desk/keys.json`. No account, no network.
 
@@ -22,7 +25,7 @@ Command Line Tools are enough, no Xcode project:
 ./build.sh
 ```
 
-Sources are five Swift files in `Sources/`: the app and menu bar (`AgentDeskApp.swift`), the keys and their storage (`DeskModel.swift`), the floating panel (`FloatingPanel.swift`), the interface (`DeskView.swift`) and the typing into the front app (`Sender.swift`).
+Sources are six Swift files in `Sources/`: the app, menu bar and URL scheme (`AgentDeskApp.swift`), the keys and their storage (`DeskModel.swift`), the floating panel (`FloatingPanel.swift`), the interface (`DeskView.swift`), the typing into the front app (`Sender.swift`) and the dictation (`Dictation.swift`).
 
 ## How it types
 

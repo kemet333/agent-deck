@@ -33,7 +33,11 @@ final class FloatingPanel: NSPanel {
         relayout(animated: false, recenter: UserDefaults.standard.string(forKey: anchorKey) == nil)
         store.$keys.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$editing.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
-        store.$collapsed.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$collapsed.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
+            // durante la transición conviven las dos vistas y el tamaño medido es el grande: se recoloca al terminar
+            self?.relayout(animated: true, recenter: false)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.relayout(animated: true, recenter: false) }
+        }.store(in: &bag)
         store.$listening.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$partial.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: false, recenter: false) }.store(in: &bag)
         store.$mode.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: true) }.store(in: &bag)
@@ -72,8 +76,8 @@ final class FloatingPanel: NSPanel {
         if recenter || savedAnchor == nil {
             let v = screenUnderMouse.visibleFrame
             anchor = NSPoint(x: v.midX, y: v.minY + 2)
-        } else if isVisible {
-            anchor = NSPoint(x: frame.midX, y: frame.minY)
+        } else if isVisible, let saved = savedAnchor {
+            anchor = saved // el centro inferior recordado: estable aunque una animación esté a medias
         } else {
             anchor = savedAnchor!
         }

@@ -17,6 +17,11 @@
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSHumanReadableCopyright</key><string>Kemet Capital</string>
+  <key>CFBundleURLTypes</key>
+  <array><dict>
+    <key>CFBundleURLName</key><string>com.kemetcapital.agentdesk</string>
+    <key>CFBundleURLSchemes</key><array><string>agentdesk</string></array>
+  </dict></array>
   <key>NSMicrophoneUsageDescription</key><string>Agent Desk usa el micrófono para dictar al chat cuando pulsas Dictar. El audio no se guarda.</string>
   <key>NSSpeechRecognitionUsageDescription</key><string>Agent Desk transcribe lo que dictas, en este Mac siempre que macOS lo permita, y lo escribe en el chat. No se guarda el audio.</string>
 </dict>
