@@ -1,5 +1,7 @@
 # Agent Deck
 
+![Agent Deck: a bar of keys that types continue, next, do it into any AI chat; it folds into an orb](docs/agent-deck.gif)
+
 A Stream Deck for talking to AI. A bar of keys that type what you always type: *continue*, *next*, *do it*, *show me a preview first*, *stop*. One click, or ⌃⌥1…9, and the phrase lands in whatever chat is in front: Claude, ChatGPT, Cursor, Gemini, a terminal. Made by [Prompted](https://workwithprompted.com).
 
 - A slim glass bar on the bottom of your screen, always on top, on every desktop. Drag it anywhere. It never steals the focus from your chat.
