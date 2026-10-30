@@ -10,7 +10,7 @@ final class Dictation {
     var onEvent: ((State, String?, String?) -> Void)?
     var onLevel: ((Float) -> Void)?
 
-    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "es-ES"))
+    private let recognizer = SFSpeechRecognizer(locale: T.speechLocale) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private let engine = AVAudioEngine()
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?

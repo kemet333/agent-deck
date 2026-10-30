@@ -112,7 +112,7 @@ struct Orb: View {
                 }
                 .frame(width: 22, height: 22)
                 if store.listening {
-                    Text(store.partial.isEmpty ? "Escuchando…" : store.partial)
+                    Text(store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial)
                         .font(.system(size: 11.5, weight: .medium)).foregroundColor(Palette.gold).lineLimit(1)
                         .frame(maxWidth: 260, alignment: .leading)
                         .transition(.opacity.combined(with: .move(edge: .leading)))
@@ -126,7 +126,7 @@ struct Orb: View {
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
-        .help("Desplegar Agent Deck (⌃⌥D)")
+        .help(T.s("Unfold Agent Deck (⌃⌥D)", "Desplegar Agent Deck (⌃⌥D)"))
     }
 }
 
@@ -153,17 +153,17 @@ struct Bar: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            DockGlyph(symbol: "xmark", size: 10, weight: .bold, help: "Plegar la barra al orbe (⌃⌥D)") { store.toggleCollapsed() }
+            DockGlyph(symbol: "xmark", size: 10, weight: .bold, help: T.s("Fold the bar into the orb (⌃⌥D)", "Plegar la barra al orbe (⌃⌥D)")) { store.toggleCollapsed() }
                 .padding(.leading, 2)
             Divider_()
             DictateItem(store: store)
             DockItem(id: nil, icon: "tray.and.arrow.down", label: "Inbox", hotkey: nil, main: false, editing: false, tint: nil, store: store,
-                     help: "Manda al chat la última nota de voz del inbox de Telegram, ya transcrita",
+                     help: T.s("Sends the last transcribed voice note from your inbox to the chat", "Manda al chat la última nota de voz del inbox, ya transcrita"),
                      press: { store.sendInbox() }, edit: {}, remove: {})
             Divider_()
             if !accessibility {
-                DockItem(id: nil, icon: "hand.raised.fill", label: "Permiso", hotkey: nil, main: false, editing: false, tint: Palette.gold, store: store,
-                         help: "Permite Accesibilidad para que el Desk pueda escribir en el chat",
+                DockItem(id: nil, icon: "hand.raised.fill", label: T.s("Permission", "Permiso"), hotkey: nil, main: false, editing: false, tint: Palette.gold, store: store,
+                         help: T.s("Allow Accessibility so the deck can type into the chat", "Permite Accesibilidad para que el Desk pueda escribir en el chat"),
                          press: { _ = Sender.accessibilityGranted(prompt: true) }, edit: {}, remove: {})
                 Divider_()
             }
@@ -177,15 +177,15 @@ struct Bar: View {
             }
             if store.editing {
                 if !store.groups.contains(where: { $0.name == "mías" }) { Divider_() }
-                DockItem(id: nil, icon: "plus", label: "Nueva", hotkey: nil, main: false, editing: false, tint: Palette.gold, store: store, help: "Añadir una tecla",
+                DockItem(id: nil, icon: "plus", label: T.s("New", "Nueva"), hotkey: nil, main: false, editing: false, tint: Palette.gold, store: store, help: T.s("Add a key", "Añadir una tecla"),
                          press: { adding = true }, edit: {}, remove: {})
             }
             Divider_()
             DockGlyph(symbol: store.editing ? "checkmark" : "slider.horizontal.3", size: 12, weight: .semibold,
-                      help: store.editing ? "Terminar edición" : "Editar teclas", tint: store.editing ? Palette.gold : nil) {
+                      help: store.editing ? T.s("Done editing", "Terminar edición") : T.s("Edit keys", "Editar teclas"), tint: store.editing ? Palette.gold : nil) {
                 withAnimation(Motion.settle) { store.editing.toggle() }
             }
-            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: "Ajustes de Agent Deck") { store.showMenu?() }
+            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: T.s("Agent Deck settings", "Ajustes de Agent Deck")) { store.showMenu?() }
                 .padding(.trailing, 2)
         }
         .padding(.horizontal, 6).padding(.vertical, 5)
@@ -345,7 +345,7 @@ struct DictateItem: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .frame(width: 40, height: 17)
-                Text(store.listening ? (store.partial.isEmpty ? "Escuchando…" : store.partial) : (store.dictationNote.isEmpty ? "Dictar" : store.dictationNote))
+                Text(store.listening ? (store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial) : (store.dictationNote.isEmpty ? T.s("Dictate", "Dictar") : store.dictationNote))
                     .font(.system(size: 9.5, weight: .medium))
                     .foregroundColor(store.listening ? Palette.gold : (hover ? Palette.ink : Palette.mute))
                     .lineLimit(1)
@@ -365,7 +365,7 @@ struct DictateItem: View {
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .pressEvents(onPress: { pressed = true }, onRelease: { pressed = false })
-        .help("Dictar al chat (⌃⌥M): una pulsación escucha, otra envía")
+        .help(T.s("Dictate to the chat (⌃⌥M): one press listens, the next sends", "Dictar al chat (⌃⌥M): una pulsación escucha, otra envía"))
     }
 }
 
@@ -421,7 +421,7 @@ struct CardView: View {
                     .foregroundColor(store.editing ? Palette.gold : Palette.mute)
             }
             .buttonStyle(.plain)
-            .help(store.editing ? "Terminar edición" : "Editar teclas")
+            .help(store.editing ? T.s("Done editing", "Terminar edición") : T.s("Edit keys", "Editar teclas"))
         }
     }
 
@@ -429,7 +429,7 @@ struct CardView: View {
         Button(action: { _ = Sender.accessibilityGranted(prompt: true) }) {
             HStack(spacing: 8) {
                 Image(systemName: "hand.raised").foregroundColor(Palette.gold)
-                Text("Permite Accesibilidad para que el Desk pueda escribir en el chat.")
+                Text(T.s("Allow Accessibility so the deck can type into the chat.", "Permite Accesibilidad para que el Desk pueda escribir en el chat."))
                     .font(.system(size: 11)).foregroundColor(Palette.text).multilineTextAlignment(.leading)
             }
             .padding(10)
@@ -450,7 +450,7 @@ struct CardView: View {
 
     private var footer: some View {
         HStack {
-            Text(store.lastSent.isEmpty ? "pulsa una tecla, o ⌃⌥ y su número" : "enviado \(store.lastSent)")
+            Text(store.lastSent.isEmpty ? T.s("press a key, or ⌃⌥ and its number", "pulsa una tecla, o ⌃⌥ y su número") : T.s("sent", "enviado") + " \(store.lastSent)")
                 .font(.system(size: 10, weight: .regular, design: .monospaced))
                 .foregroundColor(store.lastSent.isEmpty ? Palette.faint : Palette.green)
                 .lineLimit(1)
@@ -511,10 +511,10 @@ struct KeyEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(isNew ? "Nueva tecla" : "Editar tecla").font(.system(size: 13, weight: .semibold)).foregroundColor(Palette.ink)
-            TextField("Nombre corto (lo que se ve)", text: $key.label).textFieldStyle(.roundedBorder)
-            TextField("Lo que se escribe en el chat", text: $key.text, axis: .vertical).lineLimit(2...5).textFieldStyle(.roundedBorder)
-            Text("Icono").font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
+            Text(isNew ? T.s("New key", "Nueva tecla") : T.s("Edit key", "Editar tecla")).font(.system(size: 13, weight: .semibold)).foregroundColor(Palette.ink)
+            TextField(T.s("Short name (what you see)", "Nombre corto (lo que se ve)"), text: $key.label).textFieldStyle(.roundedBorder)
+            TextField(T.s("What gets typed into the chat", "Lo que se escribe en el chat"), text: $key.text, axis: .vertical).lineLimit(2...5).textFieldStyle(.roundedBorder)
+            Text(T.s("Icon", "Icono")).font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
             LazyVGrid(columns: cols, spacing: 6) {
                 ForEach(deskIcons, id: \.self) { name in
                     Button(action: { key.icon = name }) {
@@ -525,11 +525,11 @@ struct KeyEditor: View {
                     }.buttonStyle(.plain)
                 }
             }
-            Toggle("Pulsar Intro al enviar", isOn: $key.sendEnter).toggleStyle(.switch).font(.system(size: 12))
+            Toggle(T.s("Press Enter after typing", "Pulsar Intro al enviar"), isOn: $key.sendEnter).toggleStyle(.switch).font(.system(size: 12))
             HStack {
                 Spacer()
-                Button("Cancelar") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button(isNew ? "Añadir" : "Guardar") {
+                Button(T.s("Cancel", "Cancelar")) { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(isNew ? T.s("Add", "Añadir") : T.s("Save", "Guardar")) {
                     guard !key.text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                     save(key); dismiss()
                 }.keyboardShortcut(.defaultAction)

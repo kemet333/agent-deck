@@ -60,25 +60,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image?.isTemplate = true
         }
         let menu = NSMenu()
-        menu.addItem(withTitle: "Plegar o desplegar el Desk", action: #selector(togglePanel), keyEquivalent: "d")
+        menu.addItem(withTitle: T.s("Fold or unfold the deck", "Plegar o desplegar el Deck"), action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        menu.addItem(withTitle: "Dictar al chat", action: #selector(dictate), keyEquivalent: "m")
+        menu.addItem(withTitle: T.s("Dictate to the chat", "Dictar al chat"), action: #selector(dictate), keyEquivalent: "m")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        let modeItem = NSMenuItem(title: "Modo", action: nil, keyEquivalent: "")
+        let modeItem = NSMenuItem(title: T.s("Mode", "Modo"), action: nil, keyEquivalent: "")
         let modes = NSMenu()
-        let dock = NSMenuItem(title: "Dock (barra abajo)", action: #selector(setDock), keyEquivalent: ""); dock.target = self
-        let card = NSMenuItem(title: "Tarjeta flotante", action: #selector(setCard), keyEquivalent: ""); card.target = self
+        let dock = NSMenuItem(title: T.s("Bar (bottom of the screen)", "Barra (abajo)"), action: #selector(setDock), keyEquivalent: ""); dock.target = self
+        let card = NSMenuItem(title: T.s("Floating card", "Tarjeta flotante"), action: #selector(setCard), keyEquivalent: ""); card.target = self
         modes.addItem(dock); modes.addItem(card)
         modeItem.submenu = modes
         menu.addItem(modeItem)
         menu.addItem(.separator())
-        let login = NSMenuItem(title: "Abrir al iniciar sesión", action: #selector(toggleLogin), keyEquivalent: "")
+        let login = NSMenuItem(title: T.s("Open at login", "Abrir al iniciar sesión"), action: #selector(toggleLogin), keyEquivalent: "")
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
-        menu.addItem(withTitle: "Permiso de Accesibilidad…", action: #selector(openAccessibility), keyEquivalent: "")
-        menu.addItem(withTitle: "Restaurar teclas de fábrica", action: #selector(restoreDefaults), keyEquivalent: "")
+        menu.addItem(withTitle: T.s("Accessibility permission…", "Permiso de Accesibilidad…"), action: #selector(openAccessibility), keyEquivalent: "")
+        menu.addItem(withTitle: T.s("Restore default keys", "Restaurar teclas de fábrica"), action: #selector(restoreDefaults), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Salir de Agent Deck", action: #selector(quit), keyEquivalent: "q")
+        menu.addItem(withTitle: T.s("Quit Agent Deck", "Salir de Agent Deck"), action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
         status.menu = menu
     }

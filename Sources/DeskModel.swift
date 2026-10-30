@@ -70,7 +70,7 @@ final class DeskStore: ObservableObject {
     }()
     static let file = folder.appendingPathComponent("keys.json")
 
-    static let defaults: [DeskKey] = [
+    static let defaults: [DeskKey] = T.es ? [
         DeskKey(label: "Continúa", text: "continúa", hotkey: 1, icon: "arrow.right.circle", group: "flujo"),
         DeskKey(label: "Siguiente", text: "siguiente", hotkey: 2, icon: "forward.end", group: "flujo"),
         DeskKey(label: "Dale caña", text: "dale caña", hotkey: 3, icon: "bolt.fill", group: "flujo"),
@@ -79,6 +79,15 @@ final class DeskStore: ObservableObject {
         DeskKey(label: "Preview", text: "enséñame una preview antes de seguir", hotkey: 6, icon: "eye", group: "control"),
         DeskKey(label: "Resumen", text: "resumen corto: dónde estamos y qué falta", hotkey: 7, icon: "list.bullet.rectangle", group: "control"),
         DeskKey(label: "Para", text: "para, no sigas con eso", hotkey: 8, icon: "stop.circle", group: "control"),
+    ] : [
+        DeskKey(label: "Continue", text: "continue", hotkey: 1, icon: "arrow.right.circle", group: "flujo"),
+        DeskKey(label: "Next", text: "next", hotkey: 2, icon: "forward.end", group: "flujo"),
+        DeskKey(label: "Go hard", text: "go hard", hotkey: 3, icon: "bolt.fill", group: "flujo"),
+        DeskKey(label: "Do it", text: "do it", hotkey: 4, icon: "checkmark.circle", group: "flujo"),
+        DeskKey(label: "I like it", text: "I like it, continue", hotkey: 5, icon: "hand.thumbsup", group: "control"),
+        DeskKey(label: "Preview", text: "show me a preview before you go on", hotkey: 6, icon: "eye", group: "control"),
+        DeskKey(label: "Recap", text: "short recap: where are we and what's left", hotkey: 7, icon: "list.bullet.rectangle", group: "control"),
+        DeskKey(label: "Stop", text: "stop, don't go on with that", hotkey: 8, icon: "stop.circle", group: "control"),
     ]
 
     init() {
@@ -172,7 +181,7 @@ final class DeskStore: ObservableObject {
                 case .idle: self.listening = false; self.partial = ""
                 case .unavailable:
                     self.listening = false; self.partial = ""
-                    self.dictationNote = reason == "mic-denied" ? "Permite el micrófono" : reason == "speech-denied" ? "Permite el reconocimiento de voz" : "Dictado no disponible"
+                    self.dictationNote = reason == "mic-denied" ? T.s("Allow the microphone", "Permite el micrófono") : reason == "speech-denied" ? T.s("Allow speech recognition", "Permite el reconocimiento de voz") : T.s("Dictation unavailable", "Dictado no disponible")
                 }
             }
             dictation = d
@@ -188,7 +197,7 @@ final class DeskStore: ObservableObject {
     func sendInbox() {
         DeskStore.haptic()
         guard let text = try? String(contentsOf: DeskStore.lastVoice, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
-            dictationNote = "Inbox vacío"
+            dictationNote = T.s("Inbox empty", "Inbox vacío")
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self.dictationNote = "" }
             return
         }
