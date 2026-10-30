@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-// Icono de Agent Desk: placa oscura con cuatro teclas, una dorada. Genera el iconset y el .icns.
+// Icono de Agent Deck: placa oscura con cuatro teclas, una dorada. Genera el iconset y el .icns.
 let destination = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
 var iconChunks = Data()

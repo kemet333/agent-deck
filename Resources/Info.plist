@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key><string>es</string>
-  <key>CFBundleDisplayName</key><string>Agent Desk</string>
+  <key>CFBundleDisplayName</key><string>Agent Deck</string>
   <key>CFBundleExecutable</key><string>AgentDesk</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleIdentifier</key><string>com.kemetcapital.agentdesk</string>
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-  <key>CFBundleName</key><string>Agent Desk</string>
+  <key>CFBundleName</key><string>Agent Deck</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1.0</string>
   <key>CFBundleVersion</key><string>1</string>
@@ -16,13 +16,13 @@
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSHumanReadableCopyright</key><string>Kemet Capital</string>
+  <key>NSHumanReadableCopyright</key><string>© 2026 Prompted</string>
   <key>CFBundleURLTypes</key>
   <array><dict>
     <key>CFBundleURLName</key><string>com.kemetcapital.agentdesk</string>
-    <key>CFBundleURLSchemes</key><array><string>agentdesk</string></array>
+    <key>CFBundleURLSchemes</key><array><string>agentdeck</string></array>
   </dict></array>
-  <key>NSMicrophoneUsageDescription</key><string>Agent Desk usa el micrófono para dictar al chat cuando pulsas Dictar. El audio no se guarda.</string>
-  <key>NSSpeechRecognitionUsageDescription</key><string>Agent Desk transcribe lo que dictas, en este Mac siempre que macOS lo permita, y lo escribe en el chat. No se guarda el audio.</string>
+  <key>NSMicrophoneUsageDescription</key><string>Agent Deck usa el micrófono para dictar al chat cuando pulsas Dictar. El audio no se guarda.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Agent Deck transcribe lo que dictas, en este Mac siempre que macOS lo permita, y lo escribe en el chat. No se guarda el audio.</string>
 </dict>
 </plist>

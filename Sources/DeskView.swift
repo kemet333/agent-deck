@@ -126,7 +126,7 @@ struct Orb: View {
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
-        .help("Desplegar Agent Desk (⌃⌥D)")
+        .help("Desplegar Agent Deck (⌃⌥D)")
     }
 }
 
@@ -185,7 +185,7 @@ struct Bar: View {
                       help: store.editing ? "Terminar edición" : "Editar teclas", tint: store.editing ? Palette.gold : nil) {
                 withAnimation(Motion.settle) { store.editing.toggle() }
             }
-            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: "Ajustes de Agent Desk") { store.showMenu?() }
+            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: "Ajustes de Agent Deck") { store.showMenu?() }
                 .padding(.trailing, 2)
         }
         .padding(.horizontal, 6).padding(.vertical, 5)
@@ -412,7 +412,7 @@ struct CardView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Circle().fill(Palette.gold).frame(width: 7, height: 7)
-            Text("AGENT DESK").font(.system(size: 11, weight: .medium, design: .monospaced)).tracking(2.2).foregroundColor(Palette.mute)
+            Text("AGENT DECK").font(.system(size: 11, weight: .medium, design: .monospaced)).tracking(2.2).foregroundColor(Palette.mute)
             Spacer()
             Text(target).font(.system(size: 11, weight: .regular)).foregroundColor(Palette.faint).lineLimit(1)
             Button(action: { store.editing.toggle() }) {

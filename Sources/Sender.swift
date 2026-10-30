@@ -19,7 +19,7 @@ enum Sender {
         let previous = pasteboard.string(forType: .string)
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
-        // El pegado va a la app activa; el panel del Desk no activa Agent Desk, así que el chat sigue delante.
+        // El pegado va a la app activa; el panel del Desk no activa Agent Deck, así que el chat sigue delante.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             tap(keyV, flags: .maskCommand)
             if enter {

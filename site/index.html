@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agent Desk</title>
+<title>Agent Deck</title>
 <meta name="description" content="A Stream Deck for talking to AI. One key for what you type a hundred times a day: continue, next, do it, stop. Works with Claude, ChatGPT, Cursor and any chat in front of you. Free, open source, for Mac.">
-<meta property="og:title" content="Agent Desk · A Stream Deck for talking to AI">
+<meta property="og:title" content="Agent Deck · A Stream Deck for talking to AI">
 <meta property="og:description" content="One key for what you type a hundred times a day. Free, open source, for Mac.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d10'/%3E%3Crect x='12' y='12' width='18' height='18' rx='4' fill='%23e3c98a'/%3E%3Crect x='34' y='12' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='12' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='34' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3C/svg%3E">
@@ -66,15 +66,21 @@ h1 em{font-style:normal;color:var(--gold)}
 .chat .input .ph{color:var(--faint)}
 .chat .input .caret{display:inline-block;width:1.5px;height:16px;background:var(--gold);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
-.dock{display:inline-flex;align-items:center;gap:6px;margin:26px auto 60px;padding:8px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),rgba(11,13,16,.78);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 20px 60px rgba(0,0,0,.55);position:relative;z-index:2}
-.dock .led{width:6px;height:6px;border-radius:50%;background:var(--gold);margin:0 4px 0 8px}
-.key{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:10px;background:rgba(28,29,46,.85);border:1px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:500;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;user-select:none;white-space:nowrap}
-.key small{font:500 9px var(--mono);color:var(--faint)}
-.key:hover,.key.on{border-color:rgba(227,201,138,.9);background:var(--panel)}
-.key.main{border-color:rgba(227,201,138,.5)}
-.key.on{transform:scale(.94)}
-.dock .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
-.dock .gear{width:24px;height:24px;display:grid;place-items:center;color:var(--mute);font-size:12px;margin-right:4px}
+.dock{display:inline-flex;align-items:center;gap:2px;margin:26px auto 60px;padding:5px 6px;border-radius:16px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 40%,transparent),rgba(0,0,0,.8);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 20px 60px rgba(0,0,0,.55);position:relative;z-index:2}
+.dock .x{width:26px;height:26px;display:grid;place-items:center;color:var(--mute);font-size:11px;font-weight:700;margin-left:2px}
+.dock .sep{width:1px;height:26px;background:rgba(255,255,255,.09);margin:0 4px}
+.key{display:inline-flex;flex-direction:column;align-items:center;gap:4px;min-width:54px;padding:6px;border-radius:10px;background:transparent;border:0;color:var(--text);cursor:pointer;transition:background .14s,transform .1s;user-select:none;white-space:nowrap;position:relative;font:500 9.5px var(--sans)}
+.key svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:color .14s}
+.key span{color:var(--mute);transition:color .14s}
+.key:hover{background:rgba(255,255,255,.09)}.key:hover span,.key:hover svg{color:var(--ink)}
+.key.main svg{color:var(--ink)}
+.key.on{transform:scale(.9)}.key.on svg,.key.on span{color:var(--gold)}
+.key.on::after{content:"";position:absolute;inset:0;border-radius:12px;border:1.2px solid var(--gold);animation:burst .55s ease-out forwards}
+@keyframes burst{from{transform:scale(.8);opacity:.9}to{transform:scale(1.45);opacity:0}}
+.key small{position:absolute;top:2px;right:4px;font:600 8px var(--mono);color:var(--faint);opacity:0;transition:opacity .14s}
+.key:hover small{opacity:1}
+.dock .mic svg{color:var(--text)}
+.dock .glyph{width:26px;height:26px;display:grid;place-items:center;color:var(--mute);font-size:12px}
 .demo .hint{font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-top:-44px;margin-bottom:28px;position:relative;z-index:2}
 
 /* works with */
@@ -126,10 +132,10 @@ footer a:hover{color:var(--ink)}
   <div class="wrap">
     <a class="brand" href="#">
       <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1d2e"/><rect x="12" y="12" width="18" height="18" rx="4" fill="#e3c98a"/><rect x="34" y="12" width="18" height="18" rx="4" fill="#2a2d3e"/><rect x="12" y="34" width="18" height="18" rx="4" fill="#2a2d3e"/><rect x="34" y="34" width="18" height="18" rx="4" fill="#2a2d3e"/></svg>
-      Agent Desk
+      Agent Deck
     </a>
-    <div class="links"><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="https://github.com/kemet333/agent-desk">GitHub</a></div>
-    <a class="btn" href="https://github.com/kemet333/agent-desk/releases/latest">Download for Mac</a>
+    <div class="links"><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="https://github.com/kemet333/agent-deck">GitHub</a></div>
+    <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac</a>
   </div>
 </nav>
 
@@ -139,12 +145,12 @@ footer a:hover{color:var(--ink)}
     <h1>A Stream Deck<br>for talking to <em>AI</em>.</h1>
     <p class="lede">One key for what you type a hundred times a day. <b>continue</b>. <b>next</b>. <b>do it</b>. <b>show me a preview first</b>. <b>stop</b>. One click, or ⌃⌥1, and it lands in whatever chat is in front of you.</p>
     <div class="cta">
-      <a class="btn pri" href="https://github.com/kemet333/agent-desk/releases/latest">Download for Mac <span class="k">.zip</span></a>
-      <a class="btn" href="https://github.com/kemet333/agent-desk">See the code</a>
+      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac <span class="k">.zip</span></a>
+      <a class="btn" href="https://github.com/kemet333/agent-deck">See the code</a>
     </div>
     <div class="fine">Apple Silicon · macOS 14 or newer · no account, no network</div>
 
-    <div class="demo" aria-label="Agent Desk demo">
+    <div class="demo" aria-label="Agent Deck demo">
       <div class="chat">
         <div class="bar"><i></i><i></i><i></i><span id="who">Claude</span></div>
         <div class="msgs" id="msgs">
@@ -153,16 +159,13 @@ footer a:hover{color:var(--ink)}
         <div class="input" id="input"><span class="ph">Message…</span><span class="caret"></span></div>
       </div>
       <div class="dock" id="dock" role="group" aria-label="Keys">
-        <span class="led"></span>
-        <button class="key main" data-text="continue">Continue <small>1</small></button>
-        <button class="key" data-text="next">Next <small>2</small></button>
-        <button class="key" data-text="go hard">Go hard <small>3</small></button>
-        <button class="key" data-text="do it">Do it <small>4</small></button>
-        <button class="key" data-text="I like it, continue">I like it <small>5</small></button>
-        <button class="key" data-text="show me a preview before you go on">Preview <small>6</small></button>
-        <button class="key" data-text="short recap: where are we and what's left">Recap <small>7</small></button>
-        <button class="key" data-text="stop, don't go on with that">Stop <small>8</small></button>
-        <span class="sep"></span><span class="gear">⚙</span>
+        <span class="x">✕</span><span class="sep"></span>
+        <button class="key mic" data-text="dictate" data-nofire="1"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Dictate</span><small>M</small></button>
+        <span class="sep"></span>
+        <button class="key main" data-text="continue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12h6m-2.5-3 3 3-3 3"/></svg><span>Continue</span><small>1</small></button><button class="key " data-text="next"><svg viewBox="0 0 24 24"><path d="M5 5l10 7-10 7z"/><path d="M19 5v14"/></svg><span>Next</span><small>2</small></button><button class="key " data-text="go hard"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Go hard</span><small>3</small></button><button class="key " data-text="do it"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Do it</span><small>4</small></button>
+        <span class="sep"></span>
+        <button class="key " data-text="I like it, continue"><svg viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-7c1.5 0 2.5 1 2.5 2.5V10h5a2 2 0 0 1 2 2l-1.2 6.5A2 2 0 0 1 17.3 20H7"/></svg><span>I like it</span><small>5</small></button><button class="key " data-text="show me a preview before you go on"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Preview</span><small>6</small></button><button class="key " data-text="short recap: where are we and what's left"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Recap</span><small>7</small></button><button class="key " data-text="stop, don't go on with that"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span>Stop</span><small>8</small></button>
+        <span class="sep"></span><span class="glyph">⚌</span><span class="glyph">⚙</span>
       </div>
       <div class="hint">Click a key. That is the whole product.</div>
     </div>
@@ -197,7 +200,7 @@ footer a:hover{color:var(--ink)}
     <h2>Boring on purpose.</h2>
     <div class="two">
       <div>
-        <p>Agent Desk does one thing, the same way every time:</p>
+        <p>Agent Deck does one thing, the same way every time:</p>
         <ol>
           <li>Puts the key's text on the clipboard.</li>
           <li>Presses ⌘V in the app in front, then Enter if the key says so.</li>
@@ -207,8 +210,8 @@ footer a:hover{color:var(--ink)}
       </div>
       <div class="priv" id="privacy">
         <div class="kicker">Privacy</div>
-        <p>The first time you open it, macOS asks for <b>Accessibility</b>. That permission is what lets an app press keys for you. Agent Desk uses it to press ⌘V and Enter, and for nothing else.</p>
-        <p>No account. No network calls. No analytics. Your keys stay in <code>~/Library/Application Support/Agent Desk/keys.json</code>. The code is on GitHub, five Swift files, built with <code>./build.sh</code>.</p>
+        <p>The first time you open it, macOS asks for <b>Accessibility</b>. That permission is what lets an app press keys for you. Agent Deck uses it to press ⌘V and Enter, and for nothing else.</p>
+        <p>No account. No network calls. No analytics. Your keys stay in <code>~/Library/Application Support/Agent Deck/keys.json</code>. The code is on GitHub, five Swift files, built with <code>./build.sh</code>.</p>
       </div>
     </div>
   </div>
@@ -218,16 +221,16 @@ footer a:hover{color:var(--ink)}
   <div class="wrap">
     <h2>Stop typing "continue".</h2>
     <div class="cta">
-      <a class="btn pri" href="https://github.com/kemet333/agent-desk/releases/latest">Download for Mac</a>
-      <a class="btn" href="https://github.com/kemet333/agent-desk">Star it on GitHub</a>
+      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac</a>
+      <a class="btn" href="https://github.com/kemet333/agent-deck">Star it on GitHub</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <span>Made by <a href="https://www.kemet-capital.com">Kemet Capital</a></span>
-    <span><a href="https://github.com/kemet333/agent-desk">GitHub</a> · MIT license · Apple Silicon, macOS 14+</span>
+    <span>Made by <a href="https://workwithprompted.com">Prompted</a> · media systems for brands</span>
+    <span><a href="https://github.com/kemet333/agent-deck">GitHub</a> · MIT license · Apple Silicon, macOS 14+</span>
   </div>
 </footer>
 
@@ -262,8 +265,8 @@ footer a:hover{color:var(--ink)}
       },700);
     });
   }
-  function schedule(){timer=setTimeout(function(){var keys=dock.querySelectorAll('.key');ai=(ai+1)%apps.length;who.textContent=apps[ai];fire(keys[Math.floor(Math.random()*keys.length)]);},3200);}
-  dock.addEventListener('click',function(e){var k=e.target.closest('.key');if(!k)return;auto=false;clearTimeout(timer);fire(k);timer=setTimeout(function(){auto=true;schedule()},9000);});
+  function schedule(){timer=setTimeout(function(){var keys=dock.querySelectorAll('.key:not(.mic)');ai=(ai+1)%apps.length;who.textContent=apps[ai];fire(keys[Math.floor(Math.random()*keys.length)]);},3200);}
+  dock.addEventListener('click',function(e){var k=e.target.closest('.key');if(!k||k.dataset.nofire)return;auto=false;clearTimeout(timer);fire(k);timer=setTimeout(function(){auto=true;schedule()},9000);});
   if(!matchMedia('(prefers-reduced-motion: reduce)').matches) timer=setTimeout(function(){fire(dock.querySelector('.key.main'))},1400);
 })();
 </script>

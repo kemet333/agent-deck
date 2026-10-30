@@ -41,7 +41,7 @@ enum DeskMode: String, Codable, CaseIterable {
     case dock, card
 }
 
-/// Las teclas, guardadas en ~/Library/Application Support/Agent Desk/keys.json; el modo en UserDefaults.
+/// Las teclas, guardadas en ~/Library/Application Support/Agent Deck/keys.json; el modo en UserDefaults.
 final class DeskStore: ObservableObject {
     @Published var keys: [DeskKey] { didSet { save() } }
     @Published var mode: DeskMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
@@ -61,7 +61,12 @@ final class DeskStore: ObservableObject {
 
     static let folder: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("Agent Desk", isDirectory: true)
+        let new = base.appendingPathComponent("Agent Deck", isDirectory: true)
+        let old = base.appendingPathComponent("Agent Desk", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: new.path), FileManager.default.fileExists(atPath: old.path) {
+            try? FileManager.default.moveItem(at: old, to: new)
+        }
+        return new
     }()
     static let file = folder.appendingPathComponent("keys.json")
 
@@ -107,7 +112,7 @@ final class DeskStore: ObservableObject {
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(keys).write(to: DeskStore.file, options: .atomic)
         } catch {
-            NSLog("Agent Desk: no se pudo guardar keys.json: \(error)")
+            NSLog("Agent Deck: no se pudo guardar keys.json: \(error)")
         }
     }
 

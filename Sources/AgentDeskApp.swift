@@ -30,8 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = Sender.accessibilityGranted(prompt: true)
     }
 
-    // MARK: URL scheme: agentdesk://toggle · dictate · press?n=3 · send?text=hola · show
-    // Para Atajos, Raycast, un Stream Deck físico o un script: `open "agentdesk://press?n=1"`.
+    // MARK: URL scheme: agentdeck://toggle · dictate · press?n=3 · send?text=hola · show
+    // Para Atajos, Raycast, un Stream Deck físico o un script: `open "agentdeck://press?n=1"`.
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func installStatusItem() {
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = status.button {
-            button.image = NSImage(systemSymbolName: "square.grid.2x2.fill", accessibilityDescription: "Agent Desk")
+            button.image = NSImage(systemSymbolName: "square.grid.2x2.fill", accessibilityDescription: "Agent Deck")
             button.image?.isTemplate = true
         }
         let menu = NSMenu()
@@ -78,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Permiso de Accesibilidad…", action: #selector(openAccessibility), keyEquivalent: "")
         menu.addItem(withTitle: "Restaurar teclas de fábrica", action: #selector(restoreDefaults), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Salir de Agent Desk", action: #selector(quit), keyEquivalent: "q")
+        menu.addItem(withTitle: "Salir de Agent Deck", action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
         status.menu = menu
     }
@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func toggleLogin(_ sender: NSMenuItem) {
         do {
             if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() }
-        } catch { NSLog("Agent Desk: inicio de sesión: \(error)") }
+        } catch { NSLog("Agent Deck: inicio de sesión: \(error)") }
         sender.state = SMAppService.mainApp.status == .enabled ? .on : .off
     }
 
