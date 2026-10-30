@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Desk</title>
+<meta name="description" content="A Stream Deck for talking to AI. One key for what you type a hundred times a day: continue, next, do it, stop. Works with Claude, ChatGPT, Cursor and any chat in front of you. Free, open source, for Mac.">
+<meta property="og:title" content="Agent Desk · A Stream Deck for talking to AI">
+<meta property="og:description" content="One key for what you type a hundred times a day. Free, open source, for Mac.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d10'/%3E%3Crect x='12' y='12' width='18' height='18' rx='4' fill='%23e3c98a'/%3E%3Crect x='34' y='12' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='12' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='34' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0b0d10;--bg2:#08090b;--panel:#1c1d2e;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
+  --ink:#eef2f7;--text:#c9d2de;--mute:#8a96a8;--faint:#5f6b7c;--gold:#e3c98a;--green:#7fd18b;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(227,201,138,.3)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+.kicker{font:500 11px/1 var(--mono);letter-spacing:.26em;text-transform:uppercase;color:var(--mute)}
+.kicker .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:10px;vertical-align:1px}
+
+/* nav */
+nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);background:rgba(11,13,16,.6);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.brand svg{width:22px;height:22px}
+nav .links{display:flex;gap:22px;font-size:13.5px;color:var(--mute)}
+nav .links a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;font-size:13.5px;font-weight:600;border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.04);transition:border-color .2s,background .2s,transform .12s}
+.btn:hover{border-color:rgba(227,201,138,.6);background:rgba(227,201,138,.08)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--gold);color:#141108;border-color:var(--gold)}
+.btn.pri:hover{background:#ecd79f;border-color:#ecd79f}
+.btn .k{font:500 11px var(--mono);color:currentColor;opacity:.6}
+
+/* hero */
+.hero{position:relative;padding:92px 0 40px;text-align:center}
+.hero::before{content:"";position:absolute;inset:-200px 0 0;background:radial-gradient(60% 50% at 50% 0%,rgba(227,201,138,.12),transparent 70%);pointer-events:none}
+h1{font-size:clamp(40px,7vw,76px);line-height:1;letter-spacing:-.035em;color:var(--ink);margin:22px 0 18px;font-weight:700}
+h1 em{font-style:normal;color:var(--gold)}
+.lede{font-size:clamp(17px,2.2vw,21px);line-height:1.45;color:var(--text);max-width:640px;margin:0 auto 30px}
+.lede b{color:var(--ink);font-weight:600}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.fine{margin-top:14px;font-size:12.5px;color:var(--faint)}
+
+/* demo */
+.demo{position:relative;margin:56px auto 0;max-width:900px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));overflow:hidden;padding:36px 20px 0}
+.demo::after{content:"";position:absolute;inset:auto 0 0;height:120px;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
+.chat{max-width:620px;margin:0 auto;border:1px solid var(--line);border-radius:16px;background:#121318;box-shadow:0 30px 80px rgba(0,0,0,.5);text-align:left;overflow:hidden}
+.chat .bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--faint)}
+.chat .bar i{width:10px;height:10px;border-radius:50%;background:#2a2d36;display:inline-block}
+.chat .bar i:first-child{background:#ff5f57}.chat .bar i:nth-child(2){background:#febc2e}.chat .bar i:nth-child(3){background:#28c840}
+.chat .bar span{margin-left:auto;font-family:var(--mono);letter-spacing:.04em}
+.chat .msgs{padding:18px 18px 8px;display:flex;flex-direction:column;gap:12px;min-height:150px}
+.msg{max-width:84%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.45}
+.msg.ai{align-self:flex-start;background:#1a1c24;color:var(--text);border:1px solid var(--line)}
+.msg.me{align-self:flex-end;background:var(--gold);color:#141108;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.msg.me.show{opacity:1;transform:none}
+.chat .input{margin:8px 14px 14px;border:1px solid var(--line2);border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--ink);min-height:40px;display:flex;align-items:center;gap:6px}
+.chat .input .ph{color:var(--faint)}
+.chat .input .caret{display:inline-block;width:1.5px;height:16px;background:var(--gold);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.dock{display:inline-flex;align-items:center;gap:6px;margin:26px auto 60px;padding:8px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),rgba(11,13,16,.78);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 20px 60px rgba(0,0,0,.55);position:relative;z-index:2}
+.dock .led{width:6px;height:6px;border-radius:50%;background:var(--gold);margin:0 4px 0 8px}
+.key{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:10px;background:rgba(28,29,46,.85);border:1px solid var(--line);color:var(--ink);font-size:12.5px;font-weight:500;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;user-select:none;white-space:nowrap}
+.key small{font:500 9px var(--mono);color:var(--faint)}
+.key:hover,.key.on{border-color:rgba(227,201,138,.9);background:var(--panel)}
+.key.main{border-color:rgba(227,201,138,.5)}
+.key.on{transform:scale(.94)}
+.dock .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.dock .gear{width:24px;height:24px;display:grid;place-items:center;color:var(--mute);font-size:12px;margin-right:4px}
+.demo .hint{font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-top:-44px;margin-bottom:28px;position:relative;z-index:2}
+
+/* works with */
+.with{padding:28px 0 10px;text-align:center}
+.with .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.chip{padding:8px 14px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--text);background:rgba(255,255,255,.02)}
+
+/* features */
+.feat{padding:70px 0 20px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.card{border:1px solid var(--line);border-radius:18px;padding:22px 22px 24px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01))}
+.card h3{margin:14px 0 8px;font-size:17px;color:var(--ink);letter-spacing:-.01em}
+.card p{margin:0;font-size:14px;line-height:1.5;color:var(--mute)}
+.card .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(227,201,138,.1);color:var(--gold);font:600 13px var(--mono)}
+
+/* how */
+.how{padding:60px 0}
+.how .two{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start;margin-top:22px}
+.how h2,.feat h2,.with h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.03em;color:var(--ink);margin:12px 0 10px;line-height:1.1}
+.how p{font-size:15.5px;line-height:1.6;color:var(--text);margin:0 0 14px}
+.how ol{margin:0;padding-left:18px;color:var(--text);font-size:15px;line-height:1.7}
+.priv{border:1px solid rgba(227,201,138,.25);border-radius:16px;padding:18px 20px;background:rgba(227,201,138,.05)}
+.priv .kicker{color:var(--gold)}
+.priv p{font-size:14px;color:var(--text);margin:10px 0 0;line-height:1.55}
+.priv p+p{margin-top:8px}
+code{font:12.5px var(--mono);color:var(--ink);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px}
+
+/* end */
+.end{padding:70px 0 40px;text-align:center}
+.end h2{font-size:clamp(28px,4.4vw,48px);letter-spacing:-.035em;color:var(--ink);margin:0 0 20px;line-height:1.05}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;font-size:13px;color:var(--faint)}
+footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+footer a:hover{color:var(--ink)}
+
+@media (max-width:760px){
+  nav .links{display:none}
+  .hero{padding-top:64px}
+  .grid{grid-template-columns:1fr}
+  .how .two{grid-template-columns:1fr}
+  .dock{gap:5px;padding:6px;border-radius:14px;max-width:calc(100vw - 40px);overflow-x:auto;justify-content:flex-start}
+  .demo{padding:24px 12px 0;border-radius:16px}
+  .demo .hint{margin-top:-40px}
+}
+@media (prefers-reduced-motion:reduce){.msg.me{transition:none}.chat .input .caret{animation:none}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1d2e"/><rect x="12" y="12" width="18" height="18" rx="4" fill="#e3c98a"/><rect x="34" y="12" width="18" height="18" rx="4" fill="#2a2d3e"/><rect x="12" y="34" width="18" height="18" rx="4" fill="#2a2d3e"/><rect x="34" y="34" width="18" height="18" rx="4" fill="#2a2d3e"/></svg>
+      Agent Desk
+    </a>
+    <div class="links"><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="https://github.com/kemet333/agent-desk">GitHub</a></div>
+    <a class="btn" href="https://github.com/kemet333/agent-desk/releases/latest">Download for Mac</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="kicker"><span class="dot"></span>Free · Open source · macOS</div>
+    <h1>A Stream Deck<br>for talking to <em>AI</em>.</h1>
+    <p class="lede">One key for what you type a hundred times a day. <b>continue</b>. <b>next</b>. <b>do it</b>. <b>show me a preview first</b>. <b>stop</b>. One click, or ⌃⌥1, and it lands in whatever chat is in front of you.</p>
+    <div class="cta">
+      <a class="btn pri" href="https://github.com/kemet333/agent-desk/releases/latest">Download for Mac <span class="k">.zip</span></a>
+      <a class="btn" href="https://github.com/kemet333/agent-desk">See the code</a>
+    </div>
+    <div class="fine">Apple Silicon · macOS 14 or newer · no account, no network</div>
+
+    <div class="demo" aria-label="Agent Desk demo">
+      <div class="chat">
+        <div class="bar"><i></i><i></i><i></i><span id="who">Claude</span></div>
+        <div class="msgs" id="msgs">
+          <div class="msg ai">I've refactored the first module. Want me to go on with the rest, or would you rather see it first?</div>
+        </div>
+        <div class="input" id="input"><span class="ph">Message…</span><span class="caret"></span></div>
+      </div>
+      <div class="dock" id="dock" role="group" aria-label="Keys">
+        <span class="led"></span>
+        <button class="key main" data-text="continue">Continue <small>1</small></button>
+        <button class="key" data-text="next">Next <small>2</small></button>
+        <button class="key" data-text="go hard">Go hard <small>3</small></button>
+        <button class="key" data-text="do it">Do it <small>4</small></button>
+        <button class="key" data-text="I like it, continue">I like it <small>5</small></button>
+        <button class="key" data-text="show me a preview before you go on">Preview <small>6</small></button>
+        <button class="key" data-text="short recap: where are we and what's left">Recap <small>7</small></button>
+        <button class="key" data-text="stop, don't go on with that">Stop <small>8</small></button>
+        <span class="sep"></span><span class="gear">⚙</span>
+      </div>
+      <div class="hint">Click a key. That is the whole product.</div>
+    </div>
+  </div>
+</section>
+
+<section class="with">
+  <div class="wrap">
+    <div class="kicker">Works with what is in front of you</div>
+    <h2>Any chat. Any app.</h2>
+    <div class="row">
+      <span class="chip">Claude</span><span class="chip">ChatGPT</span><span class="chip">Cursor</span><span class="chip">Gemini</span><span class="chip">Claude Code</span><span class="chip">Codex</span><span class="chip">Terminal</span><span class="chip">Anything with a text box</span>
+    </div>
+  </div>
+</section>
+
+<section class="feat">
+  <div class="wrap">
+    <div class="kicker">What you get</div>
+    <h2>Small, native, out of the way.</h2>
+    <div class="grid">
+      <div class="card"><div class="ico">▁▁</div><h3>Dock or card</h3><p>A slim bar on the bottom edge of your screen, always on top, on every desktop. Or a floating card you drag wherever. It never steals the focus from your chat.</p></div>
+      <div class="card"><div class="ico">⌃⌥1</div><h3>Keys on your keyboard too</h3><p>⌃⌥1 to ⌃⌥9 fire the keys from anywhere. ⌃⌥D hides the desk and brings it back.</p></div>
+      <div class="card"><div class="ico">+</div><h3>Your words</h3><p>Eight keys out of the box. Add yours in two clicks: a short label, the text, Enter or not. They live in a JSON file you own.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="kicker">How it types</div>
+    <h2>Boring on purpose.</h2>
+    <div class="two">
+      <div>
+        <p>Agent Desk does one thing, the same way every time:</p>
+        <ol>
+          <li>Puts the key's text on the clipboard.</li>
+          <li>Presses ⌘V in the app in front, then Enter if the key says so.</li>
+          <li>Half a second later, puts your previous clipboard back.</li>
+        </ol>
+        <p style="margin-top:14px">That is why it works with every chat at once: there is no plugin, no API key, nothing to connect. If a text box is focused, it types there.</p>
+      </div>
+      <div class="priv" id="privacy">
+        <div class="kicker">Privacy</div>
+        <p>The first time you open it, macOS asks for <b>Accessibility</b>. That permission is what lets an app press keys for you. Agent Desk uses it to press ⌘V and Enter, and for nothing else.</p>
+        <p>No account. No network calls. No analytics. Your keys stay in <code>~/Library/Application Support/Agent Desk/keys.json</code>. The code is on GitHub, five Swift files, built with <code>./build.sh</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="end">
+  <div class="wrap">
+    <h2>Stop typing "continue".</h2>
+    <div class="cta">
+      <a class="btn pri" href="https://github.com/kemet333/agent-desk/releases/latest">Download for Mac</a>
+      <a class="btn" href="https://github.com/kemet333/agent-desk">Star it on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Made by <a href="https://www.kemet-capital.com">Kemet Capital</a></span>
+    <span><a href="https://github.com/kemet333/agent-desk">GitHub</a> · MIT license · Apple Silicon, macOS 14+</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var msgs=document.getElementById('msgs'),input=document.getElementById('input'),dock=document.getElementById('dock'),who=document.getElementById('who');
+  var replies={
+    'continue':'On it. Second module done, third one next.',
+    'next':'Moving to the next file.',
+    'go hard':'Full speed. I\'ll report when the batch is done.',
+    'do it':'Done. Tests pass, 0 failures.',
+    'I like it, continue':'Great, keeping that direction.',
+    'show me a preview before you go on':'Here is the preview. Say the word and I ship it.',
+    'short recap: where are we and what\'s left':'Recap: 3 of 5 modules done. Left: auth and the deploy.',
+    'stop, don\'t go on with that':'Stopped. Nothing else touched.'
+  };
+  var busy=false,timer=null,auto=true,apps=['Claude','ChatGPT','Cursor','Gemini'],ai=0;
+  function typeInto(text,done){
+    input.innerHTML='';var span=document.createElement('span');input.appendChild(span);var caret=document.createElement('span');caret.className='caret';input.appendChild(caret);
+    var i=0;(function step(){ if(i<=text.length){span.textContent=text.slice(0,i);i++;setTimeout(step,18);} else setTimeout(done,220);})();
+  }
+  function fire(key){
+    if(busy)return;busy=true;clearTimeout(timer);
+    var text=key.getAttribute('data-text');key.classList.add('on');setTimeout(function(){key.classList.remove('on')},180);
+    typeInto(text,function(){
+      input.innerHTML='<span class="ph">Message…</span><span class="caret"></span>';
+      var me=document.createElement('div');me.className='msg me';me.textContent=text;msgs.appendChild(me);requestAnimationFrame(function(){me.classList.add('show')});
+      setTimeout(function(){
+        var r=document.createElement('div');r.className='msg ai';r.textContent=replies[text]||'Got it.';msgs.appendChild(r);
+        while(msgs.children.length>4)msgs.removeChild(msgs.firstChild);
+        busy=false;if(auto)schedule();
+      },700);
+    });
+  }
+  function schedule(){timer=setTimeout(function(){var keys=dock.querySelectorAll('.key');ai=(ai+1)%apps.length;who.textContent=apps[ai];fire(keys[Math.floor(Math.random()*keys.length)]);},3200);}
+  dock.addEventListener('click',function(e){var k=e.target.closest('.key');if(!k)return;auto=false;clearTimeout(timer);fire(k);timer=setTimeout(function(){auto=true;schedule()},9000);});
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches) timer=setTimeout(function(){fire(dock.querySelector('.key.main'))},1400);
+})();
+</script>
+</body>
+</html>

@@ -21,6 +21,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
+        store.showMenu = { [weak self] in
+            guard let self = self, let menu = self.status.menu else { return }
+            menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+        }
+        store.hide = { [weak self] in self?.panel.orderOut(nil) }
         installHotkeys()
         _ = Sender.accessibilityGranted(prompt: true)
     }
@@ -35,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let menu = NSMenu()
         menu.addItem(withTitle: "Mostrar u ocultar el Desk", action: #selector(togglePanel), keyEquivalent: "d")
+        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: "Dictar al chat", action: #selector(dictate), keyEquivalent: "m")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         let modeItem = NSMenuItem(title: "Modo", action: nil, keyEquivalent: "")
         let modes = NSMenu()
@@ -74,6 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func restoreDefaults() { store.restoreDefaults() }
+    @objc func dictate() { DispatchQueue.main.async { self.store.toggleDictation() } }
     @objc func setDock() { store.mode = .dock }
     @objc func setCard() { store.mode = .card }
     @objc func quit() { NSApp.terminate(nil) }
@@ -86,6 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let mods = event.modifierFlags.intersection([.control, .option, .command, .shift])
             guard mods == [.control, .option] else { return }
             if event.keyCode == 2 { self.togglePanel(); return } // D
+            if event.keyCode == 46 { DispatchQueue.main.async { self.store.toggleDictation() }; return } // M
             if let chars = event.charactersIgnoringModifiers, let n = Int(chars), (1...9).contains(n) {
                 self.store.press(hotkey: n)
             }

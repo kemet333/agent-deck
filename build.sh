@@ -11,14 +11,18 @@ xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" 
   -module-cache-path "$build_dir/modules" -parse-as-library \
   "$project_dir"/Sources/AgentDeskApp.swift "$project_dir"/Sources/DeskModel.swift \
   "$project_dir"/Sources/DeskView.swift "$project_dir"/Sources/FloatingPanel.swift "$project_dir"/Sources/Sender.swift \
-  -framework SwiftUI -framework AppKit -framework ServiceManagement \
+  "$project_dir"/Sources/Dictation.swift \
+  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation \
   -o "$app_dir/Contents/MacOS/AgentDesk"
 xcrun swiftc -swift-version 5 -O -sdk "$sdk_dir" -module-cache-path "$build_dir/modules" \
   "$project_dir/Sources/BuildIcon.swift" -framework AppKit -o "$build_dir/build-icon"
 "$build_dir/build-icon" "$build_dir/AppIcon.iconset" "$app_dir/Contents/Resources/AppIcon.icns"
 cp "$project_dir/Resources/Info.plist" "$app_dir/Contents/Info.plist"
 xattr -cr "$app_dir"
-codesign --force --sign - "$app_dir"
+# Con un certificado local (el mismo que Diego OS) la identidad no cambia entre builds y macOS conserva los permisos.
+identity="${AGENT_DESK_SIGN_IDENTITY:-Diego OS Local}"
+if security find-identity -p codesigning 2>/dev/null | grep -q "\"$identity\""; then sign_as="$identity"; else sign_as="-"; fi
+codesign --force --sign "$sign_as" "$app_dir"
 codesign --verify --deep --strict "$app_dir"
 plutil -lint "$app_dir/Contents/Info.plist" >/dev/null
 rm -rf "$project_dir/Agent Desk.app"

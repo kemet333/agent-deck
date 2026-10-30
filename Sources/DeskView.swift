@@ -15,31 +15,34 @@ enum Palette {
 }
 
 struct VisualEffect: NSViewRepresentable {
+    var material: NSVisualEffectView.Material = .hudWindow
     func makeNSView(context: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
-        v.material = .hudWindow
+        v.material = material
         v.blendingMode = .behindWindow
         v.state = .active
         return v
     }
-    func updateNSView(_ view: NSVisualEffectView, context: Context) {}
+    func updateNSView(_ view: NSVisualEffectView, context: Context) { view.material = material }
 }
 
-/// Cristal oscuro del Diego OS, común a los dos modos.
+/// Cristal oscuro: desenfoque real detrás, velo casi negro encima, filo claro arriba.
 struct Glass: ViewModifier {
     var radius: CGFloat
+    var veil: Double = 0.62
     func body(content: Content) -> some View {
         content
             .background(
                 ZStack {
                     VisualEffect()
-                    Palette.bg.opacity(0.78)
-                    LinearGradient(colors: [Color.white.opacity(0.07), Color.white.opacity(0.02), Color.white.opacity(0.01)],
-                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                    Color.black.opacity(veil)
+                    LinearGradient(colors: [Color.white.opacity(0.06), Color.white.opacity(0.015), Color.clear],
+                                   startPoint: .top, endPoint: .bottom)
                 }
             )
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Color.white.opacity(0.10), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Color.white.opacity(0.09), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).inset(by: 1).stroke(Color.white.opacity(0.03), lineWidth: 1))
     }
 }
 
@@ -54,7 +57,7 @@ struct DeskRoot: View {
     }
 }
 
-// MARK: - Modo dock: una barra en el borde inferior
+// MARK: - Modo dock: la barra en el borde inferior, al estilo de las barras de herramientas de macOS
 
 struct DockView: View {
     @ObservedObject var store: DeskStore
@@ -63,54 +66,130 @@ struct DockView: View {
     @State private var accessibility = Sender.accessibilityGranted(prompt: false)
 
     var body: some View {
-        HStack(spacing: 6) {
-            Circle().fill(accessibility ? Palette.gold : Palette.mute).frame(width: 6, height: 6)
-                .padding(.leading, 6).padding(.trailing, 2)
-                .help(accessibility ? "Agent Desk" : "Falta el permiso de Accesibilidad: pulsa el icono de la mano")
+        HStack(spacing: 2) {
+            // cerrar (esconder la barra; ⌃⌥D la devuelve)
+            DockGlyph(symbol: "xmark", size: 10, weight: .bold, filled: false, help: "Ocultar la barra (⌃⌥D la devuelve)") { store.hide?() }
+                .padding(.leading, 2)
+            Divider_()
+            DictateItem(store: store)
+            Divider_()
             if !accessibility {
-                Button(action: { _ = Sender.accessibilityGranted(prompt: true) }) {
-                    Image(systemName: "hand.raised.fill").font(.system(size: 12)).foregroundColor(Palette.gold)
-                }.buttonStyle(.plain).help("Permite Accesibilidad para que el Desk pueda escribir en el chat")
+                DockItem(icon: "hand.raised.fill", label: "Permiso", hotkey: nil, main: false, editing: false, tint: Palette.gold,
+                         help: "Permite Accesibilidad para que el Desk pueda escribir en el chat",
+                         press: { _ = Sender.accessibilityGranted(prompt: true) }, edit: {}, remove: {})
+                Divider_()
             }
-            ForEach(store.keys) { key in
-                DockKey(key: key, editing: store.editing,
-                        press: { store.press(key) }, edit: { sheet = key }, remove: { store.remove(key) })
+            ForEach(Array(store.groups.enumerated()), id: \.offset) { i, g in
+                if i > 0 { Divider_() }
+                ForEach(g.keys) { key in
+                    DockItem(icon: key.icon, label: key.label, hotkey: key.hotkey, main: key.hotkey == 1, editing: store.editing, tint: nil,
+                             help: "⌃⌥\(key.hotkey.map(String.init) ?? "") · \(key.text)",
+                             press: { store.press(key) }, edit: { sheet = key }, remove: { store.remove(key) })
+                }
             }
             if store.editing {
-                Button(action: { adding = true }) {
-                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).foregroundColor(Palette.gold)
-                        .frame(width: 30, height: 30)
-                        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Palette.gold.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
-                }.buttonStyle(.plain)
+                if !store.groups.contains(where: { $0.name == "mías" }) { Divider_() }
+                DockItem(icon: "plus", label: "Nueva", hotkey: nil, main: false, editing: false, tint: Palette.gold, help: "Añadir una tecla",
+                         press: { adding = true }, edit: {}, remove: {})
             }
-            Rectangle().fill(Palette.line).frame(width: 1, height: 22).padding(.horizontal, 4)
-            Button(action: { store.editing.toggle() }) {
-                Image(systemName: store.editing ? "checkmark" : "slider.horizontal.3")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(store.editing ? Palette.gold : Palette.mute)
-                    .frame(width: 24, height: 24)
-            }
-            .buttonStyle(.plain)
-            .help(store.editing ? "Terminar edición" : "Editar teclas")
-            .padding(.trailing, 4)
+            Divider_()
+            DockGlyph(symbol: store.editing ? "checkmark" : "slider.horizontal.3", size: 12, weight: .semibold, filled: false,
+                      help: store.editing ? "Terminar edición" : "Editar teclas", tint: store.editing ? Palette.gold : nil) { store.editing.toggle() }
+            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, filled: false, help: "Ajustes de Agent Desk") { store.showMenu?() }
+                .padding(.trailing, 2)
         }
-        .padding(.horizontal, 8).padding(.vertical, 8)
+        .padding(.horizontal, 6).padding(.vertical, 5)
         .fixedSize()
-        .modifier(Glass(radius: 18))
-        .padding(10) // sitio para la sombra
+        .modifier(Glass(radius: 16, veil: 0.8))
+        .shadow(color: .black.opacity(0.4), radius: 22, x: 0, y: 10)
+        .padding(.horizontal, 30).padding(.top, 36).padding(.bottom, 14) // sitio para la sombra
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in
             accessibility = Sender.accessibilityGranted(prompt: false)
         }
         .sheet(item: $sheet) { key in KeyEditor(key: key, isNew: false) { store.update($0) } }
         .sheet(isPresented: $adding) {
-            KeyEditor(key: DeskKey(label: "", text: ""), isNew: true) { store.add(label: $0.label, text: $0.text, sendEnter: $0.sendEnter) }
+            KeyEditor(key: DeskKey(label: "", text: "", icon: "sparkles"), isNew: true) { store.add($0) }
         }
     }
 }
 
-struct DockKey: View {
-    let key: DeskKey
+/// La tecla de dictar: micro en reposo; escuchando, onda dorada que sigue tu voz y el texto parcial debajo.
+struct DictateItem: View {
+    @ObservedObject var store: DeskStore
+    @State private var hover = false
+    var body: some View {
+        Button(action: { store.toggleDictation() }) {
+            VStack(spacing: 6) {
+                ZStack {
+                    if store.listening {
+                        Circle().fill(Palette.gold.opacity(0.18))
+                            .frame(width: 18 + CGFloat(min(store.level * 140, 16)), height: 18 + CGFloat(min(store.level * 140, 16)))
+                            .animation(.easeOut(duration: 0.08), value: store.level)
+                    }
+                    Image(systemName: store.listening ? "waveform" : "mic")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(store.listening ? Palette.gold : (hover ? Palette.ink : Palette.text))
+                }
+                .frame(width: 40, height: 17)
+                Text(store.listening ? (store.partial.isEmpty ? "Escuchando…" : store.partial) : (store.dictationNote.isEmpty ? "Dictar" : store.dictationNote))
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundColor(store.listening ? Palette.gold : (hover ? Palette.ink : Palette.mute))
+                    .lineLimit(1)
+                    .frame(maxWidth: store.listening ? 200 : 70)
+            }
+            .frame(minWidth: 54)
+            .padding(.horizontal, 6).padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(store.listening ? Palette.gold.opacity(0.08) : Color.white.opacity(hover ? 0.09 : 0)))
+            .overlay(alignment: .topTrailing) {
+                if hover { Text("M").font(.system(size: 8, weight: .semibold, design: .monospaced)).foregroundColor(Palette.faint).padding(.trailing, 4).padding(.top, 2) }
+            }
+            .animation(.easeOut(duration: 0.14), value: hover)
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help("Dictar al chat (⌃⌥M): una pulsación escucha, otra envía")
+    }
+}
+
+struct Divider_: View {
+    var body: some View {
+        Rectangle().fill(Color.white.opacity(0.09)).frame(width: 1, height: 26).padding(.horizontal, 4)
+    }
+}
+
+/// Un control redondo pequeño (la aspa, la edición).
+struct DockGlyph: View {
+    let symbol: String
+    let size: CGFloat
+    let weight: Font.Weight
+    let filled: Bool
+    let help: String
+    var tint: Color? = nil
+    let action: () -> Void
+    @State private var hover = false
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: size, weight: weight))
+                .foregroundColor(tint ?? (filled ? Palette.bg : (hover ? Palette.ink : Palette.mute)))
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(filled ? Color.white.opacity(hover ? 1 : 0.92) : Color.white.opacity(hover ? 0.10 : 0)))
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help(help)
+    }
+}
+
+/// Una tecla de la barra: icono grande arriba, etiqueta debajo, el número del atajo en la esquina.
+struct DockItem: View {
+    let icon: String
+    let label: String
+    let hotkey: Int?
+    let main: Bool
     let editing: Bool
+    let tint: Color?
+    let help: String
     let press: () -> Void
     let edit: () -> Void
     let remove: () -> Void
@@ -119,29 +198,38 @@ struct DockKey: View {
 
     var body: some View {
         Button(action: { editing ? edit() : press() }) {
-            HStack(spacing: 6) {
-                Text(key.label).font(.system(size: 12.5, weight: .medium)).foregroundColor(Palette.ink).lineLimit(1)
-                if let h = key.hotkey {
-                    Text("\(h)").font(.system(size: 9, weight: .medium, design: .monospaced)).foregroundColor(Palette.faint)
-                }
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(tint ?? (hover || main ? Palette.ink : Palette.text))
+                    .frame(height: 17)
+                Text(label)
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundColor(tint ?? (hover ? Palette.ink : Palette.mute))
+                    .lineLimit(1)
+            }
+            .frame(minWidth: 54)
+            .padding(.horizontal, 6).padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.white.opacity(hover ? 0.09 : 0)))
+            .overlay(alignment: .topTrailing) {
                 if editing {
                     Button(action: remove) {
-                        Image(systemName: "xmark").font(.system(size: 8, weight: .bold)).foregroundColor(Palette.mute)
-                    }.buttonStyle(.plain)
+                        Image(systemName: "xmark").font(.system(size: 8, weight: .bold)).foregroundColor(Palette.bg)
+                            .frame(width: 13, height: 13).background(Circle().fill(Palette.gold))
+                    }.buttonStyle(.plain).offset(x: 3, y: -3)
+                } else if let h = hotkey, hover {
+                    Text("\(h)").font(.system(size: 8, weight: .semibold, design: .monospaced))
+                        .foregroundColor(Palette.faint).padding(.trailing, 4).padding(.top, 2)
                 }
             }
-            .padding(.horizontal, 11).padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Palette.panel.opacity(hover ? 1 : 0.85)))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(hover || key.hotkey == 1 ? Palette.gold.opacity(hover ? 0.9 : 0.5) : Palette.line, lineWidth: 1))
-            .scaleEffect(pressed ? 0.94 : 1)
-            .animation(.easeOut(duration: 0.12), value: pressed)
-            .animation(.easeOut(duration: 0.15), value: hover)
+            .scaleEffect(pressed ? 0.93 : 1)
+            .animation(.easeOut(duration: 0.1), value: pressed)
+            .animation(.easeOut(duration: 0.14), value: hover)
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .pressEvents(onPress: { pressed = true }, onRelease: { pressed = false })
-        .help("⌃⌥\(key.hotkey.map(String.init) ?? "") · \(key.text)")
+        .help(help)
     }
 }
 
@@ -173,7 +261,7 @@ struct CardView: View {
         }
         .padding(16)
         .frame(width: 320)
-        .modifier(Glass(radius: 18))
+        .modifier(Glass(radius: 18, veil: 0.5))
         .padding(10)
         .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in
             target = Sender.targetName()
@@ -181,7 +269,7 @@ struct CardView: View {
         }
         .sheet(item: $sheet) { key in KeyEditor(key: key, isNew: false) { store.update($0) } }
         .sheet(isPresented: $adding) {
-            KeyEditor(key: DeskKey(label: "", text: ""), isNew: true) { store.add(label: $0.label, text: $0.text, sendEnter: $0.sendEnter) }
+            KeyEditor(key: DeskKey(label: "", text: "", icon: "sparkles"), isNew: true) { store.add($0) }
         }
     }
 
@@ -246,7 +334,8 @@ struct Tile: View {
 
     var body: some View {
         Button(action: { editing ? edit() : press() }) {
-            HStack(alignment: .top, spacing: 6) {
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: key.icon).font(.system(size: 16)).foregroundColor(hover ? Palette.ink : Palette.text).frame(width: 20)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(key.label).font(.system(size: 13, weight: .medium)).foregroundColor(Palette.ink).lineLimit(1)
                     Text(key.hotkey.map { "⌃⌥\($0)" } ?? " ")
@@ -282,12 +371,24 @@ struct KeyEditor: View {
     @State var key: DeskKey
     let isNew: Bool
     let save: (DeskKey) -> Void
+    private let cols = [GridItem(.adaptive(minimum: 34), spacing: 6)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(isNew ? "Nueva tecla" : "Editar tecla").font(.system(size: 13, weight: .semibold)).foregroundColor(Palette.ink)
             TextField("Nombre corto (lo que se ve)", text: $key.label).textFieldStyle(.roundedBorder)
             TextField("Lo que se escribe en el chat", text: $key.text, axis: .vertical).lineLimit(2...5).textFieldStyle(.roundedBorder)
+            Text("Icono").font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
+            LazyVGrid(columns: cols, spacing: 6) {
+                ForEach(deskIcons, id: \.self) { name in
+                    Button(action: { key.icon = name }) {
+                        Image(systemName: name).font(.system(size: 15))
+                            .foregroundColor(key.icon == name ? Palette.bg : Palette.text)
+                            .frame(width: 34, height: 30)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(key.icon == name ? Palette.gold : Color.white.opacity(0.06)))
+                    }.buttonStyle(.plain)
+                }
+            }
             Toggle("Pulsar Intro al enviar", isOn: $key.sendEnter).toggleStyle(.switch).font(.system(size: 12))
             HStack {
                 Spacer()
@@ -299,7 +400,7 @@ struct KeyEditor: View {
             }
         }
         .padding(16)
-        .frame(width: 320)
+        .frame(width: 360)
     }
 }
 
