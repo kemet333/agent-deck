@@ -7,7 +7,10 @@ import SwiftUI
 struct AgentDeskApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     var body: some Scene {
-        Settings { EmptyView() }
+        Settings {
+            VoiceWorkspaceView(voice: delegate.store.voice)
+                .frame(minWidth: 680, idealWidth: 760, minHeight: 540, idealHeight: 680)
+        }
     }
 }
 
