@@ -58,6 +58,8 @@ final class DeskStore: ObservableObject {
     @Published var voiceNeedsAttention = false
     var voiceExpanded: Bool { listening || voiceWorking || voiceNeedsAttention }
     private var voiceBag = Set<AnyCancellable>()
+    lazy var flows = FlowController()
+    var showFlows: (() -> Void)?
     lazy var voice: VoiceController = {
         let controller = VoiceController(storage: VoiceStorage(folder: Self.folder))
         controller.onDelivered = { [weak self] text in

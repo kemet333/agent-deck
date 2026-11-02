@@ -198,6 +198,7 @@ struct Bar: View {
                       help: store.editing ? T.s("Done editing", "Terminar edición") : T.s("Edit keys", "Editar teclas"), tint: store.editing ? Palette.gold : nil) {
                 withAnimation(Motion.settle) { store.editing.toggle() }
             }
+            DockGlyph(symbol: "arrow.triangle.branch", size: 12, weight: .regular, help: T.s("Message flows", "Flujos de mensajes")) { store.showFlows?() }
             DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: T.s("Agent Deck settings", "Ajustes de Agent Deck")) { store.showMenu?() }
                 .padding(.trailing, 2)
         }
@@ -474,6 +475,7 @@ struct CardView: View {
                 .foregroundColor(store.lastSent.isEmpty ? Palette.faint : Palette.green)
                 .lineLimit(1)
             Spacer()
+            Button { store.showFlows?() } label: { Label(T.s("Flows", "Flujos"), systemImage: "arrow.triangle.branch") }.buttonStyle(.plain).font(.system(size: 10)).foregroundColor(Palette.gold)
         }
     }
 }

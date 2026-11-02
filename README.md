@@ -9,6 +9,7 @@ A Stream Deck for talking to AI. A bar of keys that type what you always type: *
 - Built-in voice: hold Fn, speak and release; double-tap or Fn+Control for hands-free. OpenAI API transcription/cleanup with your own key, or the existing Apple on-device option. Paste or optional Enter, recoverable drafts, local text history and file transcription. ⌃⌥M still toggles recording.
 - Eight keys out of the box, yours in two clicks: label, text, icon, Enter or not. They live in a JSON file you own.
 - Global shortcuts ⌃⌥1…9 for the keys, ⌃⌥D to fold or unfold.
+- Message flows for Codex desktop: repeat `next` a finite number of times or send an ordered sequence after each response. Explicit chat selection, saved flows, progress, pause and cancel; `⌃⌥F` opens flows and `⌃⌥P` pauses. Requires reviewing/trusting the bundled Codex hooks. See [setup and limits](docs/message-flows.md).
 - A URL scheme for Shortcuts, Raycast or a hardware Stream Deck: `open "agentdeck://press?n=1"`, `agentdeck://dictate`, `agentdeck://toggle`, `agentdeck://send?text=continue`.
 - Lives in the menu bar. Opens at login if you want. No Agent Deck account. Preset keys need no network; OpenAI voice and AI features contact OpenAI with your own API key. Apple + Verbatim uses on-device recognition where available.
 

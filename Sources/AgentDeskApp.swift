@@ -8,7 +8,7 @@ struct AgentDeskApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     var body: some Scene {
         Settings {
-            VoiceWorkspaceView(voice: delegate.store.voice)
+            DeckSettingsView(store: delegate.store)
                 .frame(minWidth: 680, idealWidth: 760, minHeight: 540, idealHeight: 680)
         }
     }
@@ -22,12 +22,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var monitor: Any?
     var voiceHotkeys: VoiceHotkeys?
     var voiceWindow: NSWindow?
+    var flowWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
+        _ = store.flows // Load saved definitions; previously active runs restart paused.
+        store.showFlows = { [weak self] in self?.openFlows() }
         store.showMenu = { [weak self] in
             guard let self = self, let menu = self.status.menu else { return }
             menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
@@ -72,6 +75,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let menu = NSMenu()
         menu.addItem(withTitle: T.s("Fold or unfold the deck", "Plegar o desplegar el Deck"), action: #selector(togglePanel), keyEquivalent: "d")
+        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: T.s("Message flows…", "Flujos de mensajes…"), action: #selector(openFlows), keyEquivalent: "f")
+        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: T.s("Pause message flow", "Pausar flujo de mensajes"), action: #selector(pauseFlow), keyEquivalent: "p")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Dictate to the chat", "Dictar al chat"), action: #selector(dictate), keyEquivalent: "m")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
@@ -128,7 +135,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         voiceWindow?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
     }
-    func applicationWillTerminate(_ notification: Notification) { voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown() }
+    @objc func openFlows() {
+        if flowWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 730), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            window.title = "Agent Deck · Flujos"; window.minSize = NSSize(width: 640, height: 540); window.isReleasedWhenClosed = false
+            window.contentView = NSHostingView(rootView: FlowWorkspaceView(flow: store.flows)); window.center(); flowWindow = window
+        }
+        flowWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+    }
+    @objc func pauseFlow() { store.flows.pause() }
+    func applicationWillTerminate(_ notification: Notification) { store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown() }
     @objc func dictate() { DispatchQueue.main.async { self.store.toggleDictation() } }
     @objc func setDock() { store.mode = .dock }
     @objc func setCard() { store.mode = .card }
@@ -142,6 +158,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor [weak self] in
                 guard let self,mods == [.control,.option] else { return }
                 if code == 2 { self.togglePanel(); return }
+                if code == 3 { self.openFlows(); return }
+                if code == 35 { self.pauseFlow(); return }
                 if code == 43 { self.openVoice(); return }
                 if code == 37 { self.store.voice.pasteLast(); return }
                 if code == 46 { self.store.toggleDictation(); return }
