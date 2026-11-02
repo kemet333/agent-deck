@@ -6,6 +6,7 @@ import SwiftUI
 /// le llega a él. Siempre encima y en todos los escritorios. Se arrastra por cualquier punto; al cambiar
 /// de tamaño (teclas, plegado) conserva su centro inferior, con una animación corta, y no se sale de
 /// la pantalla. La primera vez se coloca centrada abajo en la pantalla donde está el ratón.
+@MainActor
 final class FloatingPanel: NSPanel {
     private let store: DeskStore
     private let host: NSHostingView<DeskRoot>
@@ -39,13 +40,15 @@ final class FloatingPanel: NSPanel {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.relayout(animated: true, recenter: false) }
         }.store(in: &bag)
         store.$listening.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$voiceWorking.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$voiceNeedsAttention.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$partial.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: false, recenter: false) }.store(in: &bag)
         store.$mode.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: true) }.store(in: &bag)
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.relayout(animated: false, recenter: false)
+            MainActor.assumeIsolated { self?.relayout(animated: false, recenter: false) }
         }
         NotificationCenter.default.addObserver(forName: NSWindow.didMoveNotification, object: self, queue: .main) { [weak self] _ in
-            self?.rememberAnchor()
+            MainActor.assumeIsolated { self?.rememberAnchor() }
         }
     }
 

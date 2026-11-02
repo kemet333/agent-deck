@@ -10,8 +10,8 @@
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>Agent Deck</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.1</string>
-  <key>CFBundleVersion</key><string>2</string>
+  <key>CFBundleShortVersionString</key><string>0.2.0</string>
+  <key>CFBundleVersion</key><string>3</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
@@ -22,7 +22,7 @@
     <key>CFBundleURLName</key><string>com.kemetcapital.agentdesk</string>
     <key>CFBundleURLSchemes</key><array><string>agentdeck</string></array>
   </dict></array>
-  <key>NSMicrophoneUsageDescription</key><string>Agent Deck usa el micrófono para dictar al chat cuando pulsas Dictar. El audio no se guarda.</string>
+  <key>NSMicrophoneUsageDescription</key><string>Agent Deck graba cuando activas el dictado. En modo OpenAI, envía esa grabación a OpenAI con tu clave de API y elimina el archivo temporal; puedes elegir el motor local de Apple.</string>
   <key>NSSpeechRecognitionUsageDescription</key><string>Agent Deck transcribe lo que dictas, en este Mac siempre que macOS lo permita, y lo escribe en el chat. No se guarda el audio.</string>
 </dict>
 </plist>

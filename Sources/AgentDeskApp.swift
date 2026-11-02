@@ -3,6 +3,7 @@ import ServiceManagement
 import SwiftUI
 
 @main
+@MainActor
 struct AgentDeskApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     var body: some Scene {
@@ -10,11 +11,14 @@ struct AgentDeskApp: App {
     }
 }
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = DeskStore()
     var panel: FloatingPanel!
     var status: NSStatusItem!
     var monitor: Any?
+    var voiceHotkeys: VoiceHotkeys?
+    var voiceWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -27,6 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         store.hide = { [weak self] in self?.store.toggleCollapsed() }
         installHotkeys()
+        voiceHotkeys = VoiceHotkeys(voice: store.voice); voiceHotkeys?.install()
+        store.voice.showWorkspace = { [weak self] in self?.openVoice() }
+        store.voice.showDeck = { [weak self] in guard let self else{return};self.voiceWindow?.orderOut(nil);self.store.collapsed=false;self.panel.orderFrontRegardless() }
+        store.voice.onShortcutsChanged = { [weak self] in if self?.store.voice.active == true{self?.store.voice.cancel()};self?.voiceHotkeys?.install() }
         _ = Sender.accessibilityGranted(prompt: true)
     }
 
@@ -63,6 +71,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: T.s("Fold or unfold the deck", "Plegar o desplegar el Deck"), action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Dictate to the chat", "Dictar al chat"), action: #selector(dictate), keyEquivalent: "m")
+        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: T.s("Voice, drafts & history…", "Voz, borradores e historial…"), action: #selector(openVoice), keyEquivalent: ",")
+        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: T.s("Paste last transcription", "Pegar última transcripción"), action: #selector(pasteLastVoice), keyEquivalent: "l")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         let modeItem = NSMenuItem(title: T.s("Mode", "Modo"), action: nil, keyEquivalent: "")
         let modes = NSMenu()
@@ -103,6 +115,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func restoreDefaults() { store.restoreDefaults() }
+    @objc func pasteLastVoice() { store.voice.pasteLast() }
+    @objc func openVoice() {
+        if voiceHotkeys?.hasTap == false && !store.voice.active { voiceHotkeys?.install() }
+        if voiceWindow == nil {
+            let window = NSWindow(contentRect:NSRect(x:0,y:0,width:760,height:680),styleMask:[.titled,.closable,.miniaturizable,.resizable],backing:.buffered,defer:false)
+            window.title=T.s("Agent Deck · Voice", "Agent Deck · Voz");window.minSize=NSSize(width:680,height:540);window.isReleasedWhenClosed=false
+            window.contentView=NSHostingView(rootView:VoiceWorkspaceView(voice:store.voice));window.center();voiceWindow=window
+        }
+        voiceWindow?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
+    }
+    func applicationWillTerminate(_ notification: Notification) { voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown() }
     @objc func dictate() { DispatchQueue.main.async { self.store.toggleDictation() } }
     @objc func setDock() { store.mode = .dock }
     @objc func setCard() { store.mode = .card }
@@ -112,13 +135,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func installHotkeys() {
         monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self = self else { return }
-            let mods = event.modifierFlags.intersection([.control, .option, .command, .shift])
-            guard mods == [.control, .option] else { return }
-            if event.keyCode == 2 { self.togglePanel(); return } // D
-            if event.keyCode == 46 { DispatchQueue.main.async { self.store.toggleDictation() }; return } // M
-            if let chars = event.charactersIgnoringModifiers, let n = Int(chars), (1...9).contains(n) {
-                self.store.press(hotkey: n)
+            let mods=event.modifierFlags.intersection([.control,.option,.command,.shift]), code=event.keyCode, chars=event.charactersIgnoringModifiers
+            Task { @MainActor [weak self] in
+                guard let self,mods == [.control,.option] else { return }
+                if code == 2 { self.togglePanel(); return }
+                if code == 43 { self.openVoice(); return }
+                if code == 37 { self.store.voice.pasteLast(); return }
+                if code == 46 { self.store.toggleDictation(); return }
+                if let chars,let n=Int(chars),(1...9).contains(n){self.store.press(hotkey:n)}
             }
         }
     }

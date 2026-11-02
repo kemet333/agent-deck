@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import Combine
 
 /// Una tecla del Desk: lo que se ve (label) y lo que se escribe en el chat (text).
 struct DeskKey: Codable, Identifiable, Equatable {
@@ -42,6 +43,7 @@ enum DeskMode: String, Codable, CaseIterable {
 }
 
 /// Las teclas, guardadas en ~/Library/Application Support/Agent Deck/keys.json; el modo en UserDefaults.
+@MainActor
 final class DeskStore: ObservableObject {
     @Published var keys: [DeskKey] { didSet { save() } }
     @Published var mode: DeskMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
@@ -52,7 +54,28 @@ final class DeskStore: ObservableObject {
     @Published var partial: String = ""
     @Published var level: Float = 0
     @Published var dictationNote: String = ""
-    private var dictation: Dictation?
+    @Published var voiceWorking = false
+    @Published var voiceNeedsAttention = false
+    var voiceExpanded: Bool { listening || voiceWorking || voiceNeedsAttention }
+    private var voiceBag = Set<AnyCancellable>()
+    lazy var voice: VoiceController = {
+        let controller = VoiceController(storage: VoiceStorage(folder: Self.folder))
+        controller.onDelivered = { [weak self] text in
+            let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
+        }
+        controller.objectWillChange.sink { [weak self, weak controller] in
+            DispatchQueue.main.async {
+                guard let self, let controller else { return }
+                self.listening=controller.phase == .listening
+                self.voiceWorking=controller.working
+                self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
+                self.partial=controller.phase == .listening ? controller.partial : controller.label
+                self.level=controller.level
+                self.dictationNote=controller.phase == .idle ? "" : controller.label
+            }
+        }.store(in:&voiceBag)
+        return controller
+    }()
     /// Plegada a un orbe (el copiloto) o desplegada. Se recuerda entre sesiones.
     @Published var collapsed: Bool { didSet { UserDefaults.standard.set(collapsed, forKey: "collapsed") } }
     /// Cuenta pulsaciones para disparar la animación de la última tecla pulsada.
@@ -129,9 +152,10 @@ final class DeskStore: ObservableObject {
         DeskStore.haptic()
         lastPressedId = key.id
         pulse += 1
-        Sender.send(key.text, enter: key.sendEnter)
-        let f = DateFormatter(); f.dateFormat = "HH:mm"
-        lastSent = "\(f.string(from: Date())) · \(key.text)"
+        Sender.send(key.text, enter: key.sendEnter) { [weak self] result in
+            switch result { case .success: let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(key.text)"
+            case .failure(let error): self?.voice.note(error.localizedDescription) }
+        }
     }
 
     func press(hotkey: Int) {
@@ -161,33 +185,8 @@ final class DeskStore: ObservableObject {
         return order.map { ($0, byName[$0]!) }
     }
 
-    /// Dictar: una pulsación empieza a escuchar, otra para y envía lo oído al chat como una tecla más.
-    @MainActor func toggleDictation() {
-        if dictation == nil {
-            let d = Dictation()
-            d.onLevel = { [weak self] l in self?.level = l }
-            d.onEvent = { [weak self] state, text, reason in
-                guard let self = self else { return }
-                switch state {
-                case .listening: self.listening = true; self.partial = ""; self.dictationNote = ""
-                case .partial: self.partial = text ?? ""
-                case .final:
-                    self.listening = false; self.partial = ""
-                    if let t = text, !t.isEmpty {
-                        Sender.send(t, enter: true)
-                        let f = DateFormatter(); f.dateFormat = "HH:mm"
-                        self.lastSent = "\(f.string(from: Date())) · \(t)"
-                    }
-                case .idle: self.listening = false; self.partial = ""
-                case .unavailable:
-                    self.listening = false; self.partial = ""
-                    self.dictationNote = reason == "mic-denied" ? T.s("Allow the microphone", "Permite el micrófono") : reason == "speech-denied" ? T.s("Allow speech recognition", "Permite el reconocimiento de voz") : T.s("Dictation unavailable", "Dictado no disponible")
-                }
-            }
-            dictation = d
-        }
-        if listening { dictation?.stop() } else { dictation?.start() }
-    }
+    /// Same entry point for the bar, menu, URL scheme and the existing ⌃⌥M shortcut.
+    @MainActor func toggleDictation() { voice.toggle() }
 
     /// Última nota de voz transcrita por el inbox de Telegram (la escribe inbox-telegram.py).
     static let lastVoice = FileManager.default.homeDirectoryForCurrentUser
@@ -201,10 +200,13 @@ final class DeskStore: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self.dictationNote = "" }
             return
         }
-        Sender.send(text, enter: true)
-        let f = DateFormatter(); f.dateFormat = "HH:mm"
-        lastSent = "\(f.string(from: Date())) · \(text)"
-        try? "".write(to: DeskStore.lastVoice, atomically: true, encoding: .utf8)
+        Sender.send(text, enter: true) { [weak self] result in
+            if case .success = result {
+                let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
+                // Do not erase a newer inbox note that arrived while inserting the previous one.
+                if (try? String(contentsOf:Self.lastVoice,encoding:.utf8).trimmingCharacters(in:.whitespacesAndNewlines)) == text { try? "".write(to:Self.lastVoice,atomically:true,encoding:.utf8) }
+            } else if case .failure(let error) = result { self?.voice.note(error.localizedDescription) }
+        }
     }
 
     /// Lo pone el AppDelegate: abre el menú de la app desde el engranaje de la barra.

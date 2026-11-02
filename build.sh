@@ -12,7 +12,10 @@ xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" 
   "$project_dir"/Sources/AgentDeskApp.swift "$project_dir"/Sources/DeskModel.swift \
   "$project_dir"/Sources/DeskView.swift "$project_dir"/Sources/FloatingPanel.swift "$project_dir"/Sources/Sender.swift \
   "$project_dir"/Sources/Dictation.swift "$project_dir"/Sources/Strings.swift \
-  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation \
+  "$project_dir"/Sources/VoiceModels.swift "${project_dir}/Sources/VoiceAudioFile.swift" "$project_dir"/Sources/OpenAIVoiceClient.swift \
+  "$project_dir"/Sources/VoiceKeychain.swift "$project_dir"/Sources/VoiceRecorder.swift \
+  "$project_dir"/Sources/VoiceController.swift "$project_dir"/Sources/VoiceHotkeys.swift "$project_dir"/Sources/VoiceWorkspaceView.swift \
+  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication \
   -o "$app_dir/Contents/MacOS/AgentDesk"
 xcrun swiftc -swift-version 5 -O -sdk "$sdk_dir" -module-cache-path "$build_dir/modules" \
   "$project_dir/Sources/BuildIcon.swift" -framework AppKit -o "$build_dir/build-icon"
