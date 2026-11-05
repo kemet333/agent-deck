@@ -41,10 +41,23 @@ enum DeskMode: String, Codable, CaseIterable {
     case dock, card
 }
 
+/// El aspecto de la barra: el de siempre, cristal translúcido (como Alfred) o metal con la tecla naranja (como el Pad físico).
+enum BarStyle: String, Codable, CaseIterable {
+    case classic, glass, metal
+    var title: String {
+        switch self {
+        case .classic: return T.s("Classic", "Clásico")
+        case .glass: return T.s("Glass", "Cristal")
+        case .metal: return T.s("Metal", "Metal")
+        }
+    }
+}
+
 /// Las teclas, guardadas en ~/Library/Application Support/Agent Deck/keys.json; el modo en UserDefaults.
 final class DeskStore: ObservableObject {
     @Published var keys: [DeskKey] { didSet { save() } }
     @Published var mode: DeskMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
+    @Published var style: BarStyle { didSet { UserDefaults.standard.set(style.rawValue, forKey: "style") } }
     @Published var lastSent: String = ""
     @Published var editing: Bool = false
     /// Dictado: escuchando, texto parcial y nivel del micro (para el icono).
@@ -103,6 +116,7 @@ final class DeskStore: ObservableObject {
         }
         mode = DeskMode(rawValue: UserDefaults.standard.string(forKey: "mode") ?? "") ?? .dock
         collapsed = UserDefaults.standard.bool(forKey: "collapsed")
+        style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .classic
     }
 
     static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {

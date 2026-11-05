@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = Sender.accessibilityGranted(prompt: true)
     }
 
-    // MARK: URL scheme: agentdeck://toggle · dictate · press?n=3 · send?text=hola · show
+    // MARK: URL scheme: agentdeck://toggle · dictate · press?n=3 · send?text=hola · show · style?name=glass
     // Para Atajos, Raycast, un Stream Deck físico o un script: `open "agentdeck://press?n=1"`.
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -40,6 +40,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "toggle": togglePanel()
             case "show": panel.orderFrontRegardless(); store.collapsed = false
             case "dictate": DispatchQueue.main.async { self.store.toggleDictation() }
+            case "style":
+                if let n = q.first(where: { $0.name == "name" })?.value, let st = BarStyle(rawValue: n) {
+                    store.style = st
+                    status.menu?.items.first { $0.submenu?.items.first?.representedObject != nil }?.submenu?.items.forEach {
+                        $0.state = ($0.representedObject as? String) == n ? .on : .off
+                    }
+                }
             case "press":
                 if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
             case "send":
@@ -71,6 +78,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         modes.addItem(dock); modes.addItem(card)
         modeItem.submenu = modes
         menu.addItem(modeItem)
+        let styleItem = NSMenuItem(title: T.s("Style", "Estilo"), action: nil, keyEquivalent: "")
+        let styles = NSMenu()
+        for st in BarStyle.allCases {
+            let it = NSMenuItem(title: st.title, action: #selector(setStyle(_:)), keyEquivalent: "")
+            it.target = self; it.representedObject = st.rawValue; it.state = store.style == st ? .on : .off
+            styles.addItem(it)
+        }
+        styleItem.submenu = styles
+        menu.addItem(styleItem)
         menu.addItem(.separator())
         let login = NSMenuItem(title: T.s("Open at login", "Abrir al iniciar sesión"), action: #selector(toggleLogin), keyEquivalent: "")
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -106,6 +122,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func dictate() { DispatchQueue.main.async { self.store.toggleDictation() } }
     @objc func setDock() { store.mode = .dock }
     @objc func setCard() { store.mode = .card }
+    @objc func setStyle(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let st = BarStyle(rawValue: raw) else { return }
+        store.style = st
+        sender.menu?.items.forEach { $0.state = ($0 === sender) ? .on : .off }
+    }
     @objc func quit() { NSApp.terminate(nil) }
 
     // MARK: atajos globales ⌃⌥1…9 y ⌃⌥D
