@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agent Deck</title>
-<meta name="description" content="A Stream Deck for talking to AI. One key for what you type a hundred times a day: continue, next, do it, stop. Works with Claude, ChatGPT, Cursor and any chat in front of you. Free, open source, for Mac.">
-<meta property="og:title" content="Agent Deck · A Stream Deck for talking to AI">
-<meta property="og:description" content="One key for what you type a hundred times a day. Free, open source, for Mac.">
+<title>Agent Bar · Press one key. Your AI keeps going.</title>
+<meta name="description" content="One key for what you type a hundred times a day: continue, next, do it, stop. Works with Claude, ChatGPT, Cursor and any chat in front of you. Free for Mac, made by Prompted.">
+<meta property="og:title" content="Agent Bar · Press one key. Your AI keeps going.">
+<meta property="og:description" content="One key for what you type a hundred times a day. Free for Mac.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://getagentbar.com/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d10'/%3E%3Crect x='12' y='12' width='18' height='18' rx='4' fill='%23e3c98a'/%3E%3Crect x='34' y='12' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='12' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='34' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3C/svg%3E">
 <style>
 :root{
@@ -125,32 +126,83 @@ footer a:hover{color:var(--ink)}
   .demo .hint{margin-top:-40px}
 }
 @media (prefers-reduced-motion:reduce){.msg.me{transition:none}.chat .input .caret{animation:none}}
+
+/* Agent Bar · pillars, pad, plans, faq */
+.pillars{padding:70px 0 10px}
+.pillars h2,.pad h2,.plans h2,.faq h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.03em;color:var(--ink);margin:12px 0 10px;line-height:1.1}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.pillar{position:relative;border:1px solid var(--line);border-radius:20px;padding:24px 22px 26px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01))}
+.pillar h3{margin:16px 0 8px;font-size:22px;color:var(--ink);letter-spacing:-.02em}
+.pillar p{margin:0;font-size:14.5px;line-height:1.55;color:var(--mute)}
+.pillar__ico{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(227,201,138,.1);color:var(--gold);margin-top:16px}
+.pillar__ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tag{display:inline-block;font:500 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line2);border-radius:999px;padding:6px 10px}
+.tag.live{color:var(--green);border-color:rgba(127,209,139,.35)}
+
+.pad{padding:80px 0 20px}
+.pad__grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.pad__lede{font-size:16px;line-height:1.6;color:var(--text);margin:0 0 22px;max-width:440px}
+.pad__art{display:grid;place-items:center;padding:30px 0}
+.padbox{display:flex;align-items:center;gap:22px;padding:22px;border-radius:26px;background:linear-gradient(180deg,#22232f,#15161d);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 40px 90px rgba(0,0,0,.6);transform:perspective(900px) rotateX(18deg)}
+.padkeys{display:grid;grid-template-columns:repeat(3,76px);gap:12px}
+.pk{height:76px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font:600 10px var(--sans);color:var(--text);background:linear-gradient(180deg,#2c2e3c,#1d1e28);border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 0 #0e0f14}
+.pk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.pk.gold{color:#141108;background:linear-gradient(180deg,#ecd79f,#d9bd7c);border-color:#e3c98a}
+.dial{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3c4c,#16171e);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 0 #0e0f14;position:relative}
+.dial i{position:absolute;left:50%;top:10px;width:3px;height:16px;margin-left:-1.5px;border-radius:2px;background:var(--gold)}
+
+.plans{padding:80px 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+.plan{border:1px solid var(--line);border-radius:20px;padding:26px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));display:flex;flex-direction:column}
+.plan--pro{border-color:rgba(227,201,138,.4);background:linear-gradient(180deg,rgba(227,201,138,.08),rgba(227,201,138,.015))}
+.plan__name{font-size:15px;font-weight:600;color:var(--ink)}
+.plan__name .soon{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-left:8px}
+.plan__price{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin:10px 0 14px}
+.plan ul{list-style:none;margin:0 0 22px;padding:0;flex:1}
+.plan li{padding:9px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--text)}
+.plan li::before{content:"✓";color:var(--gold);margin-right:10px;font-weight:700}
+.plan .btn{align-self:flex-start}
+
+.faq{padding:60px 0 10px}
+.faq details{border-top:1px solid var(--line)}
+.faq details:last-of-type{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;display:flex;justify-content:space-between;gap:16px;padding:18px 0;cursor:pointer;font-size:16px;font-weight:600;color:var(--ink)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--mute);font-weight:400;font-size:22px;line-height:1;transition:transform .25s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{margin:0 0 18px;color:var(--mute);font-size:15px;line-height:1.55;max-width:680px}
+
+@media (max-width:760px){
+  .grid3,.grid2,.pad__grid{grid-template-columns:1fr}
+  .padkeys{grid-template-columns:repeat(3,58px);gap:9px}.pk{height:58px;font-size:9px}
+  .dial{width:62px;height:62px}.padbox{gap:14px;padding:16px;transform:none}
+}
 </style>
 </head>
 <body>
 <nav>
   <div class="wrap">
     <a class="brand" href="#">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1d2e"/><rect x="12" y="12" width="18" height="18" rx="4" fill="#e3c98a"/><rect x="34" y="12" width="18" height="18" rx="4" fill="#2a2d3e"/><rect x="12" y="34" width="18" height="18" rx="4" fill="#2a2d3e"/><rect x="34" y="34" width="18" height="18" rx="4" fill="#2a2d3e"/></svg>
-      Agent Deck
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1d2e"/><rect x="10" y="25" width="44" height="14" rx="7" fill="#2a2d3e"/><rect x="13" y="28" width="12" height="8" rx="4" fill="#e3c98a"/><circle cx="33" cy="32" r="2.6" fill="#8a96a8"/><circle cx="42" cy="32" r="2.6" fill="#8a96a8"/></svg>
+      Agent Bar
     </a>
-    <div class="links"><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="https://github.com/kemet333/agent-deck">GitHub</a></div>
-    <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac</a>
+    <div class="links"><a href="#how">How it works</a><a href="#pro">Voice</a><a href="#pad">Pad</a><a href="#faq">FAQ</a></div>
+    <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Get it free</a>
   </div>
 </nav>
 
 <section class="hero">
   <div class="wrap">
-    <div class="kicker"><span class="dot"></span>Free · Open source · macOS</div>
-    <h1>A Stream Deck<br>for talking to <em>AI</em>.</h1>
-    <p class="lede">One key for what you type a hundred times a day. <b>continue</b>. <b>next</b>. <b>do it</b>. <b>show me a preview first</b>. <b>stop</b>. One click, or ⌃⌥1, and it lands in whatever chat is in front of you.</p>
+    <div class="kicker"><span class="dot"></span>Free for Mac · Made by Prompted</div>
+    <h1>Press one key.<br>Your AI <em>keeps going</em>.</h1>
+    <p class="lede">You type <b>continue</b> a hundred times a day. Agent Bar turns it into one key: <b>continue</b>, <b>next</b>, <b>do it</b>, <b>stop</b>. It lands in whatever chat is in front of you, in Claude, ChatGPT, Cursor or anywhere you type.</p>
     <div class="cta">
-      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac <span class="k">.zip</span></a>
-      <a class="btn" href="https://github.com/kemet333/agent-deck">See the code</a>
+      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download free for Mac</a>
+      <a class="btn" href="#waitlist">Join the Pro waitlist</a>
     </div>
-    <div class="fine">Apple Silicon · macOS 14 or newer · no account, no network</div>
+    <div class="fine">Apple Silicon · macOS 14 or newer · no account</div>
 
-    <div class="demo" aria-label="Agent Deck demo">
+    <div class="demo" aria-label="Agent Bar demo">
       <div class="chat">
         <div class="bar"><i></i><i></i><i></i><span id="who">Claude</span></div>
         <div class="msgs" id="msgs">
@@ -182,14 +234,99 @@ footer a:hover{color:var(--ink)}
   </div>
 </section>
 
+<section class="pillars" id="pro">
+  <div class="wrap">
+    <div class="kicker">Three ways to drive your agents</div>
+    <h2>Tap. Talk. Repeat.</h2>
+    <div class="grid3">
+      <article class="pillar">
+        <div class="tag live">Free · available now</div>
+        <div class="pillar__ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="5"/><circle cx="9" cy="12" r="2"/></svg></div>
+        <h3>Tap</h3>
+        <p>Eight keys out of the box, or your own words. Click them, or fire them from anywhere with ⌃⌥1 to ⌃⌥9.</p>
+      </article>
+      <article class="pillar">
+        <div class="tag">Pro · coming soon</div>
+        <div class="pillar__ico"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
+        <h3>Talk</h3>
+        <p>Hold Fn and speak. Agent Bar cleans up what you said and types it into the chat, in any language.</p>
+      </article>
+      <article class="pillar">
+        <div class="tag">Pro · coming soon</div>
+        <div class="pillar__ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/></svg></div>
+        <h3>Repeat</h3>
+        <p>Queue it once: «next» ten times, or a list of steps. Every time the agent finishes, Agent Bar sends the next one.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
 <section class="feat">
   <div class="wrap">
     <div class="kicker">What you get</div>
     <h2>Small, native, out of the way.</h2>
     <div class="grid">
-      <div class="card"><div class="ico">▁▁</div><h3>Dock or card</h3><p>A slim bar on the bottom edge of your screen, always on top, on every desktop. Or a floating card you drag wherever. It never steals the focus from your chat.</p></div>
-      <div class="card"><div class="ico">⌃⌥1</div><h3>Keys on your keyboard too</h3><p>⌃⌥1 to ⌃⌥9 fire the keys from anywhere. ⌃⌥D hides the desk and brings it back.</p></div>
-      <div class="card"><div class="ico">+</div><h3>Your words</h3><p>Eight keys out of the box. Add yours in two clicks: a short label, the text, Enter or not. They live in a JSON file you own.</p></div>
+      <div class="card"><div class="ico">▁▁</div><h3>A bar or a card</h3><p>A slim bar on the bottom edge of your screen, on top of everything and on every desktop. Or a floating card you drag anywhere. It never steals focus from your chat.</p></div>
+      <div class="card"><div class="ico">⌃⌥1</div><h3>Keys on your keyboard too</h3><p>⌃⌥1 to ⌃⌥9 fire the keys from anywhere. ⌃⌥D hides the bar and brings it back.</p></div>
+      <div class="card"><div class="ico">+</div><h3>Your words</h3><p>Add your own keys in two clicks: a short label, the text, and Enter or not. They live in a file you own.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="pad">
+  <div class="wrap pad__grid">
+    <div>
+      <div class="kicker">Agent Bar Pad</div>
+      <h2>A real button<br>for your agents.</h2>
+      <p class="pad__lede">Six keys and a dial, set up out of the box: Talk, Continue, Next, Do it, Stop and Retry. Put it next to your keyboard and keep your AI working with one hand.</p>
+      <a class="btn pri" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pad%20%C2%B7%20Put%20me%20on%20the%20list">Put me on the list</a>
+      <div class="fine" style="text-align:left">Coming soon. No payment now.</div>
+    </div>
+    <div class="pad__art" aria-hidden="true">
+      <div class="padbox">
+        <div class="padkeys">
+          <span class="pk gold"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Talk</span>
+          <span class="pk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12h6m-2.5-3 3 3-3 3"/></svg>Continue</span>
+          <span class="pk"><svg viewBox="0 0 24 24"><path d="M5 5l10 7-10 7z"/><path d="M19 5v14"/></svg>Next</span>
+          <span class="pk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Do it</span>
+          <span class="pk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Stop</span>
+          <span class="pk"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5"/></svg>Retry</span>
+        </div>
+        <div class="dial"><i></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="plans" id="waitlist">
+  <div class="wrap">
+    <div class="kicker">Plans</div>
+    <h2>Free to start.</h2>
+    <div class="grid2">
+      <article class="plan">
+        <div class="plan__name">Free</div>
+        <div class="plan__price">€0</div>
+        <ul>
+          <li>Eight keys, plus your own</li>
+          <li>Keyboard shortcuts from anywhere</li>
+          <li>Works in any app you type in</li>
+          <li>No account, no network</li>
+          <li>Open source (MIT)</li>
+        </ul>
+        <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download free</a>
+      </article>
+      <article class="plan plan--pro">
+        <div class="plan__name">Pro <span class="soon">coming soon</span></div>
+        <div class="plan__price">Waitlist</div>
+        <ul>
+          <li>Everything in Free</li>
+          <li>Talk: hold Fn and speak</li>
+          <li>Repeat: queues that run while you're away</li>
+          <li>Profiles for Codex, Claude, ChatGPT and Cursor</li>
+          <li>Pairs with Agent Bar Pad</li>
+        </ul>
+        <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Join%20the%20waitlist">Join the waitlist</a>
+      </article>
     </div>
   </div>
 </section>
@@ -200,20 +337,32 @@ footer a:hover{color:var(--ink)}
     <h2>Boring on purpose.</h2>
     <div class="two">
       <div>
-        <p>Agent Deck does one thing, the same way every time:</p>
+        <p>A key in Agent Bar does one thing, the same way every time:</p>
         <ol>
           <li>Puts the key's text on the clipboard.</li>
           <li>Presses ⌘V in the app in front, then Enter if the key says so.</li>
           <li>Half a second later, puts your previous clipboard back.</li>
         </ol>
-        <p style="margin-top:14px">That is why it works with every chat at once: there is no plugin, no API key, nothing to connect. If a text box is focused, it types there.</p>
+        <p style="margin-top:14px">That is why it works with every chat at once: no plugin, no API key, nothing to connect. If a text box is focused, it types there.</p>
       </div>
       <div class="priv" id="privacy">
         <div class="kicker">Privacy</div>
-        <p>The first time you open it, macOS asks for <b>Accessibility</b>. That permission is what lets an app press keys for you. Agent Deck uses it to press ⌘V and Enter, and for nothing else.</p>
-        <p>No account. No network calls. No analytics. Your keys stay in <code>~/Library/Application Support/Agent Deck/keys.json</code>. The code is on GitHub, five Swift files, built with <code>./build.sh</code>.</p>
+        <p>The first time you open it, macOS asks for <b>Accessibility</b>. That permission is what lets an app press keys for you. Agent Bar uses it to press ⌘V and Enter, and for nothing else.</p>
+        <p>The free version has no account, no network calls and no analytics. Your keys stay on your Mac. The code is on GitHub.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="kicker">FAQ</div>
+    <h2>Questions, answered.</h2>
+    <details><summary>Is it really free?</summary><p>Yes. The keys, the shortcuts and your own words are free and open source. Pro will add voice and queues.</p></details>
+    <details><summary>Which AI apps does it work with?</summary><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></details>
+    <details><summary>Windows or Linux?</summary><p>Mac only for now: Apple Silicon, macOS 14 or newer.</p></details>
+    <details><summary>Why is the download called Agent Deck?</summary><p>That was its first name. The next release ships as Agent Bar.</p></details>
+    <details><summary>What is the Agent Bar Pad?</summary><p>A small physical pad with six keys and a dial, set up for Agent Bar. Join the list and we'll tell you when it's ready.</p></details>
   </div>
 </section>
 
@@ -221,16 +370,16 @@ footer a:hover{color:var(--ink)}
   <div class="wrap">
     <h2>Stop typing "continue".</h2>
     <div class="cta">
-      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac</a>
-      <a class="btn" href="https://github.com/kemet333/agent-deck">Star it on GitHub</a>
+      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download free for Mac</a>
+      <a class="btn" href="#waitlist">Join the Pro waitlist</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <span>Made by <a href="https://workwithprompted.com">Prompted</a> · media systems for brands</span>
-    <span><a href="https://github.com/kemet333/agent-deck">GitHub</a> · MIT license · Apple Silicon, macOS 14+</span>
+    <span>Agent Bar is made by <a href="https://www.workwithprompted.com">PROMPTED®</a></span>
+    <span>getagentbar.com · <a href="https://github.com/kemet333/agent-deck">GitHub</a> · MIT license</span>
   </div>
 </footer>
 
