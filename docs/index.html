@@ -134,7 +134,7 @@ p{margin:0;text-wrap:pretty}
 .hud::-webkit-scrollbar{display:none}
 .hud .sep{width:1px;height:clamp(22px,3cqw,34px);margin:0 4px;flex:0 0 auto}
 .hud .g{flex:0 0 auto;width:clamp(22px,2.6cqw,32px);height:clamp(22px,2.6cqw,32px);display:grid;place-items:center;font-size:clamp(11px,1.3cqw,15px)}
-.hud .k{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:clamp(44px,5.6cqw,72px);padding:clamp(6px,.9cqw,10px) 5px;border:0;border-radius:10px;background:transparent;cursor:pointer;font:500 clamp(8px,1.05cqw,12.5px)/1 var(--sans);transition:background .25s var(--ease),transform .35s var(--spring),color .25s var(--ease),box-shadow .25s var(--ease)}
+.hud .k{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:clamp(48px,6.6cqw,82px);padding:clamp(6px,.9cqw,10px) 5px;border:0;border-radius:10px;background:transparent;cursor:pointer;font:500 clamp(8px,1.05cqw,12.5px)/1 var(--sans);transition:background .25s var(--ease),transform .35s var(--spring),color .25s var(--ease),box-shadow .25s var(--ease)}
 .hud .k i{font-size:clamp(13px,1.85cqw,22px)}
 .hud .k b{font-weight:500}
 .hud .k:active,.hud .k.on{transform:scale(.9)}
@@ -246,7 +246,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .stage{aspect-ratio:4/3.4}
   .chatbox{width:88%;top:34%}
   .ask{width:88%;top:6%}
-  .hud .sep2~.k,.hud .sep2{display:none}
+  .hud .k--wide{display:none}
+  .hud .g,.hud .g+.sep,.hud .sep:has(+.g){display:none}
   .plans__grid,.faq__grid{grid-template-columns:1fr}
   .try,.pad,.plans,.privacy,.faq,.end{padding-top:80px;padding-bottom:80px}
   .bar{flex-wrap:wrap;justify-content:center;overflow:visible}
@@ -274,7 +275,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <div class="hero__top rv">
         <h1><span class="ln" style="color:inherit">Stop typing “continue”.</span><br><span class="ln">Just press one key.</span></h1>
         <div>
-          <p class="hero__sub">Agent Bar types continue, fix it or test it into any chat with one key, so your AI keeps going and you stop babysitting it.</p>
+          <p class="hero__sub">Answer with one key, in any chat, and your AI keeps going while you do something else.</p>
           <div class="hero__cta">
             <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
             <a class="link" href="#pricing">Join the Pro waitlist</a>
@@ -293,12 +294,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <button class="k" data-say="run the tests and tell me what fails" data-reply="Ran the tests: <b>41 passed, 2 failed.</b>"><i class="ph ph-flask"></i><b>Test it</b></button>
             <button class="k" data-say="fix those errors, then continue" data-reply="Fixed both. <b>All 43 tests pass</b> now."><i class="ph ph-wrench"></i><b>Fix it</b></button>
             <span class="sep sep2"></span>
-            <button class="k" data-say="make a plan first and wait for my ok" data-reply="Plan: <b>billing, emails, then deploy.</b> Okay?"><i class="ph ph-list-checks"></i><b>Plan</b></button>
-            <button class="k" data-say="show me a preview before you go on" data-reply="Preview is ready. <b>Does it look right?</b>"><i class="ph ph-eye"></i><b>Preview</b></button>
-            <button class="k" data-say="short recap: where are we and what's left" data-reply="Done: login and dashboard. <b>Left: billing and emails.</b>"><i class="ph ph-list-bullets"></i><b>Recap</b></button>
-            <button class="k" data-say="explain that in two simple lines" data-reply="In short: people sign in, <b>then see their own data.</b>"><i class="ph ph-chat-circle-text"></i><b>Explain</b></button>
-            <button class="k" data-say="undo that last change" data-reply="Undone. <b>Back to how it was.</b>"><i class="ph ph-arrow-counter-clockwise"></i><b>Undo</b></button>
-            <button class="k" data-say="commit this with a clear message" data-reply="Committed: <b>“Add dashboard and tests”.</b>"><i class="ph ph-git-commit"></i><b>Commit</b></button>
+            <button class="k k--wide" data-say="show me a preview before you go on" data-reply="Preview is ready. <b>Does it look right?</b>"><i class="ph ph-eye"></i><b>Preview</b></button>
+            <button class="k k--wide" data-say="undo that last change" data-reply="Undone. <b>Back to how it was.</b>"><i class="ph ph-arrow-counter-clockwise"></i><b>Undo</b></button>
             <button class="k" data-say="stop, don't go on with that" data-reply="Stopped. <b>I won't touch anything else.</b>"><i class="ph ph-stop-circle"></i><b>Stop</b></button>
             <span class="sep"></span><span class="g"><i class="ph ph-sliders-horizontal"></i></span><span class="g"><i class="ph ph-gear-six"></i></span>
           </div>
@@ -438,7 +435,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   var typed = document.getElementById('typed'), ph = document.getElementById('ph'), sent = document.getElementById('sent'),
       appEl = document.getElementById('app'), who = document.getElementById('who'), ask = document.getElementById('ask'), bar = document.getElementById('bar');
   var apps = ['Claude', 'Cursor', 'ChatGPT', 'Codex'], a = 0, busy = false, auto = !reduce, timer, step = 0;
-  var story = ['continue', 'run the tests and tell me what fails', 'fix those errors, then continue', 'show me a preview before you go on', 'make the header sticky and the logo a bit bigger', 'make a plan first and wait for my ok', 'continue', 'commit this with a clear message', "short recap: where are we and what's left"];
+  var story = ['continue', 'run the tests and tell me what fails', 'fix those errors, then continue', 'show me a preview before you go on', 'make the header sticky and the logo a bit bigger', 'continue', 'undo that last change'];
   function say(html) { ask.classList.add('out'); setTimeout(function () { ask.innerHTML = html; ask.classList.remove('out'); }, 220); }
   function press(key) {
     if (busy) return; busy = true; clearTimeout(timer);
@@ -465,7 +462,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   function loop() {
     step = (step + 1) % story.length;
     if (step === 0) { a = (a + 1) % apps.length; appEl.textContent = who.textContent = apps[a]; }
-    var k = [].filter.call(bar.querySelectorAll('.k'), function (x) { return x.dataset.say === story[step]; })[0];
+    var k = [].filter.call(bar.querySelectorAll('.k'), function (x) { return x.dataset.say === story[step] && x.offsetParent; })[0];
+    if (!k) return loop();
     press(k);
   }
   bar.addEventListener('click', function (e) { var k = e.target.closest('.k'); if (!k) return; auto = false; press(k); clearTimeout(timer); timer = setTimeout(function () { auto = !reduce; if (auto) loop(); }, 9000); });
