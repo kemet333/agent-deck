@@ -78,8 +78,11 @@ p{margin:0;text-wrap:pretty}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}}
 
 /* Hero */
-.hero{min-height:100dvh;display:grid;align-items:center;padding:110px 0 56px}
-.hero__grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;align-items:center}
+.hero{padding:128px 0 40px}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:56px}
+.hero__top{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;align-items:end}
+.hero__top .hero__sub{margin-top:0}
+.hero__top .hero__cta{margin-top:24px}
 .hero h1{font-size:clamp(42px,5vw,74px);line-height:1}
 .hero h1 span{color:var(--mute)}
 @media (min-width:901px){.hero h1 .ln{white-space:nowrap}}
@@ -87,7 +90,7 @@ p{margin:0;text-wrap:pretty}
 .hero__cta{display:flex;align-items:center;gap:26px;margin-top:36px;flex-wrap:wrap}
 .frame{padding:8px;border-radius:var(--r-lg);background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line)}
 .frame>img{border-radius:calc(var(--r-lg) - 8px);width:100%;aspect-ratio:4/3;object-fit:cover;box-shadow:var(--shadow)}
-.hero__media{transform:rotate(1.2deg)}
+.hero__media{}
 
 /* Try it */
 .try{padding:120px 0 130px;text-align:center}
@@ -106,6 +109,46 @@ p{margin:0;text-wrap:pretty}
 .k:active,.k.on{transform:scale(.92)}
 .k.main{color:var(--accent)}
 .k.on{background:var(--accent-soft);color:var(--accent)}
+
+
+/* Stage: the app on a Mac desktop */
+.stage{position:relative;aspect-ratio:2.15/1;border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line),var(--shadow);container-type:inline-size;isolation:isolate}
+.stage__wall{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
+.chatbox{position:absolute;left:50%;top:24%;transform:translateX(-50%);width:min(64%,720px);display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;border-radius:16px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 14px 40px -18px rgba(40,30,20,.35);color:#1d1d1f;font:500 clamp(12px,2.1cqw,15px)/1.3 var(--sans)}
+.chatbox__app{font:500 11px var(--mono);color:#86868b;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.05)}
+.chatbox__text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;display:flex;align-items:center}
+.chatbox__ph{color:#a1a1a6}
+.chatbox .caret{width:2px;height:1.1em;background:var(--accent);margin-left:1px;animation:blink 1s steps(1) infinite}
+.chatbox__sent{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#1d1d1f;color:#fff;opacity:.25;transition:opacity .3s var(--ease),transform .4s var(--spring)}
+.chatbox__sent.on{opacity:1;transform:scale(1.08);background:var(--accent)}
+@keyframes blink{50%{opacity:0}}
+
+.hud{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:5px 6px;border-radius:16px;max-width:94%;overflow-x:auto;scrollbar-width:none;transition:background .5s var(--ease),box-shadow .5s var(--ease)}
+.hud::-webkit-scrollbar{display:none}
+.hud .sep{width:1px;height:clamp(22px,3cqw,34px);margin:0 4px;flex:0 0 auto}
+.hud .g{flex:0 0 auto;width:clamp(22px,2.6cqw,32px);height:clamp(22px,2.6cqw,32px);display:grid;place-items:center;font-size:clamp(11px,1.3cqw,15px)}
+.hud .k{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:clamp(44px,6.4cqw,80px);padding:clamp(6px,.9cqw,10px) 5px;border:0;border-radius:10px;background:transparent;cursor:pointer;font:500 clamp(8px,1.05cqw,12.5px)/1 var(--sans);transition:background .25s var(--ease),transform .35s var(--spring),color .25s var(--ease),box-shadow .25s var(--ease)}
+.hud .k i{font-size:clamp(13px,1.85cqw,22px)}
+.hud .k b{font-weight:500}
+.hud .k:active,.hud .k.on{transform:scale(.9)}
+
+
+/* The bar in its Alfred style: smoked, translucent glass */
+.stage .hud{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03)),rgba(24,24,28,.30);-webkit-backdrop-filter:blur(28px) saturate(190%);backdrop-filter:blur(28px) saturate(190%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.38),0 24px 60px -20px rgba(20,20,30,.45)}
+.stage .k,.stage .g{color:rgba(255,255,255,.78)}
+.stage .k:hover{background:rgba(255,255,255,.14);color:#fff}
+.stage .k.main{color:#fff}
+.stage .k.on{background:rgba(255,255,255,.2);color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+.stage .sep{background:rgba(255,255,255,.2)}
+
+
+
+/* Band: the desk, leading into the Pad */
+.band{max-width:1400px;margin:0 auto;padding:0 24px}
+.band__img{position:relative;border-radius:var(--r-lg);overflow:hidden}
+.band__img img{width:100%;aspect-ratio:21/9;object-fit:cover;object-position:50% 65%}
+.band__img::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,10,10,.55),transparent 55%)}
+.band__img h2{position:absolute;left:56px;bottom:44px;z-index:1;color:#f4f4f2;font-size:clamp(30px,4vw,60px);line-height:1}
 
 /* Bento */
 .bento{padding:20px 0 120px}
@@ -187,12 +230,14 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .nav__links{display:none}
   .nav{gap:14px}
   .hero{padding-top:96px}
-  .hero__grid,.pad__grid,.privacy__in{grid-template-columns:1fr;gap:36px}
+  .hero__grid,.hero__top,.pad__grid,.privacy__in{grid-template-columns:1fr;gap:28px}
   .hero__media,.pad .frame{transform:none}
   .bento__grid{grid-template-columns:1fr}
   .cell--tap,.cell--talk,.cell--repeat{grid-column:auto;grid-row:auto;min-height:280px}
-  .desk__copy{left:24px;bottom:22px}
-  .desk__img img{aspect-ratio:4/3}
+  .band__img img{aspect-ratio:4/3}
+  .band__img h2{left:24px;bottom:22px}
+  .stage{aspect-ratio:4/3.4}
+  .chatbox{width:88%;top:16%}
   .plans__grid,.faq__grid{grid-template-columns:1fr}
   .try,.pad,.plans,.privacy,.faq,.end{padding-top:80px;padding-bottom:80px}
   .bar{flex-wrap:wrap;justify-content:center;overflow:visible}
@@ -210,47 +255,47 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     <svg viewBox="0 0 32 32" aria-hidden="true"><rect class="bar" x="1" y="9" width="30" height="14" rx="7"/><circle class="dot" cx="8" cy="16" r="2"/><circle class="dot" cx="14" cy="16" r="2"/><rect class="key" x="19" y="12" width="9" height="8" rx="4"/></svg>
     Agent Bar
   </a>
-  <div class="nav__links"><a href="#try">How it works</a><a href="#pad">Pad</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
+  <div class="nav__links"><a href="#features">Features</a><a href="#pad">Pad</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
   <a class="btn btn--sm" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
 </nav>
 
 <main id="main">
   <section class="hero">
     <div class="wrap hero__grid">
-      <div class="rv">
+      <div class="hero__top rv">
         <h1><span class="ln" style="color:inherit">Press one key.</span><br><span class="ln">Your AI keeps going.</span></h1>
-        <p class="hero__sub">Agent Bar types continue, next and do it into any chat, so you stop babysitting your agents.</p>
-        <div class="hero__cta">
-          <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
-          <a class="link" href="#pricing">Join the Pro waitlist</a>
+        <div>
+          <p class="hero__sub">Agent Bar types continue, next and do it into any chat, so you stop babysitting your agents.</p>
+          <div class="hero__cta">
+            <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
+            <a class="link" href="#pricing">Join the Pro waitlist</a>
+          </div>
         </div>
       </div>
       <div class="hero__media rv">
-        <div class="frame"><img src="img/desk.jpg" alt="A hand pressing the orange key of Agent Bar Pad next to a MacBook" width="1800" height="1350"></div>
+        <div class="stage" id="stage">
+          <img class="stage__wall" src="img/wall.jpg" alt="" width="2000" height="1125">
+          <div class="chatbox" aria-live="polite"><span class="chatbox__app" id="app">Claude</span><span class="chatbox__text"><span id="typed"></span><span class="caret" aria-hidden="true"></span><span class="chatbox__ph" id="ph">Message…</span></span><span class="chatbox__sent" id="sent"><i class="ph ph-arrow-elbow-down-left"></i></span></div>
+          <div class="hud" id="bar" role="group" aria-label="Agent Bar keys">
+            <span class="g"><i class="ph ph-x"></i></span><span class="sep"></span>
+            <button class="k main" data-say="continue"><i class="ph ph-arrow-circle-right"></i><b>Continue</b></button>
+            <button class="k" data-say="next"><i class="ph ph-skip-forward"></i><b>Next</b></button>
+            <button class="k" data-say="go hard"><i class="ph ph-lightning"></i><b>Go hard</b></button>
+            <button class="k" data-say="do it"><i class="ph ph-check-circle"></i><b>Do it</b></button>
+            <span class="sep"></span>
+            <button class="k" data-say="I like it, continue"><i class="ph ph-thumbs-up"></i><b>I like it</b></button>
+            <button class="k" data-say="show me a preview before you go on"><i class="ph ph-eye"></i><b>Preview</b></button>
+            <button class="k" data-say="short recap: where are we and what's left"><i class="ph ph-list-bullets"></i><b>Recap</b></button>
+            <button class="k" data-say="stop, don't go on with that"><i class="ph ph-stop-circle"></i><b>Stop</b></button>
+            <span class="sep"></span><span class="g"><i class="ph ph-sliders-horizontal"></i></span><span class="g"><i class="ph ph-gear-six"></i></span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="try" id="try">
-    <div class="wrap rv">
-      <h2>This is the bar. Click a key.</h2>
-      <p class="note">It types into whatever chat is in front of you, then presses Enter.</p>
-      <div class="screen" aria-live="polite"><span id="typed">continue</span><span class="caret" aria-hidden="true"></span><span class="sent" id="sent">sent to Claude</span></div>
-      <div class="bar" id="bar" role="group" aria-label="Agent Bar keys">
-        <button class="k" data-say="" data-mic="1" aria-label="Dictate"><i class="ph ph-microphone"></i>Talk</button>
-        <span class="sep" aria-hidden="true"></span>
-        <button class="k main" data-say="continue"><i class="ph ph-arrow-right"></i>Continue</button>
-        <button class="k" data-say="next"><i class="ph ph-skip-forward"></i>Next</button>
-        <button class="k" data-say="do it"><i class="ph ph-check"></i>Do it</button>
-        <button class="k" data-say="show me a preview first"><i class="ph ph-eye"></i>Preview</button>
-        <button class="k" data-say="short recap, what's left?"><i class="ph ph-list-bullets"></i>Recap</button>
-        <span class="sep" aria-hidden="true"></span>
-        <button class="k" data-say="stop, don't go on"><i class="ph ph-stop"></i>Stop</button>
-      </div>
-    </div>
-  </section>
 
-  <section class="bento">
+  <section class="bento" id="features">
     <div class="wrap">
       <div class="bento__head rv"><h2>Tap, talk or let it run.</h2></div>
       <div class="bento__grid">
@@ -286,6 +331,10 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     </div>
   </section>
 
+
+  <section class="band rv" aria-label="Agent Bar Pad on a desk">
+    <div class="band__img"><img src="img/desk.jpg" alt="" width="1800" height="1350" loading="lazy"><h2>Or press a real one.</h2></div>
+  </section>
 
   <section class="pad" id="pad">
     <div class="wrap pad__grid">
@@ -372,27 +421,33 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -10% 0px' });
   document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionDelay = (i % 3) * 70 + 'ms'; io.observe(el); });
 
-  // The bar: a key types its words into the line above, like it does in a real chat.
-  var typed = document.getElementById('typed'), sent = document.getElementById('sent'), bar = document.getElementById('bar');
+  // The bar types the key's words into the chat box, then "sends" them, like the app does.
+  var typed = document.getElementById('typed'), ph = document.getElementById('ph'), sent = document.getElementById('sent'),
+      appEl = document.getElementById('app'), bar = document.getElementById('bar'), stage = document.getElementById('stage');
   var apps = ['Claude', 'ChatGPT', 'Cursor', 'Codex'], a = 0, busy = false, auto = !reduce, timer;
   function press(key) {
     if (busy) return; busy = true; clearTimeout(timer);
-    var text = key.dataset.mic ? 'listening…' : key.dataset.say;
+    var text = key.dataset.say;
     key.classList.add('on'); setTimeout(function () { key.classList.remove('on'); }, 220);
-    sent.classList.remove('on'); typed.textContent = '';
+    ph.style.display = 'none'; typed.textContent = '';
     var i = 0;
     (function step() {
       if (reduce) { typed.textContent = text; return done(); }
-      if (i <= text.length) { typed.textContent = text.slice(0, i++); setTimeout(step, 34); } else done();
+      if (i <= text.length) { typed.textContent = text.slice(0, i++); setTimeout(step, 28); } else done();
     })();
     function done() {
-      if (!key.dataset.mic) { a = (a + 1) % apps.length; sent.textContent = '↵ sent to ' + apps[a]; sent.classList.add('on'); }
-      busy = false; if (auto) timer = setTimeout(loop, 2600);
+      sent.classList.add('on');
+      setTimeout(function () {
+        sent.classList.remove('on'); typed.textContent = ''; ph.style.display = '';
+        a = (a + 1) % apps.length; appEl.textContent = apps[a];
+        busy = false; if (auto) timer = setTimeout(loop, 1800);
+      }, 900);
     }
   }
-  function loop() { var keys = bar.querySelectorAll('.k:not([data-mic])'); press(keys[Math.floor(Math.random() * keys.length)]); }
+  function loop() { var keys = bar.querySelectorAll('.k'); press(keys[Math.floor(Math.random() * keys.length)]); }
   bar.addEventListener('click', function (e) { var k = e.target.closest('.k'); if (!k) return; auto = false; press(k); clearTimeout(timer); timer = setTimeout(function () { auto = !reduce; if (auto) loop(); }, 9000); });
   if (auto) timer = setTimeout(function () { press(bar.querySelector('.k.main')); }, 1400);
+
 })();
 </script>
 </body>
