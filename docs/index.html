@@ -78,15 +78,19 @@ p{margin:0;text-wrap:pretty}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}}
 
 /* Hero */
-.hero{padding:128px 0 40px}
-.hero__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:56px}
-.hero__top{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;align-items:end}
+.hero{position:relative;padding:148px 0 0;color:#f5f5f7;background:radial-gradient(60% 55% at 50% 100%,rgba(255,91,31,.5),transparent 72%),radial-gradient(120% 90% at 50% 0%,#1b1b20,#0a0a0c 70%);overflow:hidden}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(40px,6vw,80px)}
+.hero__top{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;justify-items:center;text-align:center}
 .hero__top .hero__sub{margin-top:0}
 .hero__top .hero__cta{margin-top:24px}
-.hero h1{font-size:clamp(42px,5vw,74px);line-height:1}
-.hero h1 span{color:var(--mute)}
+.hero h1{font-size:clamp(42px,6.4vw,96px);line-height:.98;letter-spacing:-.045em}
+.hero h1 span{color:#8e8e93}
+.hero h1 .ln{display:block;text-wrap:balance}
+.hero .btn{background:#f5f5f7;color:#111114}
+.hero .link{color:#f5f5f7;border-color:rgba(255,255,255,.28)}
+.hero__top .hero__cta{justify-content:center}
 @media (min-width:901px){.hero h1 .ln{white-space:nowrap}}
-.hero__sub{margin-top:26px;font-size:clamp(18px,1.5vw,20px);color:var(--ink-2);max-width:34ch}
+.hero__sub{margin:0 auto;font-size:clamp(18px,1.5vw,21px);color:rgba(245,245,247,.68);max-width:40ch}
 .hero__cta{display:flex;align-items:center;gap:26px;margin-top:36px;flex-wrap:wrap}
 .frame{padding:8px;border-radius:var(--r-lg);background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line)}
 .frame>img{border-radius:calc(var(--r-lg) - 8px);width:100%;aspect-ratio:4/3;object-fit:cover;box-shadow:var(--shadow)}
@@ -112,22 +116,8 @@ p{margin:0;text-wrap:pretty}
 
 
 /* Stage: the app on a Mac desktop */
-.stage{position:relative;border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line),var(--shadow);container-type:inline-size;isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:clamp(16px,2.6cqw,30px);padding:clamp(22px,4.4cqw,56px) clamp(14px,4cqw,56px) clamp(18px,3cqw,36px)}
-.stage{background:radial-gradient(55% 45% at 50% 108%,rgba(255,91,31,.42),transparent 70%),radial-gradient(90% 90% at 50% 0%,#1d1d22,#0b0b0d)}
-.chatbox{position:absolute;left:50%;top:24%;transform:translateX(-50%);width:min(64%,720px);display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;border-radius:16px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.14),0 14px 40px -18px rgba(0,0,0,.6);color:#f5f5f7;font:500 clamp(12px,2.1cqw,15px)/1.3 var(--sans)}
-.win{width:min(100%,780px);border-radius:16px;overflow:hidden;background:rgba(28,28,32,.78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09),inset 0 1px 0 rgba(255,255,255,.07),0 40px 80px -30px rgba(0,0,0,.8)}
-.win__bar{position:relative;height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.06)}
-.win__bar i{width:11px;height:11px;border-radius:50%;background:#3a3a3f}
-.win__title{position:absolute;left:50%;transform:translateX(-50%);font:500 11px var(--mono);color:#8e8e93;letter-spacing:.02em}
-.win__log{height:clamp(170px,24cqw,250px);padding:18px clamp(14px,2.4cqw,24px) 10px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 28%);mask-image:linear-gradient(to bottom,transparent,#000 28%)}
-.msg{max-width:80%;padding:9px 13px;border-radius:15px;font:400 clamp(13px,1.5cqw,15px)/1.45 var(--sans);animation:pop .5s var(--spring) both}
-.msg--ai{align-self:flex-start;color:#e5e5ea;background:rgba(255,255,255,.07);border-bottom-left-radius:5px}
-.msg--me{align-self:flex-end;color:#fff;background:var(--accent);border-bottom-right-radius:5px}
-.msg b{font-weight:500;color:#fff}
-.dots{display:inline-flex;gap:4px;padding:3px 0}.dots i{width:6px;height:6px;border-radius:50%;background:#8e8e93;animation:dot 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
-@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}}
-@keyframes dot{0%,60%,100%{opacity:.35;transform:none}30%{opacity:1;transform:translateY(-2px)}}
-.win .chatbox{position:static;transform:none;width:auto;margin:0 12px 12px}
+.stage{position:relative;container-type:inline-size;display:flex;flex-direction:column;align-items:center;gap:clamp(70px,11cqw,150px);padding:8px 0 clamp(34px,4.5cqw,60px)}
+.chatbox{position:relative;width:min(100%,680px);display:flex;align-items:center;gap:10px;padding:14px 14px 14px 18px;border-radius:16px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.14),0 14px 40px -18px rgba(0,0,0,.6);color:#f5f5f7;font:500 clamp(14px,1.6cqw,16px)/1.3 var(--sans)}
 .stage .hud{position:relative;left:auto;bottom:auto;transform:none}
 .chatbox__app{font:500 11px var(--mono);color:#a1a1a6;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08)}
 .chatbox__text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;display:flex;align-items:center}
@@ -250,7 +240,6 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .cell--tap,.cell--talk,.cell--repeat{grid-column:auto;grid-row:auto;min-height:280px}
   .band__img img{aspect-ratio:4/3}
   .band__img h2{left:24px;bottom:22px}
-  .win__log{height:210px}
   .hud .sep2~.k,.hud .sep2{display:none}
   .plans__grid,.faq__grid{grid-template-columns:1fr}
   .try,.pad,.plans,.privacy,.faq,.end{padding-top:80px;padding-bottom:80px}
@@ -277,7 +266,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   <section class="hero">
     <div class="wrap hero__grid">
       <div class="hero__top rv">
-        <h1><span class="ln" style="color:inherit">Press one key.</span><br><span class="ln">Your AI keeps going.</span></h1>
+        <h1><span class="ln" style="color:inherit">Stop typing “continue”.</span><span class="ln">Just press one key.</span></h1>
         <div>
           <p class="hero__sub">Agent Bar types continue, next and do it into any chat, so you stop babysitting your agents.</p>
           <div class="hero__cta">
@@ -289,11 +278,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <div class="hero__media rv">
         <div class="stage" id="stage">
           
-          <div class="win" aria-hidden="false">
-            <div class="win__bar"><i></i><i></i><i></i><span class="win__title" id="app">Claude</span></div>
-            <div class="win__log" id="log" aria-live="polite"><div class="msg msg--ai">Step 2 of 5 done: <b>the login page works.</b> Shall I keep going?</div></div>
-            <div class="chatbox"><span class="chatbox__text"><span id="typed"></span><span class="caret" aria-hidden="true"></span><span class="chatbox__ph" id="ph">Message…</span></span><span class="chatbox__sent" id="sent"><i class="ph ph-arrow-elbow-down-left"></i></span></div>
-          </div>
+          <div class="chatbox" aria-live="polite"><span class="chatbox__app" id="app">Claude</span><span class="chatbox__text"><span id="typed"></span><span class="caret" aria-hidden="true"></span><span class="chatbox__ph" id="ph">Message…</span></span><span class="chatbox__sent" id="sent"><i class="ph ph-arrow-elbow-down-left"></i></span></div>
           <div class="hud" id="bar" role="group" aria-label="Agent Bar keys">
             <span class="g"><i class="ph ph-x"></i></span><span class="sep"></span>
             <button class="k main" data-say="continue"><i class="ph ph-arrow-circle-right"></i><b>Continue</b></button>
@@ -419,7 +404,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 
   <section class="end">
     <div class="wrap rv">
-      <h2>Stop typing “continue”.</h2>
+      <h2>Press one key.<br>Your AI keeps going.</h2>
       <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
     </div>
   </section>
@@ -439,22 +424,10 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -10% 0px' });
   document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionDelay = (i % 3) * 70 + 'ms'; io.observe(el); });
 
-  // A real loop: the agent stops and asks, a key types the answer and sends it, the agent goes on.
+  // The bar types the key's words into the chat box, then "sends" them, like the app does.
   var typed = document.getElementById('typed'), ph = document.getElementById('ph'), sent = document.getElementById('sent'),
-      appEl = document.getElementById('app'), bar = document.getElementById('bar'), log = document.getElementById('log');
-  var apps = ['Claude', 'Cursor', 'ChatGPT', 'Codex'], a = 0, busy = false, auto = !reduce, timer, n = 0;
-  var asks = [
-    'Dashboard is built. <b>Want a preview</b> before I wire the data?',
-    'Tests pass, 41 of 41. <b>Next step</b> is billing. Go on?',
-    'Billing works in test mode. <b>Keep going</b> with emails?',
-    'Emails are sending. Step 5 of 5 left: <b>should I finish?</b>',
-    'All 5 steps done. <b>The app is ready</b> for your review.'
-  ];
-  function add(cls, html) {
-    var m = document.createElement('div'); m.className = 'msg ' + cls; m.innerHTML = html; log.appendChild(m);
-    while (log.children.length > 4) log.removeChild(log.firstChild);
-    return m;
-  }
+      appEl = document.getElementById('app'), bar = document.getElementById('bar'), stage = document.getElementById('stage');
+  var apps = ['Claude', 'ChatGPT', 'Cursor', 'Codex'], a = 0, busy = false, auto = !reduce, timer;
   function press(key) {
     if (busy) return; busy = true; clearTimeout(timer);
     var text = key.dataset.say;
@@ -463,25 +436,20 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     var i = 0;
     (function step() {
       if (reduce) { typed.textContent = text; return done(); }
-      if (i <= text.length) { typed.textContent = text.slice(0, i++); setTimeout(step, 30); } else done();
+      if (i <= text.length) { typed.textContent = text.slice(0, i++); setTimeout(step, 28); } else done();
     })();
     function done() {
       sent.classList.add('on');
       setTimeout(function () {
         sent.classList.remove('on'); typed.textContent = ''; ph.style.display = '';
-        add('msg--me', text.replace(/</g, '&lt;'));
-        var t = add('msg--ai', '<span class="dots"><i></i><i></i><i></i></span>');
-        setTimeout(function () {
-          t.innerHTML = asks[n % asks.length]; n++;
-          if (n % asks.length === 0) { a = (a + 1) % apps.length; appEl.textContent = apps[a]; }
-          busy = false; if (auto) timer = setTimeout(loop, 2200);
-        }, reduce ? 0 : 1300);
-      }, 450);
+        a = (a + 1) % apps.length; appEl.textContent = apps[a];
+        busy = false; if (auto) timer = setTimeout(loop, 1800);
+      }, 900);
     }
   }
-  function loop() { var keys = bar.querySelectorAll('.k'); var pick = Math.random() < .55 ? bar.querySelector('.k.main') : keys[Math.floor(Math.random() * keys.length)]; press(pick); }
+  function loop() { var keys = bar.querySelectorAll('.k'); press(keys[Math.floor(Math.random() * keys.length)]); }
   bar.addEventListener('click', function (e) { var k = e.target.closest('.k'); if (!k) return; auto = false; press(k); clearTimeout(timer); timer = setTimeout(function () { auto = !reduce; if (auto) loop(); }, 9000); });
-  if (auto) timer = setTimeout(function () { press(bar.querySelector('.k.main')); }, 1800);
+  if (auto) timer = setTimeout(function () { press(bar.querySelector('.k.main')); }, 1400);
 
 })();
 </script>
