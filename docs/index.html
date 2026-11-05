@@ -2,421 +2,397 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Agent Bar · Press one key. Your AI keeps going.</title>
-<meta name="description" content="One key for what you type a hundred times a day: continue, next, do it, stop. Works with Claude, ChatGPT, Cursor and any chat in front of you. Free for Mac, made by Prompted.">
+<meta name="description" content="Agent Bar types continue, next and do it into any chat, so you stop babysitting your agents. Free for Mac. Made by Prompted.">
 <meta property="og:title" content="Agent Bar · Press one key. Your AI keeps going.">
 <meta property="og:description" content="One key for what you type a hundred times a day. Free for Mac.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://getagentbar.com/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d10'/%3E%3Crect x='12' y='12' width='18' height='18' rx='4' fill='%23e3c98a'/%3E%3Crect x='34' y='12' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='12' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3Crect x='34' y='34' width='18' height='18' rx='4' fill='%231c1d2e' stroke='%23ffffff22'/%3E%3C/svg%3E">
+<meta property="og:image" content="https://getagentbar.com/img/desk.jpg">
+<meta name="theme-color" content="#ebebe8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111112" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='9' width='30' height='14' rx='7' fill='%23111112'/%3E%3Ccircle cx='8' cy='16' r='2' fill='%23ebebe8'/%3E%3Ccircle cx='14' cy='16' r='2' fill='%23ebebe8'/%3E%3Crect x='19' y='12' width='9' height='8' rx='4' fill='%23ff5b1f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 <style>
 :root{
-  --bg:#0b0d10;--bg2:#08090b;--panel:#1c1d2e;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
-  --ink:#eef2f7;--text:#c9d2de;--mute:#8a96a8;--faint:#5f6b7c;--gold:#e3c98a;--green:#7fd18b;
-  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
-  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,monospace;
+  --bg:#ebebe8; --bg-2:#e2e2de; --surface:#f6f6f4; --ink:#121213; --ink-2:#3d3d40; --mute:#77777b;
+  --line:rgba(18,18,19,.09); --line-2:rgba(18,18,19,.16);
+  --accent:#ff5b1f; --accent-ink:#1a0a03; --accent-soft:rgba(255,91,31,.12);
+  --shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 24px 60px -28px rgba(60,60,50,.35);
+  --sans:"Geist", ui-sans-serif, system-ui, sans-serif; --mono:"Geist Mono", ui-monospace, monospace;
+  --ease:cubic-bezier(.16,1,.3,1); --spring:cubic-bezier(.32,.72,0,1);
+  --r-lg:28px; --r-md:18px; --r-sm:12px;
+  color-scheme:light;
 }
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-body{overflow-x:hidden}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#111112; --bg-2:#18181a; --surface:#1d1d20; --ink:#f1f1ef; --ink-2:#c2c2c0; --mute:#8b8b8f;
+    --line:rgba(241,241,239,.08); --line-2:rgba(241,241,239,.16);
+    --accent-soft:rgba(255,91,31,.16);
+    --shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 30px 70px -30px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 a{color:inherit;text-decoration:none}
-::selection{background:rgba(227,201,138,.3)}
-.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
-.kicker{font:500 11px/1 var(--mono);letter-spacing:.26em;text-transform:uppercase;color:var(--mute)}
-.kicker .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:10px;vertical-align:1px}
+img{display:block;max-width:100%;height:auto}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.035em;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+.wrap{width:100%;max-width:1240px;margin:0 auto;padding:0 24px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;z-index:4}
+.skip:focus{left:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
 
-/* nav */
-nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);background:rgba(11,13,16,.6);border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
-.brand svg{width:22px;height:22px}
-nav .links{display:flex;gap:22px;font-size:13.5px;color:var(--mute)}
-nav .links a:hover{color:var(--ink)}
-.btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;font-size:13.5px;font-weight:600;border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.04);transition:border-color .2s,background .2s,transform .12s}
-.btn:hover{border-color:rgba(227,201,138,.6);background:rgba(227,201,138,.08)}
+/* Mark */
+.mark{display:inline-flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:16px}
+.mark svg{width:30px;height:30px}
+.mark .bar{fill:var(--ink)} .mark .dot{fill:var(--bg)} .mark .key{fill:var(--accent)}
+
+/* Nav: floating island */
+.nav{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2;display:flex;align-items:center;gap:28px;height:56px;padding:0 8px 0 18px;border-radius:999px;
+  background:color-mix(in srgb,var(--surface) 78%,transparent);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:inset 0 0 0 1px var(--line),0 10px 40px -20px rgba(0,0,0,.35);width:max-content;max-width:calc(100vw - 24px)}
+.nav__links{display:flex;gap:22px;font-size:14px;color:var(--ink-2)}
+.nav__links a{transition:color .3s var(--ease)} .nav__links a:hover{color:var(--ink)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:12px;height:48px;padding:0 8px 0 22px;border-radius:999px;font:600 15px/1 var(--sans);letter-spacing:-.01em;white-space:nowrap;
+  background:var(--ink);color:var(--bg);transition:transform .5s var(--spring),background .3s var(--ease)}
+.btn .ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-size:17px;transition:transform .5s var(--spring)}
+.btn:hover .ic{transform:translate(2px,-1px) scale(1.06)}
 .btn:active{transform:scale(.97)}
-.btn.pri{background:var(--gold);color:#141108;border-color:var(--gold)}
-.btn.pri:hover{background:#ecd79f;border-color:#ecd79f}
-.btn .k{font:500 11px var(--mono);color:currentColor;opacity:.6}
+.btn--sm{height:40px;font-size:14px;padding:0 6px 0 16px}.btn--sm .ic{width:28px;height:28px;font-size:14px}
+.link{display:inline-flex;align-items:center;gap:6px;font-weight:500;color:var(--ink);border-bottom:1px solid var(--line-2);padding-bottom:2px;transition:border-color .3s var(--ease)}
+.link:hover{border-color:var(--ink)}
 
-/* hero */
-.hero{position:relative;padding:92px 0 40px;text-align:center}
-.hero::before{content:"";position:absolute;inset:-200px 0 0;background:radial-gradient(60% 50% at 50% 0%,rgba(227,201,138,.12),transparent 70%);pointer-events:none}
-h1{font-size:clamp(40px,7vw,76px);line-height:1;letter-spacing:-.035em;color:var(--ink);margin:22px 0 18px;font-weight:700}
-h1 em{font-style:normal;color:var(--gold)}
-.lede{font-size:clamp(17px,2.2vw,21px);line-height:1.45;color:var(--text);max-width:640px;margin:0 auto 30px}
-.lede b{color:var(--ink);font-weight:600}
-.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.fine{margin-top:14px;font-size:12.5px;color:var(--faint)}
+/* Reveal */
+.rv{opacity:0;transform:translateY(28px);filter:blur(6px);transition:opacity .9s var(--ease),transform .9s var(--ease),filter .9s var(--ease)}
+.rv.in{opacity:1;transform:none;filter:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}}
 
-/* demo */
-.demo{position:relative;margin:56px auto 0;max-width:900px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));overflow:hidden;padding:36px 20px 0}
-.demo::after{content:"";position:absolute;inset:auto 0 0;height:120px;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
-.chat{max-width:620px;margin:0 auto;border:1px solid var(--line);border-radius:16px;background:#121318;box-shadow:0 30px 80px rgba(0,0,0,.5);text-align:left;overflow:hidden}
-.chat .bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--faint)}
-.chat .bar i{width:10px;height:10px;border-radius:50%;background:#2a2d36;display:inline-block}
-.chat .bar i:first-child{background:#ff5f57}.chat .bar i:nth-child(2){background:#febc2e}.chat .bar i:nth-child(3){background:#28c840}
-.chat .bar span{margin-left:auto;font-family:var(--mono);letter-spacing:.04em}
-.chat .msgs{padding:18px 18px 8px;display:flex;flex-direction:column;gap:12px;min-height:150px}
-.msg{max-width:84%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.45}
-.msg.ai{align-self:flex-start;background:#1a1c24;color:var(--text);border:1px solid var(--line)}
-.msg.me{align-self:flex-end;background:var(--gold);color:#141108;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
-.msg.me.show{opacity:1;transform:none}
-.chat .input{margin:8px 14px 14px;border:1px solid var(--line2);border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--ink);min-height:40px;display:flex;align-items:center;gap:6px}
-.chat .input .ph{color:var(--faint)}
-.chat .input .caret{display:inline-block;width:1.5px;height:16px;background:var(--gold);animation:blink 1s steps(1) infinite}
+/* Hero */
+.hero{min-height:100dvh;display:grid;align-items:center;padding:110px 0 56px}
+.hero__grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;align-items:center}
+.hero h1{font-size:clamp(42px,5vw,74px);line-height:1}
+.hero h1 span{color:var(--mute)}
+@media (min-width:901px){.hero h1 .ln{white-space:nowrap}}
+.hero__sub{margin-top:26px;font-size:clamp(18px,1.5vw,20px);color:var(--ink-2);max-width:34ch}
+.hero__cta{display:flex;align-items:center;gap:26px;margin-top:36px;flex-wrap:wrap}
+.frame{padding:8px;border-radius:var(--r-lg);background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line)}
+.frame>img{border-radius:calc(var(--r-lg) - 8px);width:100%;aspect-ratio:4/3;object-fit:cover;box-shadow:var(--shadow)}
+.hero__media{transform:rotate(1.2deg)}
+
+/* Try it */
+.try{padding:120px 0 130px;text-align:center}
+.try h2{font-size:clamp(30px,3.4vw,46px)}
+.try p.note{color:var(--mute);margin-top:12px}
+.screen{margin:44px auto 0;max-width:820px;min-height:120px;display:flex;align-items:center;justify-content:center;gap:14px;font:500 clamp(28px,4.4vw,54px)/1.1 var(--mono);letter-spacing:-.03em}
+.screen .caret{width:3px;height:.9em;background:var(--accent);animation:blink 1s steps(1) infinite}
+.screen .sent{font:500 13px var(--mono);letter-spacing:0;color:var(--mute);opacity:0;transition:opacity .4s var(--ease)}
+.screen .sent.on{opacity:1}
 @keyframes blink{50%{opacity:0}}
-.dock{display:inline-flex;align-items:center;gap:2px;margin:26px auto 60px;padding:5px 6px;border-radius:16px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 40%,transparent),rgba(0,0,0,.8);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 20px 60px rgba(0,0,0,.55);position:relative;z-index:2}
-.dock .x{width:26px;height:26px;display:grid;place-items:center;color:var(--mute);font-size:11px;font-weight:700;margin-left:2px}
-.dock .sep{width:1px;height:26px;background:rgba(255,255,255,.09);margin:0 4px}
-.key{display:inline-flex;flex-direction:column;align-items:center;gap:4px;min-width:54px;padding:6px;border-radius:10px;background:transparent;border:0;color:var(--text);cursor:pointer;transition:background .14s,transform .1s;user-select:none;white-space:nowrap;position:relative;font:500 9.5px var(--sans)}
-.key svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:color .14s}
-.key span{color:var(--mute);transition:color .14s}
-.key:hover{background:rgba(255,255,255,.09)}.key:hover span,.key:hover svg{color:var(--ink)}
-.key.main svg{color:var(--ink)}
-.key.on{transform:scale(.9)}.key.on svg,.key.on span{color:var(--gold)}
-.key.on::after{content:"";position:absolute;inset:0;border-radius:12px;border:1.2px solid var(--gold);animation:burst .55s ease-out forwards}
-@keyframes burst{from{transform:scale(.8);opacity:.9}to{transform:scale(1.45);opacity:0}}
-.key small{position:absolute;top:2px;right:4px;font:600 8px var(--mono);color:var(--faint);opacity:0;transition:opacity .14s}
-.key:hover small{opacity:1}
-.dock .mic svg{color:var(--text)}
-.dock .glyph{width:26px;height:26px;display:grid;place-items:center;color:var(--mute);font-size:12px}
-.demo .hint{font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-top:-44px;margin-bottom:28px;position:relative;z-index:2}
+.bar{display:inline-flex;align-items:center;gap:4px;margin-top:28px;padding:6px;border-radius:20px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line),var(--shadow);max-width:100%;overflow-x:auto}
+.bar .sep{width:1px;height:30px;background:var(--line-2);margin:0 4px;flex:0 0 auto}
+.k{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:68px;padding:10px 8px 8px;border:0;border-radius:14px;background:transparent;color:var(--ink-2);font:500 11px var(--sans);cursor:pointer;transition:background .3s var(--ease),transform .4s var(--spring),color .3s var(--ease)}
+.k i{font-size:20px}
+.k:hover{background:var(--bg-2);color:var(--ink)}
+.k:active,.k.on{transform:scale(.92)}
+.k.main{color:var(--accent)}
+.k.on{background:var(--accent-soft);color:var(--accent)}
 
-/* works with */
-.with{padding:28px 0 10px;text-align:center}
-.with .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
-.chip{padding:8px 14px;border-radius:999px;border:1px solid var(--line);font-size:13px;color:var(--text);background:rgba(255,255,255,.02)}
+/* Bento */
+.bento{padding:20px 0 120px}
+.bento__head{max-width:640px;margin-bottom:40px}
+.bento__head h2{font-size:clamp(32px,3.8vw,54px);line-height:1.02}
+.bento__grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+.cell{border-radius:var(--r-lg);padding:32px;min-height:320px;display:flex;flex-direction:column;justify-content:space-between;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.cell h3{font-size:30px;line-height:1}
+.cell p{color:var(--ink-2);margin-top:12px;max-width:34ch}
+.cell .soon{font:500 12px var(--mono);color:var(--mute)}
+.cell--tap{grid-column:span 7;grid-row:span 2;min-height:560px}
+.cell--talk{grid-column:span 5}
+.cell--repeat{grid-column:span 5;background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.cell--repeat p,.cell--repeat .soon{color:rgba(26,10,3,.72)}
+.caps{display:flex;gap:10px;flex-wrap:wrap}
+.cap{min-width:72px;height:72px;padding:0 18px;border-radius:16px;display:grid;place-items:center;font:500 24px var(--mono);background:var(--bg);box-shadow:inset 0 -4px 0 var(--line-2),inset 0 0 0 1px var(--line);color:var(--ink)}
+.cap.sm{min-width:46px;height:46px;padding:0 12px;border-radius:12px;font-size:17px}
+.shortcuts{display:grid;gap:12px}
+.sc{display:flex;align-items:center;gap:8px}
+.sc__t{margin-left:10px;font:500 16px var(--mono);color:var(--ink-2)}
+.cell--talk .fn{font:500 64px/1 var(--mono);letter-spacing:-.04em}
+.queue{font:500 clamp(40px,5vw,64px)/1 var(--mono);letter-spacing:-.05em}
 
-/* features */
-.feat{padding:70px 0 20px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
-.card{border:1px solid var(--line);border-radius:18px;padding:22px 22px 24px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01))}
-.card h3{margin:14px 0 8px;font-size:17px;color:var(--ink);letter-spacing:-.01em}
-.card p{margin:0;font-size:14px;line-height:1.5;color:var(--mute)}
-.card .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(227,201,138,.1);color:var(--gold);font:600 13px var(--mono)}
+/* Desk */
+.desk{position:relative;margin:0 auto;max-width:1400px;padding:0 24px}
+.desk__img{border-radius:var(--r-lg);overflow:hidden;position:relative}
+.desk__img img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.desk__img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,10,10,.55))}
+.desk__copy{position:absolute;left:56px;bottom:48px;z-index:1;color:#f4f4f2;max-width:16ch}
+.desk__copy h2{font-size:clamp(30px,3.6vw,52px);line-height:1}
 
-/* how */
-.how{padding:60px 0}
-.how .two{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start;margin-top:22px}
-.how h2,.feat h2,.with h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.03em;color:var(--ink);margin:12px 0 10px;line-height:1.1}
-.how p{font-size:15.5px;line-height:1.6;color:var(--text);margin:0 0 14px}
-.how ol{margin:0;padding-left:18px;color:var(--text);font-size:15px;line-height:1.7}
-.priv{border:1px solid rgba(227,201,138,.25);border-radius:16px;padding:18px 20px;background:rgba(227,201,138,.05)}
-.priv .kicker{color:var(--gold)}
-.priv p{font-size:14px;color:var(--text);margin:10px 0 0;line-height:1.55}
-.priv p+p{margin-top:8px}
-code{font:12.5px var(--mono);color:var(--ink);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px}
+/* Pad */
+.pad{padding:140px 0 120px}
+.pad__grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:64px;align-items:center}
+.pad h2{font-size:clamp(36px,4.2vw,60px);line-height:1}
+.pad p{color:var(--ink-2);margin:22px 0 30px;max-width:40ch}
+.pad__note{font:500 13px var(--mono);color:var(--mute);margin-top:16px}
+.pad .frame{transform:rotate(-1.2deg)}
 
-/* end */
-.end{padding:70px 0 40px;text-align:center}
-.end h2{font-size:clamp(28px,4.4vw,48px);letter-spacing:-.035em;color:var(--ink);margin:0 0 20px;line-height:1.05}
-footer{border-top:1px solid var(--line);padding:26px 0 40px;font-size:13px;color:var(--faint)}
-footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-footer a:hover{color:var(--ink)}
+/* Pricing */
+.plans{padding:40px 0 120px}
+.plans h2{font-size:clamp(32px,3.6vw,50px);margin-bottom:40px}
+.plans__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:980px}
+.plan{border-radius:var(--r-lg);padding:8px;background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line)}
+.plan__in{border-radius:calc(var(--r-lg) - 8px);background:var(--surface);padding:30px;height:100%;display:flex;flex-direction:column}
+.plan--pro{background:var(--accent-soft);box-shadow:inset 0 0 0 1px rgba(255,91,31,.4)}
+.plan__name{font-weight:600;font-size:16px;display:flex;justify-content:space-between;align-items:baseline}
+.plan__name span{font:500 12px var(--mono);color:var(--mute)}
+.plan__price{font:600 56px/1 var(--sans);letter-spacing:-.04em;margin:18px 0 24px}
+.plan ul{list-style:none;margin:0 0 30px;padding:0;display:grid;gap:12px;flex:1}
+.plan li{display:flex;gap:10px;color:var(--ink-2)}
+.plan li i{color:var(--accent);font-size:18px;margin-top:3px}
+.plan__in .btn{align-self:flex-start}
 
-@media (max-width:760px){
-  nav .links{display:none}
-  .hero{padding-top:64px}
-  .grid{grid-template-columns:1fr}
-  .how .two{grid-template-columns:1fr}
-  .dock{gap:5px;padding:6px;border-radius:14px;max-width:calc(100vw - 40px);overflow-x:auto;justify-content:flex-start}
-  .demo{padding:24px 12px 0;border-radius:16px}
-  .demo .hint{margin-top:-40px}
-}
-@media (prefers-reduced-motion:reduce){.msg.me{transition:none}.chat .input .caret{animation:none}}
+/* Privacy */
+.privacy{padding:60px 0 130px}
+.privacy__in{border-top:1px solid var(--line-2);padding-top:48px;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px}
+.privacy h2{font-size:clamp(28px,3vw,42px);line-height:1.08}
+.privacy p{color:var(--ink-2)}
+.privacy code{font:500 14px var(--mono);background:var(--bg-2);padding:2px 7px;border-radius:7px}
 
-/* Agent Bar · pillars, pad, plans, faq */
-.pillars{padding:70px 0 10px}
-.pillars h2,.pad h2,.plans h2,.faq h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.03em;color:var(--ink);margin:12px 0 10px;line-height:1.1}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
-.pillar{position:relative;border:1px solid var(--line);border-radius:20px;padding:24px 22px 26px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01))}
-.pillar h3{margin:16px 0 8px;font-size:22px;color:var(--ink);letter-spacing:-.02em}
-.pillar p{margin:0;font-size:14.5px;line-height:1.55;color:var(--mute)}
-.pillar__ico{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:rgba(227,201,138,.1);color:var(--gold);margin-top:16px}
-.pillar__ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.tag{display:inline-block;font:500 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);border:1px solid var(--line2);border-radius:999px;padding:6px 10px}
-.tag.live{color:var(--green);border-color:rgba(127,209,139,.35)}
+/* FAQ */
+.faq{padding:0 0 120px}
+.faq h2{font-size:clamp(28px,3vw,42px);margin-bottom:36px}
+.faq__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 56px}
+.faq h3{font-size:18px;letter-spacing:-.015em;margin-bottom:8px}
+.faq p{color:var(--ink-2);font-size:16px}
 
-.pad{padding:80px 0 20px}
-.pad__grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
-.pad__lede{font-size:16px;line-height:1.6;color:var(--text);margin:0 0 22px;max-width:440px}
-.pad__art{display:grid;place-items:center;padding:30px 0}
-.padbox{display:flex;align-items:center;gap:22px;padding:22px;border-radius:26px;background:linear-gradient(180deg,#22232f,#15161d);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 40px 90px rgba(0,0,0,.6);transform:perspective(900px) rotateX(18deg)}
-.padkeys{display:grid;grid-template-columns:repeat(3,76px);gap:12px}
-.pk{height:76px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font:600 10px var(--sans);color:var(--text);background:linear-gradient(180deg,#2c2e3c,#1d1e28);border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 0 #0e0f14}
-.pk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.pk.gold{color:#141108;background:linear-gradient(180deg,#ecd79f,#d9bd7c);border-color:#e3c98a}
-.dial{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3c4c,#16171e);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 0 #0e0f14;position:relative}
-.dial i{position:absolute;left:50%;top:10px;width:3px;height:16px;margin-left:-1.5px;border-radius:2px;background:var(--gold)}
+/* End */
+.end{padding:60px 0 130px;text-align:center}
+.end h2{font-size:clamp(44px,7vw,104px);line-height:.95}
+.end .btn{margin-top:40px}
 
-.plans{padding:80px 0 10px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
-.plan{border:1px solid var(--line);border-radius:20px;padding:26px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));display:flex;flex-direction:column}
-.plan--pro{border-color:rgba(227,201,138,.4);background:linear-gradient(180deg,rgba(227,201,138,.08),rgba(227,201,138,.015))}
-.plan__name{font-size:15px;font-weight:600;color:var(--ink)}
-.plan__name .soon{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-left:8px}
-.plan__price{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin:10px 0 14px}
-.plan ul{list-style:none;margin:0 0 22px;padding:0;flex:1}
-.plan li{padding:9px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--text)}
-.plan li::before{content:"✓";color:var(--gold);margin-right:10px;font-weight:700}
-.plan .btn{align-self:flex-start}
+footer{border-top:1px solid var(--line);padding:30px 0 46px;font-size:14px;color:var(--mute)}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--ease)} footer a:hover{border-color:var(--mute)}
 
-.faq{padding:60px 0 10px}
-.faq details{border-top:1px solid var(--line)}
-.faq details:last-of-type{border-bottom:1px solid var(--line)}
-.faq summary{list-style:none;display:flex;justify-content:space-between;gap:16px;padding:18px 0;cursor:pointer;font-size:16px;font-weight:600;color:var(--ink)}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";color:var(--mute);font-weight:400;font-size:22px;line-height:1;transition:transform .25s}
-.faq details[open] summary::after{transform:rotate(45deg)}
-.faq details p{margin:0 0 18px;color:var(--mute);font-size:15px;line-height:1.55;max-width:680px}
-
-@media (max-width:760px){
-  .grid3,.grid2,.pad__grid{grid-template-columns:1fr}
-  .padkeys{grid-template-columns:repeat(3,58px);gap:9px}.pk{height:58px;font-size:9px}
-  .dial{width:62px;height:62px}.padbox{gap:14px;padding:16px;transform:none}
+@media (max-width:900px){
+  .nav__links{display:none}
+  .nav{gap:14px}
+  .hero{padding-top:96px}
+  .hero__grid,.pad__grid,.privacy__in{grid-template-columns:1fr;gap:36px}
+  .hero__media,.pad .frame{transform:none}
+  .bento__grid{grid-template-columns:1fr}
+  .cell--tap,.cell--talk,.cell--repeat{grid-column:auto;grid-row:auto;min-height:280px}
+  .desk__copy{left:24px;bottom:22px}
+  .desk__img img{aspect-ratio:4/3}
+  .plans__grid,.faq__grid{grid-template-columns:1fr}
+  .try,.pad,.plans,.privacy,.faq,.end{padding-top:80px;padding-bottom:80px}
+  .bar{flex-wrap:wrap;justify-content:center;overflow:visible}
+  .bar .sep{display:none}
+  .k{min-width:62px}
+  .screen{font-size:30px;min-height:96px;flex-wrap:wrap}
 }
 </style>
 </head>
 <body>
-<nav>
-  <div class="wrap">
-    <a class="brand" href="#">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1c1d2e"/><rect x="10" y="25" width="44" height="14" rx="7" fill="#2a2d3e"/><rect x="13" y="28" width="12" height="8" rx="4" fill="#e3c98a"/><circle cx="33" cy="32" r="2.6" fill="#8a96a8"/><circle cx="42" cy="32" r="2.6" fill="#8a96a8"/></svg>
-      Agent Bar
-    </a>
-    <div class="links"><a href="#how">How it works</a><a href="#pro">Voice</a><a href="#pad">Pad</a><a href="#faq">FAQ</a></div>
-    <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Get it free</a>
-  </div>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="nav" aria-label="Main">
+  <a class="mark" href="#" aria-label="Agent Bar, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect class="bar" x="1" y="9" width="30" height="14" rx="7"/><circle class="dot" cx="8" cy="16" r="2"/><circle class="dot" cx="14" cy="16" r="2"/><rect class="key" x="19" y="12" width="9" height="8" rx="4"/></svg>
+    Agent Bar
+  </a>
+  <div class="nav__links"><a href="#try">How it works</a><a href="#pad">Pad</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
+  <a class="btn btn--sm" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
 </nav>
 
-<section class="hero">
-  <div class="wrap">
-    <div class="kicker"><span class="dot"></span>Free for Mac · Made by Prompted</div>
-    <h1>Press one key.<br>Your AI <em>keeps going</em>.</h1>
-    <p class="lede">You type <b>continue</b> a hundred times a day. Agent Bar turns it into one key: <b>continue</b>, <b>next</b>, <b>do it</b>, <b>stop</b>. It lands in whatever chat is in front of you, in Claude, ChatGPT, Cursor or anywhere you type.</p>
-    <div class="cta">
-      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download free for Mac</a>
-      <a class="btn" href="#waitlist">Join the Pro waitlist</a>
-    </div>
-    <div class="fine">Apple Silicon · macOS 14 or newer · no account</div>
-
-    <div class="demo" aria-label="Agent Bar demo">
-      <div class="chat">
-        <div class="bar"><i></i><i></i><i></i><span id="who">Claude</span></div>
-        <div class="msgs" id="msgs">
-          <div class="msg ai">I've refactored the first module. Want me to go on with the rest, or would you rather see it first?</div>
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div class="rv">
+        <h1><span class="ln" style="color:inherit">Press one key.</span><br><span class="ln">Your AI keeps going.</span></h1>
+        <p class="hero__sub">Agent Bar types continue, next and do it into any chat, so you stop babysitting your agents.</p>
+        <div class="hero__cta">
+          <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
+          <a class="link" href="#pricing">Join the Pro waitlist</a>
         </div>
-        <div class="input" id="input"><span class="ph">Message…</span><span class="caret"></span></div>
       </div>
-      <div class="dock" id="dock" role="group" aria-label="Keys">
-        <span class="x">✕</span><span class="sep"></span>
-        <button class="key mic" data-text="dictate" data-nofire="1"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Dictate</span><small>M</small></button>
-        <span class="sep"></span>
-        <button class="key main" data-text="continue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12h6m-2.5-3 3 3-3 3"/></svg><span>Continue</span><small>1</small></button><button class="key " data-text="next"><svg viewBox="0 0 24 24"><path d="M5 5l10 7-10 7z"/><path d="M19 5v14"/></svg><span>Next</span><small>2</small></button><button class="key " data-text="go hard"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Go hard</span><small>3</small></button><button class="key " data-text="do it"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span>Do it</span><small>4</small></button>
-        <span class="sep"></span>
-        <button class="key " data-text="I like it, continue"><svg viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-7c1.5 0 2.5 1 2.5 2.5V10h5a2 2 0 0 1 2 2l-1.2 6.5A2 2 0 0 1 17.3 20H7"/></svg><span>I like it</span><small>5</small></button><button class="key " data-text="show me a preview before you go on"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Preview</span><small>6</small></button><button class="key " data-text="short recap: where are we and what's left"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Recap</span><small>7</small></button><button class="key " data-text="stop, don't go on with that"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span>Stop</span><small>8</small></button>
-        <span class="sep"></span><span class="glyph">⚌</span><span class="glyph">⚙</span>
-      </div>
-      <div class="hint">Click a key. That is the whole product.</div>
-    </div>
-  </div>
-</section>
-
-<section class="with">
-  <div class="wrap">
-    <div class="kicker">Works with what is in front of you</div>
-    <h2>Any chat. Any app.</h2>
-    <div class="row">
-      <span class="chip">Claude</span><span class="chip">ChatGPT</span><span class="chip">Cursor</span><span class="chip">Gemini</span><span class="chip">Claude Code</span><span class="chip">Codex</span><span class="chip">Terminal</span><span class="chip">Anything with a text box</span>
-    </div>
-  </div>
-</section>
-
-<section class="pillars" id="pro">
-  <div class="wrap">
-    <div class="kicker">Three ways to drive your agents</div>
-    <h2>Tap. Talk. Repeat.</h2>
-    <div class="grid3">
-      <article class="pillar">
-        <div class="tag live">Free · available now</div>
-        <div class="pillar__ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="5"/><circle cx="9" cy="12" r="2"/></svg></div>
-        <h3>Tap</h3>
-        <p>Eight keys out of the box, or your own words. Click them, or fire them from anywhere with ⌃⌥1 to ⌃⌥9.</p>
-      </article>
-      <article class="pillar">
-        <div class="tag">Pro · coming soon</div>
-        <div class="pillar__ico"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></div>
-        <h3>Talk</h3>
-        <p>Hold Fn and speak. Agent Bar cleans up what you said and types it into the chat, in any language.</p>
-      </article>
-      <article class="pillar">
-        <div class="tag">Pro · coming soon</div>
-        <div class="pillar__ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"/></svg></div>
-        <h3>Repeat</h3>
-        <p>Queue it once: «next» ten times, or a list of steps. Every time the agent finishes, Agent Bar sends the next one.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="feat">
-  <div class="wrap">
-    <div class="kicker">What you get</div>
-    <h2>Small, native, out of the way.</h2>
-    <div class="grid">
-      <div class="card"><div class="ico">▁▁</div><h3>A bar or a card</h3><p>A slim bar on the bottom edge of your screen, on top of everything and on every desktop. Or a floating card you drag anywhere. It never steals focus from your chat.</p></div>
-      <div class="card"><div class="ico">⌃⌥1</div><h3>Keys on your keyboard too</h3><p>⌃⌥1 to ⌃⌥9 fire the keys from anywhere. ⌃⌥D hides the bar and brings it back.</p></div>
-      <div class="card"><div class="ico">+</div><h3>Your words</h3><p>Add your own keys in two clicks: a short label, the text, and Enter or not. They live in a file you own.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="pad" id="pad">
-  <div class="wrap pad__grid">
-    <div>
-      <div class="kicker">Agent Bar Pad</div>
-      <h2>A real button<br>for your agents.</h2>
-      <p class="pad__lede">Six keys and a dial, set up out of the box: Talk, Continue, Next, Do it, Stop and Retry. Put it next to your keyboard and keep your AI working with one hand.</p>
-      <a class="btn pri" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pad%20%C2%B7%20Put%20me%20on%20the%20list">Put me on the list</a>
-      <div class="fine" style="text-align:left">Coming soon. No payment now.</div>
-    </div>
-    <div class="pad__art" aria-hidden="true">
-      <div class="padbox">
-        <div class="padkeys">
-          <span class="pk gold"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Talk</span>
-          <span class="pk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12h6m-2.5-3 3 3-3 3"/></svg>Continue</span>
-          <span class="pk"><svg viewBox="0 0 24 24"><path d="M5 5l10 7-10 7z"/><path d="M19 5v14"/></svg>Next</span>
-          <span class="pk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Do it</span>
-          <span class="pk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Stop</span>
-          <span class="pk"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5"/></svg>Retry</span>
-        </div>
-        <div class="dial"><i></i></div>
+      <div class="hero__media rv">
+        <div class="frame"><img src="img/desk.jpg" alt="A hand pressing the orange key of Agent Bar Pad next to a MacBook" width="1800" height="1350"></div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="plans" id="waitlist">
-  <div class="wrap">
-    <div class="kicker">Plans</div>
-    <h2>Free to start.</h2>
-    <div class="grid2">
-      <article class="plan">
-        <div class="plan__name">Free</div>
-        <div class="plan__price">€0</div>
-        <ul>
-          <li>Eight keys, plus your own</li>
-          <li>Keyboard shortcuts from anywhere</li>
-          <li>Works in any app you type in</li>
-          <li>No account, no network</li>
-          <li>Open source (MIT)</li>
-        </ul>
-        <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download free</a>
-      </article>
-      <article class="plan plan--pro">
-        <div class="plan__name">Pro <span class="soon">coming soon</span></div>
-        <div class="plan__price">Waitlist</div>
-        <ul>
-          <li>Everything in Free</li>
-          <li>Talk: hold Fn and speak</li>
-          <li>Repeat: queues that run while you're away</li>
-          <li>Profiles for Codex, Claude, ChatGPT and Cursor</li>
-          <li>Pairs with Agent Bar Pad</li>
-        </ul>
-        <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Join%20the%20waitlist">Join the waitlist</a>
-      </article>
+  <section class="try" id="try">
+    <div class="wrap rv">
+      <h2>This is the bar. Click a key.</h2>
+      <p class="note">It types into whatever chat is in front of you, then presses Enter.</p>
+      <div class="screen" aria-live="polite"><span id="typed">continue</span><span class="caret" aria-hidden="true"></span><span class="sent" id="sent">sent to Claude</span></div>
+      <div class="bar" id="bar" role="group" aria-label="Agent Bar keys">
+        <button class="k" data-say="" data-mic="1" aria-label="Dictate"><i class="ph ph-microphone"></i>Talk</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="k main" data-say="continue"><i class="ph ph-arrow-right"></i>Continue</button>
+        <button class="k" data-say="next"><i class="ph ph-skip-forward"></i>Next</button>
+        <button class="k" data-say="do it"><i class="ph ph-check"></i>Do it</button>
+        <button class="k" data-say="show me a preview first"><i class="ph ph-eye"></i>Preview</button>
+        <button class="k" data-say="short recap, what's left?"><i class="ph ph-list-bullets"></i>Recap</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="k" data-say="stop, don't go on"><i class="ph ph-stop"></i>Stop</button>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="how" id="how">
-  <div class="wrap">
-    <div class="kicker">How it types</div>
-    <h2>Boring on purpose.</h2>
-    <div class="two">
+  <section class="bento">
+    <div class="wrap">
+      <div class="bento__head rv"><h2>Tap, talk or let it run.</h2></div>
+      <div class="bento__grid">
+        <article class="cell cell--tap rv">
+          <div>
+            <h3>Tap</h3>
+            <p>Eight keys out of the box, or your own words. Click them on screen, or fire them from anywhere.</p>
+          </div>
+          <div class="shortcuts">
+            <div class="sc"><span class="cap sm">⌃</span><span class="cap sm">⌥</span><span class="cap sm">1</span><span class="sc__t">continue</span></div>
+            <div class="sc"><span class="cap sm">⌃</span><span class="cap sm">⌥</span><span class="cap sm">2</span><span class="sc__t">next</span></div>
+            <div class="sc"><span class="cap sm">⌃</span><span class="cap sm">⌥</span><span class="cap sm">4</span><span class="sc__t">do it</span></div>
+            <div class="sc"><span class="cap sm">⌃</span><span class="cap sm">⌥</span><span class="cap sm">D</span><span class="sc__t">hide the bar</span></div>
+          </div>
+        </article>
+        <article class="cell cell--talk rv">
+          <div class="fn" aria-hidden="true">fn</div>
+          <div>
+            <span class="soon">Pro · coming soon</span>
+            <h3 style="margin-top:10px">Talk</h3>
+            <p>Hold fn and speak. Agent Bar cleans it up and types it in.</p>
+          </div>
+        </article>
+        <article class="cell cell--repeat rv">
+          <div class="queue" aria-hidden="true">next × 10</div>
+          <div>
+            <span class="soon">Pro · coming soon</span>
+            <h3 style="margin-top:10px">Repeat</h3>
+            <p>Queue it once. Each time your agent finishes, the next step goes in.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="pad" id="pad">
+    <div class="wrap pad__grid">
+      <div class="rv"><div class="frame"><img src="img/pad.jpg" alt="Agent Bar Pad: an aluminium keypad with seven keys, one orange, and a dial" width="1800" height="1350" loading="lazy"></div></div>
+      <div class="rv">
+        <h2>A real button for your agents.</h2>
+        <p>Agent Bar Pad puts your keys under your fingers: talk, continue, next, do it, stop and retry. The orange one keeps your agent going.</p>
+        <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pad%20%C2%B7%20Notify%20me">Notify me<span class="ic"><i class="ph ph-bell-simple"></i></span></a>
+        <div class="pad__note">Coming soon. No payment now.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="plans" id="pricing">
+    <div class="wrap">
+      <h2 class="rv">Free to start.</h2>
+      <div class="plans__grid">
+        <article class="plan rv"><div class="plan__in">
+          <div class="plan__name">Free</div>
+          <div class="plan__price">€0</div>
+          <ul>
+            <li><i class="ph ph-check"></i>Eight keys, plus your own</li>
+            <li><i class="ph ph-check"></i>Shortcuts from any app</li>
+            <li><i class="ph ph-check"></i>Works anywhere you type</li>
+            <li><i class="ph ph-check"></i>No account, open source</li>
+          </ul>
+          <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
+        </div></article>
+        <article class="plan plan--pro rv"><div class="plan__in">
+          <div class="plan__name">Pro <span>coming soon</span></div>
+          <div class="plan__price">Waitlist</div>
+          <ul>
+            <li><i class="ph ph-check"></i>Everything in Free</li>
+            <li><i class="ph ph-check"></i>Talk: hold fn and speak</li>
+            <li><i class="ph ph-check"></i>Repeat: queues that run while you're away</li>
+            <li><i class="ph ph-check"></i>Works with Agent Bar Pad</li>
+          </ul>
+          <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the Pro waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+        </div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="privacy">
+    <div class="wrap privacy__in rv">
+      <h2>It presses ⌘V and Enter for you. That's all it does.</h2>
       <div>
-        <p>A key in Agent Bar does one thing, the same way every time:</p>
-        <ol>
-          <li>Puts the key's text on the clipboard.</li>
-          <li>Presses ⌘V in the app in front, then Enter if the key says so.</li>
-          <li>Half a second later, puts your previous clipboard back.</li>
-        </ol>
-        <p style="margin-top:14px">That is why it works with every chat at once: no plugin, no API key, nothing to connect. If a text box is focused, it types there.</p>
-      </div>
-      <div class="priv" id="privacy">
-        <div class="kicker">Privacy</div>
-        <p>The first time you open it, macOS asks for <b>Accessibility</b>. That permission is what lets an app press keys for you. Agent Bar uses it to press ⌘V and Enter, and for nothing else.</p>
-        <p>The free version has no account, no network calls and no analytics. Your keys stay on your Mac. The code is on GitHub.</p>
+        <p>macOS asks once for Accessibility, the permission that lets an app press keys. The free version has no account, no network calls and no analytics. Your keys live on your Mac, and the code is on <a class="link" href="https://github.com/kemet333/agent-deck">GitHub</a>.</p>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="faq" id="faq">
-  <div class="wrap">
-    <div class="kicker">FAQ</div>
-    <h2>Questions, answered.</h2>
-    <details><summary>Is it really free?</summary><p>Yes. The keys, the shortcuts and your own words are free and open source. Pro will add voice and queues.</p></details>
-    <details><summary>Which AI apps does it work with?</summary><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></details>
-    <details><summary>Windows or Linux?</summary><p>Mac only for now: Apple Silicon, macOS 14 or newer.</p></details>
-    <details><summary>Why is the download called Agent Deck?</summary><p>That was its first name. The next release ships as Agent Bar.</p></details>
-    <details><summary>What is the Agent Bar Pad?</summary><p>A small physical pad with six keys and a dial, set up for Agent Bar. Join the list and we'll tell you when it's ready.</p></details>
-  </div>
-</section>
-
-<section class="end">
-  <div class="wrap">
-    <h2>Stop typing "continue".</h2>
-    <div class="cta">
-      <a class="btn pri" href="https://github.com/kemet333/agent-deck/releases/latest">Download free for Mac</a>
-      <a class="btn" href="#waitlist">Join the Pro waitlist</a>
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <h2 class="rv">Questions.</h2>
+      <div class="faq__grid">
+        <div class="rv"><h3>Which apps does it work with?</h3><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></div>
+        <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, shortcuts and your own words are free and open source. Pro will add voice and queues.</p></div>
+        <div class="rv"><h3>Windows or Linux?</h3><p>Mac only for now, on Apple Silicon with macOS 14 or newer.</p></div>
+        <div class="rv"><h3>Why does the download say Agent Deck?</h3><p>That was its first name. The next release ships as Agent Bar.</p></div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <section class="end">
+    <div class="wrap rv">
+      <h2>Stop typing “continue”.</h2>
+      <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
+    </div>
+  </section>
+</main>
 
 <footer>
   <div class="wrap">
     <span>Agent Bar is made by <a href="https://www.workwithprompted.com">PROMPTED®</a></span>
-    <span>getagentbar.com · <a href="https://github.com/kemet333/agent-deck">GitHub</a> · MIT license</span>
+    <span><a href="https://github.com/kemet333/agent-deck">GitHub</a> · MIT license</span>
   </div>
 </footer>
 
 <script>
-(function(){
-  var msgs=document.getElementById('msgs'),input=document.getElementById('input'),dock=document.getElementById('dock'),who=document.getElementById('who');
-  var replies={
-    'continue':'On it. Second module done, third one next.',
-    'next':'Moving to the next file.',
-    'go hard':'Full speed. I\'ll report when the batch is done.',
-    'do it':'Done. Tests pass, 0 failures.',
-    'I like it, continue':'Great, keeping that direction.',
-    'show me a preview before you go on':'Here is the preview. Say the word and I ship it.',
-    'short recap: where are we and what\'s left':'Recap: 3 of 5 modules done. Left: auth and the deploy.',
-    'stop, don\'t go on with that':'Stopped. Nothing else touched.'
-  };
-  var busy=false,timer=null,auto=true,apps=['Claude','ChatGPT','Cursor','Gemini'],ai=0;
-  function typeInto(text,done){
-    input.innerHTML='';var span=document.createElement('span');input.appendChild(span);var caret=document.createElement('span');caret.className='caret';input.appendChild(caret);
-    var i=0;(function step(){ if(i<=text.length){span.textContent=text.slice(0,i);i++;setTimeout(step,18);} else setTimeout(done,220);})();
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Reveal on enter
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -10% 0px' });
+  document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionDelay = (i % 3) * 70 + 'ms'; io.observe(el); });
+
+  // The bar: a key types its words into the line above, like it does in a real chat.
+  var typed = document.getElementById('typed'), sent = document.getElementById('sent'), bar = document.getElementById('bar');
+  var apps = ['Claude', 'ChatGPT', 'Cursor', 'Codex'], a = 0, busy = false, auto = !reduce, timer;
+  function press(key) {
+    if (busy) return; busy = true; clearTimeout(timer);
+    var text = key.dataset.mic ? 'listening…' : key.dataset.say;
+    key.classList.add('on'); setTimeout(function () { key.classList.remove('on'); }, 220);
+    sent.classList.remove('on'); typed.textContent = '';
+    var i = 0;
+    (function step() {
+      if (reduce) { typed.textContent = text; return done(); }
+      if (i <= text.length) { typed.textContent = text.slice(0, i++); setTimeout(step, 34); } else done();
+    })();
+    function done() {
+      if (!key.dataset.mic) { a = (a + 1) % apps.length; sent.textContent = '↵ sent to ' + apps[a]; sent.classList.add('on'); }
+      busy = false; if (auto) timer = setTimeout(loop, 2600);
+    }
   }
-  function fire(key){
-    if(busy)return;busy=true;clearTimeout(timer);
-    var text=key.getAttribute('data-text');key.classList.add('on');setTimeout(function(){key.classList.remove('on')},180);
-    typeInto(text,function(){
-      input.innerHTML='<span class="ph">Message…</span><span class="caret"></span>';
-      var me=document.createElement('div');me.className='msg me';me.textContent=text;msgs.appendChild(me);requestAnimationFrame(function(){me.classList.add('show')});
-      setTimeout(function(){
-        var r=document.createElement('div');r.className='msg ai';r.textContent=replies[text]||'Got it.';msgs.appendChild(r);
-        while(msgs.children.length>4)msgs.removeChild(msgs.firstChild);
-        busy=false;if(auto)schedule();
-      },700);
-    });
-  }
-  function schedule(){timer=setTimeout(function(){var keys=dock.querySelectorAll('.key:not(.mic)');ai=(ai+1)%apps.length;who.textContent=apps[ai];fire(keys[Math.floor(Math.random()*keys.length)]);},3200);}
-  dock.addEventListener('click',function(e){var k=e.target.closest('.key');if(!k||k.dataset.nofire)return;auto=false;clearTimeout(timer);fire(k);timer=setTimeout(function(){auto=true;schedule()},9000);});
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches) timer=setTimeout(function(){fire(dock.querySelector('.key.main'))},1400);
+  function loop() { var keys = bar.querySelectorAll('.k:not([data-mic])'); press(keys[Math.floor(Math.random() * keys.length)]); }
+  bar.addEventListener('click', function (e) { var k = e.target.closest('.k'); if (!k) return; auto = false; press(k); clearTimeout(timer); timer = setTimeout(function () { auto = !reduce; if (auto) loop(); }, 9000); });
+  if (auto) timer = setTimeout(function () { press(bar.querySelector('.k.main')); }, 1400);
 })();
 </script>
 </body>
