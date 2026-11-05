@@ -496,7 +496,7 @@ struct DictateItem: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .frame(width: 40, height: 17)
-                Text(store.listening ? (store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial) : (store.dictationNote.isEmpty ? T.s("Dictate", "Dictar") : store.dictationNote))
+                Text(store.listening ? (store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial) : (store.dictationNote.isEmpty ? T.s("Talk", "Hablar") : store.dictationNote))
                     .font(.system(size: 9.5, weight: .medium))
                     .foregroundColor(store.listening ? th.accent : (hover ? th.ink : th.mute))
                     .lineLimit(1)

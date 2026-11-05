@@ -11,6 +11,14 @@ final class FloatingPanel: NSPanel {
     private let host: NSHostingView<DeskRoot>
     private var bag = Set<AnyCancellable>()
     private let anchorKey = "AgentDeskAnchor" // "x y" del centro inferior, en coordenadas de pantalla
+    private let edgeKey = "AgentDeskEdge"     // "left" o "right": el orbe escondido en ese lateral
+    /// Arrastre del orbe a mano: el orbe es un botón y se quedaría el clic, así que el panel lo mueve él.
+    private var dragFrom: NSPoint?
+    private var frameFrom: NSRect = .zero
+    private var dragging = false
+    private var samples: [(t: TimeInterval, p: NSPoint)] = []
+    /// Lo que asoma del orbe escondido en un lateral.
+    private let peek: CGFloat = 14
 
     init(store: DeskStore) {
         self.store = store
@@ -49,6 +57,57 @@ final class FloatingPanel: NSPanel {
         }
     }
 
+    private var orbMode: Bool { store.mode == .dock && store.collapsed }
+
+    private var edge: String? {
+        get { UserDefaults.standard.string(forKey: edgeKey) }
+        set { UserDefaults.standard.set(newValue, forKey: edgeKey) }
+    }
+
+    /// Con la barra plegada: arrastrar mueve el orbe a cualquier sitio; lanzarlo hacia un lado (o soltarlo
+    /// pegado al borde) lo esconde en ese lateral, asomando un poco. Un clic sin arrastrar lo despliega, como siempre.
+    override func sendEvent(_ e: NSEvent) {
+        guard orbMode else { super.sendEvent(e); return }
+        switch e.type {
+        case .leftMouseDown:
+            dragFrom = NSEvent.mouseLocation; frameFrom = frame; dragging = false; samples = []
+            super.sendEvent(e)
+        case .leftMouseDragged:
+            guard let from = dragFrom else { super.sendEvent(e); return }
+            let p = NSEvent.mouseLocation
+            if !dragging, hypot(p.x - from.x, p.y - from.y) > 4 {
+                dragging = true
+                // el botón del orbe suelta el clic fuera de sí mismo: no se despliega al acabar el arrastre
+                if let up = NSEvent.mouseEvent(with: .leftMouseUp, location: NSPoint(x: -10_000, y: -10_000), modifierFlags: [],
+                                               timestamp: e.timestamp, windowNumber: windowNumber, context: nil,
+                                               eventNumber: e.eventNumber, clickCount: 1, pressure: 0) { super.sendEvent(up) }
+            }
+            guard dragging else { super.sendEvent(e); return }
+            setFrameOrigin(NSPoint(x: frameFrom.minX + p.x - from.x, y: frameFrom.minY + p.y - from.y))
+            samples.append((e.timestamp, p)); if samples.count > 6 { samples.removeFirst() }
+        case .leftMouseUp:
+            dragFrom = nil
+            guard dragging else { super.sendEvent(e); return }
+            dragging = false
+            fling()
+        default:
+            super.sendEvent(e)
+        }
+    }
+
+    /// Al soltar: velocidad horizontal de los últimos movimientos y adónde llegaría el orbe con ella.
+    private func fling() {
+        var vx: CGFloat = 0
+        if let a = samples.first, let b = samples.last, b.t > a.t { vx = (b.p.x - a.p.x) / CGFloat(b.t - a.t) }
+        let screen = NSScreen.screens.first { $0.frame.contains(NSPoint(x: frame.midX, y: frame.midY)) } ?? screenUnderMouse
+        let v = screen.visibleFrame
+        let landing = frame.midX + vx * 0.2
+        if vx < -900 || landing < v.minX + 30 { edge = "left" }
+        else if vx > 900 || landing > v.maxX - 30 { edge = "right" }
+        else { edge = nil }
+        relayout(animated: true, recenter: false, anchor: NSPoint(x: frame.midX, y: frame.minY))
+    }
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
@@ -68,12 +127,15 @@ final class FloatingPanel: NSPanel {
         return parts.count == 2 ? NSPoint(x: parts[0], y: parts[1]) : nil
     }
 
-    func relayout(animated: Bool, recenter: Bool) {
+    func relayout(animated: Bool, recenter: Bool, anchor dropped: NSPoint? = nil) {
         host.rootView = DeskRoot(store: store)
         host.layoutSubtreeIfNeeded()
         let size = host.fittingSize
         var anchor: NSPoint
-        if recenter || savedAnchor == nil {
+        if !orbMode { edge = nil } // al desplegarse, la barra vuelve entera a la pantalla
+        if let dropped = dropped {
+            anchor = dropped
+        } else if recenter || savedAnchor == nil {
             let v = screenUnderMouse.visibleFrame
             anchor = NSPoint(x: v.midX, y: v.minY + 2)
         } else if isVisible, let saved = savedAnchor {
@@ -87,9 +149,15 @@ final class FloatingPanel: NSPanel {
         let v = screen.visibleFrame
         target.origin.x = min(max(target.origin.x, v.minX - 20), v.maxX - target.width + 20)
         target.origin.y = min(max(target.origin.y, v.minY - 10), v.maxY - target.height + 30)
+        if orbMode, !store.listening, let side = edge { // dictando, la cápsula sale entera para leer lo que oye
+            // el orbe mide su anchura menos el margen de la sombra (30 a cada lado, DockView)
+            let orb = max(size.width - 60, 30)
+            let mid = side == "left" ? v.minX - orb / 2 + peek : v.maxX + orb / 2 - peek
+            target.origin.x = mid - size.width / 2
+        }
         if animated {
             NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.32
+                ctx.duration = dropped != nil ? 0.38 : 0.32
                 ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.25, 1)
                 self.animator().setFrame(target, display: true)
             }

@@ -33,7 +33,7 @@ struct DeskKey: Codable, Identifiable, Equatable {
 let deskIcons: [String] = [
     "arrow.right.circle", "forward.end", "bolt.fill", "checkmark.circle", "hand.thumbsup", "eye",
     "list.bullet.rectangle", "stop.circle", "arrow.counterclockwise", "questionmark.circle", "wand.and.stars",
-    "doc.text.magnifyingglass", "hammer", "paperplane", "flag", "lightbulb", "scissors", "pencil", "text.quote", "sparkles",
+    "doc.text.magnifyingglass", "hammer", "testtube.2", "wrench.and.screwdriver", "arrow.uturn.backward.circle", "paperplane", "flag", "lightbulb", "scissors", "pencil", "text.quote", "sparkles",
 ]
 
 /// Cómo se presenta el Desk: una barra pegada al borde inferior (dock) o una tarjeta flotante.
@@ -73,6 +73,8 @@ final class DeskStore: ObservableObject {
     @Published var pulse: Int = 0
 
     static let folder: URL = {
+        // pruebas y capturas: una carpeta aparte, nunca las teclas de verdad
+        if let test = ProcessInfo.processInfo.environment["AGENT_DECK_FOLDER"], !test.isEmpty { return URL(fileURLWithPath: test, isDirectory: true) }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         let new = base.appendingPathComponent("Agent Deck", isDirectory: true)
         let old = base.appendingPathComponent("Agent Desk", isDirectory: true)
@@ -83,24 +85,21 @@ final class DeskStore: ObservableObject {
     }()
     static let file = folder.appendingPathComponent("keys.json")
 
+    /// Las teclas de fábrica: seis cosas distintas que se le dicen a un agente (como en getagentbar.com).
     static let defaults: [DeskKey] = T.es ? [
         DeskKey(label: "Continúa", text: "continúa", hotkey: 1, icon: "arrow.right.circle", group: "flujo"),
-        DeskKey(label: "Siguiente", text: "siguiente", hotkey: 2, icon: "forward.end", group: "flujo"),
-        DeskKey(label: "Dale caña", text: "dale caña", hotkey: 3, icon: "bolt.fill", group: "flujo"),
-        DeskKey(label: "Hazlo", text: "hazlo", hotkey: 4, icon: "checkmark.circle", group: "flujo"),
-        DeskKey(label: "Me gusta", text: "me gusta, continúa", hotkey: 5, icon: "hand.thumbsup", group: "control"),
-        DeskKey(label: "Preview", text: "enséñame una preview antes de seguir", hotkey: 6, icon: "eye", group: "control"),
-        DeskKey(label: "Resumen", text: "resumen corto: dónde estamos y qué falta", hotkey: 7, icon: "list.bullet.rectangle", group: "control"),
-        DeskKey(label: "Para", text: "para, no sigas con eso", hotkey: 8, icon: "stop.circle", group: "control"),
+        DeskKey(label: "Pruébalo", text: "pasa los tests y dime qué falla", hotkey: 2, icon: "testtube.2", group: "flujo"),
+        DeskKey(label: "Arréglalo", text: "arregla esos errores y sigue", hotkey: 3, icon: "wrench.and.screwdriver", group: "flujo"),
+        DeskKey(label: "Preview", text: "enséñame una preview antes de seguir", hotkey: 4, icon: "eye", group: "control"),
+        DeskKey(label: "Deshaz", text: "deshaz el último cambio", hotkey: 5, icon: "arrow.uturn.backward.circle", group: "control"),
+        DeskKey(label: "Para", text: "para, no sigas con eso", hotkey: 6, icon: "stop.circle", group: "control"),
     ] : [
         DeskKey(label: "Continue", text: "continue", hotkey: 1, icon: "arrow.right.circle", group: "flujo"),
-        DeskKey(label: "Next", text: "next", hotkey: 2, icon: "forward.end", group: "flujo"),
-        DeskKey(label: "Go hard", text: "go hard", hotkey: 3, icon: "bolt.fill", group: "flujo"),
-        DeskKey(label: "Do it", text: "do it", hotkey: 4, icon: "checkmark.circle", group: "flujo"),
-        DeskKey(label: "I like it", text: "I like it, continue", hotkey: 5, icon: "hand.thumbsup", group: "control"),
-        DeskKey(label: "Preview", text: "show me a preview before you go on", hotkey: 6, icon: "eye", group: "control"),
-        DeskKey(label: "Recap", text: "short recap: where are we and what's left", hotkey: 7, icon: "list.bullet.rectangle", group: "control"),
-        DeskKey(label: "Stop", text: "stop, don't go on with that", hotkey: 8, icon: "stop.circle", group: "control"),
+        DeskKey(label: "Test it", text: "run the tests and tell me what fails", hotkey: 2, icon: "testtube.2", group: "flujo"),
+        DeskKey(label: "Fix it", text: "fix those errors, then continue", hotkey: 3, icon: "wrench.and.screwdriver", group: "flujo"),
+        DeskKey(label: "Preview", text: "show me a preview before you go on", hotkey: 4, icon: "eye", group: "control"),
+        DeskKey(label: "Undo", text: "undo that last change", hotkey: 5, icon: "arrow.uturn.backward.circle", group: "control"),
+        DeskKey(label: "Stop", text: "stop, don't go on with that", hotkey: 6, icon: "stop.circle", group: "control"),
     ]
 
     init() {
@@ -116,7 +115,7 @@ final class DeskStore: ObservableObject {
         }
         mode = DeskMode(rawValue: UserDefaults.standard.string(forKey: "mode") ?? "") ?? .dock
         collapsed = UserDefaults.standard.bool(forKey: "collapsed")
-        style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .classic
+        style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .glass
     }
 
     static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {
