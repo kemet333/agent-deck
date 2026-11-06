@@ -39,6 +39,7 @@ struct VisualEffect: NSViewRepresentable {
 struct Glass: ViewModifier {
     var radius: CGFloat
     var veil: Double = 0.8
+    var lift: Lift = .bar
     func body(content: Content) -> some View {
         content
             .background(
@@ -52,9 +53,13 @@ struct Glass: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Color.white.opacity(0.09), lineWidth: 1))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).inset(by: 1).stroke(Color.white.opacity(0.03), lineWidth: 1))
-            .shadow(color: .black.opacity(0.42), radius: 22, x: 0, y: 10)
+            .shadow(color: .black.opacity(lift == .bar ? 0.42 : 0.3), radius: lift == .bar ? 22 : 7, x: 0, y: lift == .bar ? 10 : 3)
     }
 }
+
+/// Cuánto se despega la superficie. El orbe vive en una ventana justa (30 de margen a los lados, 14 abajo):
+/// con la sombra grande de la barra, el borde de la ventana la cortaba y se veía un cuadrado gris alrededor.
+enum Lift { case bar, orb }
 
 // MARK: - Estilos de la barra
 
@@ -132,11 +137,12 @@ struct Surface: ViewModifier {
     @Environment(\.barTheme) private var th
     var radius: CGFloat
     var veil: Double = 0.8
+    var lift: Lift = .bar
     @ViewBuilder func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         switch th.style {
         case .classic:
-            content.modifier(Glass(radius: radius, veil: veil))
+            content.modifier(Glass(radius: radius, veil: veil, lift: lift))
         case .glass:
             content
                 .background(ZStack {
@@ -147,13 +153,13 @@ struct Surface: ViewModifier {
                 .clipShape(shape)
                 .overlay(shape.strokeBorder(.white.opacity(0.22), lineWidth: 1))
                 .overlay(shape.inset(by: 1).strokeBorder(LinearGradient(colors: [.white.opacity(0.32), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
-                .shadow(color: .black.opacity(0.32), radius: 26, x: 0, y: 12)
+                .shadow(color: .black.opacity(lift == .bar ? 0.32 : 0.26), radius: lift == .bar ? 26 : 7, x: 0, y: lift == .bar ? 12 : 3)
         case .metal:
             content
                 .background(
                     ZStack {
                         shape.fill(Color(hex: 0x8a8a84)).offset(y: 2)
-                            .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: 12)
+                            .shadow(color: .black.opacity(lift == .bar ? 0.35 : 0.28), radius: lift == .bar ? 20 : 7, x: 0, y: lift == .bar ? 12 : 3)
                         Brushed().clipShape(shape)
                         shape.strokeBorder(.black.opacity(0.16), lineWidth: 1)
                         shape.inset(by: 1).strokeBorder(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.0)], startPoint: .top, endPoint: .center), lineWidth: 1)
@@ -311,7 +317,7 @@ struct Orb: View {
                 }
             }
             .padding(.horizontal, store.voiceExpanded ? 14 : 9).padding(.vertical, 9)
-            .modifier(Surface(radius: 22, veil: 0.8))
+            .modifier(Surface(radius: 22, veil: 0.8, lift: .orb))
             .scaleEffect(hover ? 1.06 : 1)
             .animation(Motion.tap, value: hover)
             .animation(Motion.settle, value: store.listening)
