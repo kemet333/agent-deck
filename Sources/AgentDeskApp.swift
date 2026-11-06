@@ -130,6 +130,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pilot.addItem(.separator()); pilot.addItem(offIt)
         pilotItem.submenu = pilot
         menu.addItem(pilotItem)
+        if FileManager.default.fileExists(atPath: WhatsAppRelay.folder.path) {
+            let wa = NSMenuItem(title: T.s("Alerts to Alfred's WhatsApp when I'm away", "Avisos al WhatsApp de Alfred si no estoy"), action: #selector(toggleWhatsApp(_:)), keyEquivalent: "")
+            wa.target = self; wa.state = (UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true) ? .on : .off
+            menu.addItem(wa)
+        }
         let hooksItem = NSMenuItem(title: T.s("Claude Code alerts…", "Avisos de Claude Code…"), action: #selector(connectClaude), keyEquivalent: "")
         hooksItem.target = self
         menu.addItem(hooksItem)
@@ -206,6 +211,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .alertSecondButtonReturn: store.install(p, replace: true)
         default: break
         }
+    }
+    @objc func toggleWhatsApp(_ sender: NSMenuItem) {
+        let on = !(UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true)
+        UserDefaults.standard.set(on, forKey: "whatsappAlerts"); sender.state = on ? .on : .off
     }
     @objc func pickPack(_ sender: NSMenuItem) { if KeyPack.builtIn.indices.contains(sender.tag) { offerPack(KeyPack.builtIn[sender.tag]) } }
     @objc func shareKeys() {

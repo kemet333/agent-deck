@@ -54,6 +54,33 @@ enum BarStyle: String, Codable, CaseIterable {
     }
 }
 
+/// Los avisos de Claude Code al grupo de WhatsApp «Alfred» de Diego OS, cuando no estás en el Mac. Solo si el puente
+/// de WhatsApp de Diego OS está conectado; si no, no hace nada. Lo que contestes allí lo devuelve el puente al gancho
+/// de esa misma conversación (ab:<archivo>).
+enum WhatsAppRelay {
+    static var folder: URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/com.diegokmt.diegolifeos/Workspace/whatsapp") }
+    static var connected: Bool {
+        guard UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true,
+              let d = try? Data(contentsOf: folder.appendingPathComponent("estado.json")),
+              let j = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any], j["conectado"] as? Bool == true,
+              j["agentBar"] as? Bool == true, // solo un puente que sabe devolver la respuesta a Claude Code
+              let h = j["hora"] as? String, let t = ISO8601DateFormatter().date(from: h.replacingOccurrences(of: "\\.\\d+Z$", with: "Z", options: .regularExpression)) else { return false }
+        return Date().timeIntervalSince(t) < 300
+    }
+    static func send(_ a: AgentAlert) {
+        guard connected, a.waiting, !a.token.isEmpty else { return }
+        let msg = a.message.count > 700 ? String(a.message.prefix(700)) + "…" : a.message
+        let texto = "🤖 \(a.title)" + (a.place.isEmpty ? "" : " · \(a.place)") + (msg.isEmpty ? "" : "\n\n\(msg)") + "\n\n" + T.s("Vote, or reply to this message to answer it.", "Vota, o responde a este mensaje para contestarle.")
+        let ref = "ab:" + a.token
+        let entry: [String: Any] = ["ref": ref, "responder": true, "texto": texto,
+                                    "botones": [[["text": T.s("Continue", "Continúa"), "callback_data": ref + ":c"], ["text": T.s("Stop", "Para"), "callback_data": ref + ":p"]]]]
+        let out = folder.appendingPathComponent("salida")
+        try? FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
+        let name = "\(Int(Date().timeIntervalSince1970 * 1000))-agentbar.json"
+        if let d = try? JSONSerialization.data(withJSONObject: entry) { try? d.write(to: out.appendingPathComponent(name), options: .atomic) }
+    }
+}
+
 /// Un aviso de un agente: «Claude Code ha terminado · Diego-OS» o «Claude Code te espera».
 struct AgentAlert: Equatable {
     let app: String
@@ -295,6 +322,11 @@ final class DeskStore: ObservableObject {
         NSSound(named: ask ? "Ping" : "Glass")?.play()
         DeskStore.haptic(.levelChange)
         // sin mensaje se va solo; con mensaje se queda hasta que contestes o lo cierres
+        // si en 45 s no la has contestado (no estás en el Mac), también va a tu WhatsApp, si tienes el puente de Alfred
+        if a.waiting { DispatchQueue.main.asyncAfter(deadline: .now() + 45) { [weak self] in
+            guard let self, self.alerts.contains(where: { $0.id == a.id }) else { return }
+            WhatsAppRelay.send(a)
+        } }
         if a.message.isEmpty && !a.waiting { DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in self?.alerts.removeAll { $0.id == a.id } } }
     }
 

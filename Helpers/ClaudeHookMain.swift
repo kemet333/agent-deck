@@ -44,6 +44,10 @@ enum ClaudeHookMain {
         guard isStop else { return }
         let wait = Double(ProcessInfo.processInfo.environment["AGENT_BAR_WAIT"] ?? "") ?? 600
         let decision = dir.appendingPathComponent(name + ".decision")
+        // mientras espera, una marca: así quien conteste desde otro sitio (WhatsApp) sabe si aún llega a tiempo
+        let waiting = dir.appendingPathComponent(name + ".waiting")
+        try? Data().write(to: waiting)
+        defer { try? FileManager.default.removeItem(at: waiting) }
         let end = Date().addingTimeInterval(wait)
         while Date() < end {
             if let d = try? Data(contentsOf: decision) {
