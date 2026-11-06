@@ -84,14 +84,21 @@ final class DeskStore: ObservableObject {
     @Published var dictationNote: String = ""
     @Published var voiceWorking = false
     @Published var voiceNeedsAttention = false
-    var voiceExpanded: Bool { listening || voiceWorking || voiceNeedsAttention }
+    var voiceExpanded: Bool { listening || voiceWorking || voiceNeedsAttention || !flash.isEmpty }
+    /// Un aviso de un instante en el orbe o el micro, como «Listo en 0,4 s».
+    @Published var flash: String = ""
     private var voiceBag = Set<AnyCancellable>()
     lazy var flows = FlowController()
     var showFlows: (() -> Void)?
     lazy var voice: VoiceController = {
         let controller = VoiceController(storage: VoiceStorage(folder: Self.folder))
-        controller.onDelivered = { [weak self] text in
+        controller.onDelivered = { [weak self, weak controller] text in
             let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
+            if let l=controller?.lastLatency {
+                let n=String(format:T.s("Done in %.1f s","Listo en %.1f s"),l).replacingOccurrences(of:".",with:T.es ? "," : ".")
+                self?.flash=n
+                DispatchQueue.main.asyncAfter(deadline:.now()+2.2){ if self?.flash==n { self?.flash="" } }
+            }
         }
         controller.objectWillChange.sink { [weak self, weak controller] in
             DispatchQueue.main.async {

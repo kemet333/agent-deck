@@ -75,6 +75,10 @@ final class VoiceController: ObservableObject {
     }
     var onShortcutsChanged: (()->Void)?
     var onDelivered: ((String)->Void)?
+    /// Desde que se suelta Fn hasta que el texto entra en el chat, y si fue con el tiempo real: «Listo en 0,4 s».
+    private var releasedAt: Date?
+    private var usedLive = false
+    private(set) var lastLatency: TimeInterval?
     /// En la app de verdad, el dictado a un chat va por el camino de las teclas; las pruebas usan su entrega falsa.
     private let usesQuickSend: Bool
     /// Grabadora arrancada al pulsar Fn, antes de saber si es una pulsación larga: así no se pierde el principio.
@@ -84,12 +88,20 @@ final class VoiceController: ObservableObject {
     func prewarm() {
         guard usesQuickSend, !active, !prewarmed, draft.isEmpty, preferences.engine == .openAI, !key().isEmpty,
               AVCaptureDevice.authorizationStatus(for:.audio) == .authorized else { return }
-        do { try recorder.start(); prewarmed = true } catch { prewarmed = false }
+        do { try recorder.start(); prewarmed = true; startLive() } catch { prewarmed = false }
+    }
+    /// Transcribir mientras hablas: conexión en tiempo real con OpenAI, en paralelo a la grabación normal (red de seguridad).
+    private let live = RealtimeTranscriber()
+    private func startLive() {
+        guard usesQuickSend, preferences.streaming, preferences.engine == .openAI, !live.running else { return }
+        let k = key(); guard !k.isEmpty else { return }
+        live.onPartial = { [weak self] t in guard let self, self.preferences.showLiveText, self.phase == .listening || self.prewarmed else { return }; self.partial = t }
+        _ = live.start(key: k, model: preferences.liveModel, language: preferences.language, keywords: preferences.keywords)
     }
     /// Fn subió sin llegar a dictar (un toque, o un atajo con Fn): se tira lo grabado.
     func dropPrewarm() {
         guard prewarmed, !active else { return }
-        prewarmed = false; recorder.cancel()
+        prewarmed = false; recorder.cancel(); live.cancel()
     }
     var showWorkspace: (()->Void)?
     var showDeck: (()->Void)?
@@ -184,7 +196,7 @@ final class VoiceController: ObservableObject {
             guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Deck.","Permite el micrófono para Agent Deck en Ajustes del Sistema."));return}
             if self.snapshot.engine == .apple {self.startApple(id:id)}else{
                 if self.prewarmed { self.prewarmed=false;self.phase = .listening;return } // ya grababa desde que bajó Fn
-                do{try self.recorder.start();self.phase = .listening}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
+                do{try self.recorder.start();self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
             }
         }
     }
@@ -209,18 +221,25 @@ final class VoiceController: ObservableObject {
     func stop() {
         if phase == .permission{cancel();return}
         guard phase == .listening,let id=sessionID else{return}
-        phase = .transcribing;level=0
+        phase = .transcribing;level=0;releasedAt=Date();usedLive=false;lastLatency=nil
         if snapshot.engine == .apple{apple?.stop();return}
         // un cuarto de segundo más tras soltar, para no cortar la última palabra (solo en la app de verdad)
         let tail = usesQuickSend ? 0.25 : 0
         let finish = { [weak self] in
             guard let self, self.sessionID==id, self.phase == .transcribing else { return }
-            do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)}
+            let batch = { do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)} }
+            guard self.live.running else { batch(); return }
+            // el texto en tiempo real ya está casi listo; si no llega en 3 s, la grabación normal
+            self.live.finish(timeout: 3) { [weak self] text in
+                guard let self, self.sessionID==id, self.phase == .transcribing else { return }
+                if let text, !text.isEmpty { self.recorder.cancel(); self.audio=nil; self.usedLive=true; self.process(text,id:id) }
+                else { if !VoiceServiceError.lastDetail.isEmpty { self.log("tiempo real: sin texto, uso la grabación") }; batch() }
+            }
         }
         if tail > 0 { DispatchQueue.main.asyncAfter(deadline:.now()+tail, execute:finish) } else { finish() }
     }
     func cancel() {
-        prewarmed=false
+        prewarmed=false;live.cancel()
         sessionID=nil;operation?.cancel();operation=nil;recorder.cancel();apple?.cancel();apple=nil;audio=nil;raw="";draft="";partial="";level=0;target=nil;phase = .idle;message="";recordedID=nil
     }
     private func transcribe(id:UUID) {
@@ -277,6 +296,8 @@ final class VoiceController: ObservableObject {
         // ChatGPT o Cursor. Los terminales protegidos y la edición de una selección siguen por el camino con comprobaciones.
         if usesQuickSend, purpose == .dictation, snapshot.insertion == .paste, !(snapshot.guardTerminal && Sender.isTerminal(target)),
            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundle {
+            if let r=releasedAt { lastLatency=Date().timeIntervalSince(r)+0.17;releasedAt=nil
+                log(String(format:"listo en %.2f s (%@)",lastLatency!,usedLive ? "tiempo real" : "grabación")) }
             Sender.quickSend(text,enter:snapshot.autoEnter){[weak self] result in
                 guard let self,self.sessionID==id else{return}
                 if case .failure(let e)=result{Sender.copy(text);self.log("envío rápido: "+e.localizedDescription)}
