@@ -16,6 +16,8 @@ final class VoiceController: ObservableObject {
     @Published var shortcutStatus = ""
     var onShortcutsChanged: (()->Void)?
     var onDelivered: ((String)->Void)?
+    /// En la app de verdad, el dictado a un chat va por el camino de las teclas; las pruebas usan su entrega falsa.
+    private let usesQuickSend: Bool
     var showWorkspace: (()->Void)?
     var showDeck: (()->Void)?
     private let saveCredential:(String)throws->Void
@@ -59,6 +61,7 @@ final class VoiceController: ObservableObject {
         self.frontApp=frontApp ?? {let app=NSWorkspace.shared.frontmostApplication;return(app?.localizedName ?? "App",app?.bundleIdentifier)}
         self.saveCredential=saveCredential ?? VoiceKeychain.save;self.removeCredential=removeCredential ?? VoiceKeychain.remove
         self.captureTarget=captureTarget ?? {try Sender.capture(selection:$0)}
+        self.usesQuickSend = deliverText == nil
         self.deliverText=deliverText ?? {text,target,enter,method,guardTerminal,allow,done in Sender.deliver(text,to:target,enter:enter,method:method,guardTerminal:guardTerminal,verifyBeforeEnter:false,allow:allow,completion:done)} // los chats tardan en reflejar el pegado: Intro solo exige seguir en el mismo campo
         self.storage=storage;self.client=client;self.recorder=recorder ?? VoiceRecorder()
         self.keyProvider=keyProvider ?? {VoiceKeychain.read() ?? ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""}
@@ -183,6 +186,18 @@ final class VoiceController: ObservableObject {
         guard !active,!draft.isEmpty,let target,let id=sessionID else{message=T.s("Return to the recorded destination or copy this draft.","Vuelve al destino de la grabación o copia este borrador.");return}
         let text=draft
         phase = .inserting
+        // Dictado a un chat que sigue delante: el mismo camino que las teclas de la barra, que sí envía en Claude,
+        // ChatGPT o Cursor. Los terminales protegidos y la edición de una selección siguen por el camino con comprobaciones.
+        if usesQuickSend, purpose == .dictation, snapshot.insertion == .paste, !(snapshot.guardTerminal && Sender.isTerminal(target)),
+           NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundle {
+            Sender.quickSend(text,enter:snapshot.autoEnter){[weak self] result in
+                guard let self,self.sessionID==id else{return}
+                if case .failure(let e)=result{Sender.copy(text);self.log("envío rápido: "+e.localizedDescription)}
+                if self.draft==text{self.draft="";self.raw="";self.phase = .idle}
+                self.onDelivered?(text)
+            }
+            return
+        }
         deliverText(text,target,snapshot.autoEnter && purpose != .command,snapshot.insertion,snapshot.guardTerminal,{[weak self] in self?.sessionID==id}){[weak self] result in
             guard let self,self.sessionID==id else{return}
             switch result{case .success:
