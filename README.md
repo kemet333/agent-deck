@@ -15,9 +15,12 @@ A Stream Deck for talking to AI. A bar of keys that type what you always type: *
 
 ## Install
 
-Download `Agent-Deck-Mac.zip` from the [latest release](https://github.com/kemet333/agent-deck/releases/latest), unzip, move **Agent Deck.app** to Applications and open it. The first time, macOS asks for **Accessibility** (System Settings → Privacy & Security → Accessibility): that is what lets the deck type into the chat. Voice asks for the microphone when first used; the Apple engine additionally needs Speech Recognition. OpenAI mode uploads the recording, and AI cleanup/selection edits send their text to OpenAI. Voice settings keep the API key in macOS Keychain. The explicit text target/selection is checked through Accessibility; the app does not read other files or notes as voice context.
+1. Download **AgentBar.dmg** from the [latest release](https://github.com/kemet333/agent-deck/releases/latest) or [getagentbar.com](https://getagentbar.com).
+2. Open it and drag **Agent Deck** into **Applications**, then open it from there.
+3. It isn't notarized by Apple yet, so the first time macOS says it can't check it. Press **Done**, go to **System Settings → Privacy & Security**, scroll down and press **Open Anyway**.
+4. A two-minute tutorial opens. It asks for **Accessibility** (to type into your chat) and, if you want to talk, the **microphone**, and sets up voice, alerts and your style. Reopen it any time from the menu → **Tutorial…**
 
-Apple Silicon, macOS 14 or newer. The build is signed locally, not notarized yet: if macOS says the app cannot be checked, right-click it and choose Open once.
+Apple Silicon, macOS 14 or newer.
 
 ## Build it yourself
 

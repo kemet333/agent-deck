@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var monitor: Any?
     var voiceHotkeys: VoiceHotkeys?
     var voiceWindow: NSWindow?
+    var tutorialWindow: NSWindow?
     var flowWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -43,6 +44,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { self?.store.noteActivated(b) }
         }
         installHotkeys()
+        // la primera vez, el tutorial que lo explica y lo deja configurado
+        if !UserDefaults.standard.bool(forKey: "tutorialDone") { DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.openTutorial() } }
         voiceHotkeys = VoiceHotkeys(voice: store.voice); voiceHotkeys?.install()
         // sin Accesibilidad todavía, el tap de Fn no se crea: se reintenta hasta que se dé el permiso, sin reabrir la app
         Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] t in
@@ -107,6 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Dictate to the chat", "Dictar al chat"), action: #selector(dictate), keyEquivalent: "m")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: T.s("Tutorial…", "Tutorial…"), action: #selector(openTutorial), keyEquivalent: "")
         menu.addItem(withTitle: T.s("Voice, drafts & history…", "Voz, borradores e historial…"), action: #selector(openVoice), keyEquivalent: ",")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Paste last transcription", "Pegar última transcripción"), action: #selector(pasteLastVoice), keyEquivalent: "l")
@@ -163,6 +167,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func restoreDefaults() { store.restoreDefaults() }
     @objc func pasteLastVoice() { store.voice.pasteLast() }
+    @objc func openTutorial() {
+        if tutorialWindow == nil {
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 560), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            w.title = T.s("Welcome to Agent Bar", "Bienvenido a Agent Bar"); w.isReleasedWhenClosed = false
+            w.contentView = NSHostingView(rootView: OnboardingView(store: store, voice: store.voice,
+                connectClaude: { [weak self] in self?.connectClaude() },
+                finish: { [weak self] in UserDefaults.standard.set(true, forKey: "tutorialDone"); self?.tutorialWindow?.close(); self?.store.collapsed = false; self?.panel.orderFrontRegardless() }))
+            w.center(); tutorialWindow = w
+            NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in UserDefaults.standard.set(true, forKey: "tutorialDone") }
+        }
+        tutorialWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+    }
     @objc func openVoice() {
         if voiceHotkeys?.hasTap == false && !store.voice.active { voiceHotkeys?.install() }
         if voiceWindow == nil {
