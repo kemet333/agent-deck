@@ -18,6 +18,20 @@ final class VoiceController: ObservableObject {
     var onDelivered: ((String)->Void)?
     /// En la app de verdad, el dictado a un chat va por el camino de las teclas; las pruebas usan su entrega falsa.
     private let usesQuickSend: Bool
+    /// Grabadora arrancada al pulsar Fn, antes de saber si es una pulsación larga: así no se pierde el principio.
+    private var prewarmed = false
+
+    /// Fn acaba de bajar: si el micro ya tiene permiso y hay clave, se empieza a grabar ya mismo.
+    func prewarm() {
+        guard usesQuickSend, !active, !prewarmed, draft.isEmpty, preferences.engine == .openAI, !key().isEmpty,
+              AVCaptureDevice.authorizationStatus(for:.audio) == .authorized else { return }
+        do { try recorder.start(); prewarmed = true } catch { prewarmed = false }
+    }
+    /// Fn subió sin llegar a dictar (un toque, o un atajo con Fn): se tira lo grabado.
+    func dropPrewarm() {
+        guard prewarmed, !active else { return }
+        prewarmed = false; recorder.cancel()
+    }
     var showWorkspace: (()->Void)?
     var showDeck: (()->Void)?
     private let saveCredential:(String)throws->Void
@@ -108,6 +122,7 @@ final class VoiceController: ObservableObject {
             guard self.sessionID==id,!Task.isCancelled else{return}
             guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Deck.","Permite el micrófono para Agent Deck en Ajustes del Sistema."));return}
             if self.snapshot.engine == .apple {self.startApple(id:id)}else{
+                if self.prewarmed { self.prewarmed=false;self.phase = .listening;return } // ya grababa desde que bajó Fn
                 do{try self.recorder.start();self.phase = .listening}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
             }
         }
@@ -135,9 +150,16 @@ final class VoiceController: ObservableObject {
         guard phase == .listening,let id=sessionID else{return}
         phase = .transcribing;level=0
         if snapshot.engine == .apple{apple?.stop();return}
-        do{audio=try recorder.finish();transcribe(id:id)}catch{fail(error.localizedDescription)}
+        // un cuarto de segundo más tras soltar, para no cortar la última palabra (solo en la app de verdad)
+        let tail = usesQuickSend ? 0.25 : 0
+        let finish = { [weak self] in
+            guard let self, self.sessionID==id, self.phase == .transcribing else { return }
+            do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)}
+        }
+        if tail > 0 { DispatchQueue.main.asyncAfter(deadline:.now()+tail, execute:finish) } else { finish() }
     }
     func cancel() {
+        prewarmed=false
         sessionID=nil;operation?.cancel();operation=nil;recorder.cancel();apple?.cancel();apple=nil;audio=nil;raw="";draft="";partial="";level=0;target=nil;phase = .idle;message="";recordedID=nil
     }
     private func transcribe(id:UUID) {

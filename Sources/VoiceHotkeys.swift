@@ -43,7 +43,7 @@ final class VoiceHotkeys {
         runSource=nil;tap=nil
         if let local{NSEvent.removeMonitor(local)};local=nil
     }
-    private func cancel(){revision+=1;delayed?.cancel();_ = gesture.cancel();if voice.active{voice.cancel()}}
+    private func cancel(){revision+=1;delayed?.cancel();_ = gesture.cancel();if voice.active{voice.cancel()};voice.dropPrewarm()}
     private func apply(_ actions:[FnGesture.Action]){
         let edit=command,epoch=revision
         for a in actions{
@@ -68,7 +68,10 @@ final class VoiceHotkeys {
         let now=ProcessInfo.processInfo.systemUptime
         // Release order does not matter for Fn+Control: releasing Fn first must not cancel hands-free.
         if type == .flagsChanged,code==63,!fn{
-            delayed?.cancel();let owned=ownsFn;ownsFn=false;apply(gesture.up(at:now));return owned
+            delayed?.cancel();let owned=ownsFn;ownsFn=false;apply(gesture.up(at:now))
+            // si no llegó a dictar (un toque suelto), lo grabado por adelantado se tira cuando ya no hace falta
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.6){[weak self] in self?.voice.dropPrewarm()}
+            return owned
         }
         if type == .keyDown{if fn && code != 63{delayed?.cancel();apply(gesture.cancel())};return false}
         guard type == .flagsChanged else{return false}
@@ -78,7 +81,7 @@ final class VoiceHotkeys {
         guard mods.isEmpty || mods == [.option] else{delayed?.cancel();apply(gesture.cancel());return false}
         guard fn,(code==63 || (ownsFn && mods == [.option])) else{return false}
         guard canUseFn() else{return false}
-        ownsFn=true;command=mods == [.option];apply(gesture.down(at:now));delayed?.cancel()
+        ownsFn=true;command=mods == [.option];if !command && !voice.active{voice.prewarm()};apply(gesture.down(at:now));delayed?.cancel()
         let work=DispatchWorkItem{[weak self] in guard let self else{return};self.apply(self.gesture.held(at:ProcessInfo.processInfo.systemUptime))}
         delayed=work;DispatchQueue.main.asyncAfter(deadline:.now()+0.185,execute:work)
         return true
