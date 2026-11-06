@@ -214,6 +214,11 @@ struct DeskRoot: View {
 struct DockView: View {
     @ObservedObject var store: DeskStore
     var body: some View {
+        VStack(spacing: 10) {
+            if let a = store.alert {
+                AlertPill(alert: a) { store.alert = nil }
+                    .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8, anchor: .bottom)))
+            }
         ZStack(alignment: .bottom) {
             if store.collapsed {
                 Orb(store: store)
@@ -226,8 +231,45 @@ struct DockView: View {
             }
         }
         .animation(Motion.fold, value: store.collapsed)
+        }
+        .animation(Motion.settle, value: store.alert)
         .padding(.horizontal, 30).padding(.top, 36).padding(.bottom, 14) // sitio para la sombra y los rebotes
         .focusEffectDisabled()
+    }
+}
+
+/// El aviso de un agente encima del orbe o de la barra: un punto que late y una línea. Tocarlo lo quita.
+struct AlertPill: View {
+    let alert: AgentAlert
+    let dismiss: () -> Void
+    @Environment(\.barTheme) private var th
+    @State private var hover = false
+    var body: some View {
+        Button(action: dismiss) {
+            HStack(spacing: 10) {
+                TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
+                    let p = 0.5 + 0.5 * sin(ctx.date.timeIntervalSinceReferenceDate * (alert.ask ? 5 : 2.4))
+                    Circle().fill(alert.ask ? Color(hex: 0xff5b1f) : th.accent)
+                        .frame(width: 8, height: 8)
+                        .shadow(color: (alert.ask ? Color(hex: 0xff5b1f) : th.accent).opacity(0.4 + 0.5 * p), radius: 3 + 6 * p)
+                }
+                .frame(width: 10, height: 10)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(alert.title).font(.system(size: 12, weight: .semibold)).foregroundColor(th.ink).lineLimit(1)
+                    if !alert.place.isEmpty {
+                        Text(alert.place).font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundColor(th.mute).lineLimit(1)
+                    }
+                }
+                Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundColor(th.faint).opacity(hover ? 1 : 0)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .modifier(Surface(radius: 18))
+            .scaleEffect(hover ? 1.03 : 1)
+            .animation(Motion.tap, value: hover)
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help(T.s("Dismiss", "Quitar aviso"))
     }
 }
 

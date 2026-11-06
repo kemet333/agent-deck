@@ -54,6 +54,15 @@ enum BarStyle: String, Codable, CaseIterable {
     }
 }
 
+/// Un aviso de un agente: «Claude Code ha terminado · Diego-OS» o «Claude Code te espera».
+struct AgentAlert: Equatable {
+    let app: String
+    let ask: Bool
+    let place: String
+    let id = UUID()
+    var title: String { ask ? T.s("\(app) is waiting for you", "\(app) te espera") : T.s("\(app) is done", "\(app) ha terminado") }
+}
+
 /// Las teclas, guardadas en ~/Library/Application Support/Agent Deck/keys.json; el modo en UserDefaults.
 @MainActor
 final class DeskStore: ObservableObject {
@@ -61,6 +70,8 @@ final class DeskStore: ObservableObject {
     @Published var mode: DeskMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
     @Published var style: BarStyle { didSet { UserDefaults.standard.set(style.rawValue, forKey: "style") } }
     @Published var lastSent: String = ""
+    /// Aviso de un agente: ha terminado o te espera. Lo trae agentdeck://alert (ganchos de Claude Code u otros).
+    @Published var alert: AgentAlert?
     @Published var editing: Bool = false
     /// Dictado: escuchando, texto parcial y nivel del micro (para el icono).
     @Published var listening: Bool = false
@@ -238,4 +249,13 @@ final class DeskStore: ObservableObject {
     }
 
     func restoreDefaults() { keys = DeskStore.defaults }
+
+    /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
+    func raiseAlert(app: String, ask: Bool, place: String) {
+        let a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)))
+        alert = a
+        NSSound(named: ask ? "Ping" : "Glass")?.play()
+        DeskStore.haptic(.levelChange)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in if self?.alert == a { self?.alert = nil } }
+    }
 }
