@@ -7,16 +7,14 @@ enum ClaudeHooks {
     static let settings = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
     static let marker = "agentdeck://alert"
 
-    /// El comando de cada gancho: guarda lo que manda Claude Code (de ahí sale su última respuesta) en
-    /// Application Support/Agent Deck/hooks y abre el aviso con la carpeta del proyecto y la app donde corre.
-    static func command(kind: String) -> String {
-        "h=\"$HOME/Library/Application Support/Agent Deck/hooks\"; mkdir -p \"$h\"; n=\"$$-$RANDOM.json\"; cat > \"$h/$n\"; "
-        + "d=$(basename \"$PWD\" | sed 's/ /%20/g'); open -g \"\(marker)?app=Claude%20Code&kind=\(kind)&place=$d&file=$n&host=${__CFBundleIdentifier:-}\""
-    }
+    /// El programa de Agent Bar que decide en cada parada (piloto automático y aviso), dentro de esta app.
+    static var helper: String { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AgentBarClaudeHook").path }
+    static let helperName = "AgentBarClaudeHook"
+    static func command(kind: String) -> String { "\"\(helper)\" \(kind)" }
 
-    /// Ganchos de esta versión (con la respuesta de Claude); los de antes solo avisaban.
-    static var installed: Bool { text.contains(marker) && text.contains("&file=") }
-    static var oldVersion: Bool { text.contains(marker) && !text.contains("&file=") }
+    /// Ganchos de esta versión, apuntando a esta copia de la app.
+    static var installed: Bool { text.contains(helper) }
+    static var oldVersion: Bool { (text.contains(marker) || text.contains(helperName)) && !installed }
     private static var text: String { (try? String(contentsOf: settings, encoding: .utf8)) ?? "" }
 
     enum Outcome { case added, alreadyThere, failed(String) }
@@ -42,7 +40,7 @@ enum ClaudeHooks {
         for (event, kind) in [("Stop", "done"), ("Notification", "ask")] {
             // los ganchos antiguos de Agent Deck se cambian por los nuevos; los demás no se tocan
             var list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
-                !((entry["hooks"] as? [[String: Any]]) ?? []).contains { ($0["command"] as? String ?? "").contains(marker) }
+                !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
             }
             list.append(["hooks": [["type": "command", "command": command(kind: kind)]]])
             hooks[event] = list

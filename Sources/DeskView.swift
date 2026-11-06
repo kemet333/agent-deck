@@ -222,7 +222,8 @@ struct DockView: View {
     var body: some View {
         VStack(spacing: 10) {
             if let a = store.alert {
-                AlertPill(alert: a, dismiss: { store.alert = nil }, reply: { store.reply($0, to: a) })
+                AlertPill(alert: a, dismiss: { store.alert = nil }, reply: { store.reply($0, to: a) },
+                          autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.keys.first?.text ?? T.s("continue", "continúa"), to: a) } : nil)
                     .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8, anchor: .bottom)))
             }
         ZStack(alignment: .bottom) {
@@ -250,6 +251,7 @@ struct AlertPill: View {
     let alert: AgentAlert
     let dismiss: () -> Void
     var reply: ((String) -> Void)? = nil
+    var autopilot: (() -> Void)? = nil
     @Environment(\.barTheme) private var th
     @State private var hover = false
     @State private var answer = ""
@@ -309,6 +311,13 @@ struct AlertPill: View {
                                 .padding(.horizontal, 12).padding(.vertical, 7)
                                 .background(Capsule().fill(Color(hex: 0xff5b1f)))
                         }.buttonStyle(.plain).keyboardShortcut(.defaultAction)
+                        if let autopilot, answer.isEmpty {
+                            Button(action: autopilot) {
+                                Label("×5", systemImage: "airplane").font(.system(size: 11.5, weight: .semibold)).foregroundColor(th.ink)
+                                    .padding(.horizontal, 10).padding(.vertical, 7)
+                                    .background(Capsule().fill(th.hover.opacity(0.9))).overlay(Capsule().stroke(th.divider, lineWidth: 1))
+                            }.buttonStyle(.plain).help(T.s("Continue, and keep going on your own up to 5 more times", "Continúa y sigue solo hasta 5 veces más"))
+                        }
                     }
                 }
             }
@@ -445,6 +454,11 @@ struct Bar: View {
             DockItem(id: nil, icon: "camera.viewfinder", label: T.s("Snap", "Captura"), hotkey: nil, main: false, editing: false, tint: nil, store: store,
                      help: T.s("Pick an area of the screen and ask your AI chat what's wrong (⌃⌥S)", "Elige una zona de la pantalla y pregunta a tu chat de IA qué falla (⌃⌥S)"),
                      press: { store.snapScreen() }, edit: {}, remove: {})
+            DockItem(id: nil, icon: store.autopilotLeft > 0 ? "airplane.circle.fill" : "airplane.circle",
+                     label: store.autopilotLeft > 0 ? T.s("Pilot · \(store.autopilotLeft)", "Piloto · \(store.autopilotLeft)") : T.s("Pilot", "Piloto"),
+                     hotkey: nil, main: false, editing: false, tint: store.autopilotLeft > 0 ? th.accent : nil, store: store,
+                     help: T.s("Autopilot for Claude Code: keeps going on its own up to 5 times and stops at a real question", "Piloto automático para Claude Code: sigue solo hasta 5 veces y para ante una pregunta de verdad"),
+                     press: { store.toggleAutopilot() }, edit: {}, remove: {})
             DockItem(id: nil, icon: "tray.and.arrow.down", label: "Inbox", hotkey: nil, main: false, editing: false, tint: nil, store: store,
                      help: T.s("Sends the last transcribed voice note from your inbox to the chat", "Manda al chat la última nota de voz del inbox, ya transcrita"),
                      press: { store.sendInbox() }, edit: {}, remove: {})

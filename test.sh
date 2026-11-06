@@ -9,3 +9,6 @@ xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_
  "$project_dir/Sources/Dictation.swift" "$project_dir/Sources/VoiceController.swift" "$project_dir/Sources/RealtimeTranscriber.swift" "$project_dir/Tests/VoiceChecks.swift" \
  -framework AppKit -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication -o "$voice_test_dir/voice-checks"
 "$voice_test_dir/voice-checks"
+xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
+ "$project_dir/Sources/Autopilot.swift" "$project_dir/Tests/AutopilotChecks.swift" -o "$voice_test_dir/autopilot-checks"
+"$voice_test_dir/autopilot-checks"

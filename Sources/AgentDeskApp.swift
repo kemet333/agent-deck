@@ -82,6 +82,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
                 let msg = v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file"))
                 store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"))
+            case "autopilot": // lo manda AgentBarClaudeHook cada vez que el piloto sigue solo
+                let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
+                store.autopilotTurn(left: Int(v("left")) ?? 0, place: v("place"))
             case "press":
                 if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
             case "send":
@@ -115,6 +118,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Paste last transcription", "Pegar última transcripción"), action: #selector(pasteLastVoice), keyEquivalent: "l")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        let pilotItem = NSMenuItem(title: T.s("Autopilot (Claude Code)", "Piloto automático (Claude Code)"), action: nil, keyEquivalent: "")
+        let pilot = NSMenu()
+        for n in [3, 5, 10, 20] { let it = NSMenuItem(title: T.s("Keep going \(n) times", "Seguir solo \(n) veces"), action: #selector(setPilot(_:)), keyEquivalent: ""); it.tag = n; it.target = self; pilot.addItem(it) }
+        let offIt = NSMenuItem(title: T.s("Turn off", "Apagar"), action: #selector(setPilot(_:)), keyEquivalent: ""); offIt.tag = 0; offIt.target = self
+        pilot.addItem(.separator()); pilot.addItem(offIt)
+        pilotItem.submenu = pilot
+        menu.addItem(pilotItem)
         let hooksItem = NSMenuItem(title: T.s("Claude Code alerts…", "Avisos de Claude Code…"), action: #selector(connectClaude), keyEquivalent: "")
         hooksItem.target = self
         menu.addItem(hooksItem)
@@ -167,6 +177,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func restoreDefaults() { store.restoreDefaults() }
     @objc func pasteLastVoice() { store.voice.pasteLast() }
+    @objc func setPilot(_ sender: NSMenuItem) {
+        if sender.tag > 0 && !ClaudeHooks.installed { connectClaude(); if !ClaudeHooks.installed { return } }
+        store.setAutopilot(sender.tag)
+    }
     @objc func openTutorial() {
         if tutorialWindow == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 560), styleMask: [.titled, .closable], backing: .buffered, defer: false)

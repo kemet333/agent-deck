@@ -272,6 +272,27 @@ final class DeskStore: ObservableObject {
         if a.message.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in if self?.alert == a { self?.alert = nil } } }
     }
 
+    // MARK: - Piloto automático (Claude Code)
+
+    /// Vueltas que le quedan al piloto; 0 = apagado.
+    @Published var autopilotLeft: Int = Autopilot.load()?.remaining ?? 0
+
+    /// Enciende el piloto con N vueltas (el mensaje es la primera tecla, «continúa») o lo apaga con 0.
+    func setAutopilot(_ n: Int) {
+        if n > 0 { Autopilot.start(n, message: keys.first?.text ?? T.s("continue", "continúa")) } else { Autopilot.save(nil) }
+        autopilotLeft = n
+        flashNote(n > 0 ? T.s("Autopilot: \(n) turns", "Piloto: \(n) vueltas") : T.s("Autopilot off", "Piloto apagado"))
+    }
+    func toggleAutopilot() {
+        if autopilotLeft == 0 && !ClaudeHooks.installed { flashNote(T.s("Turn on Claude Code alerts first (menu)", "Activa antes los avisos de Claude Code (menú)"), for: 3.5); return }
+        setAutopilot(autopilotLeft > 0 ? 0 : 5)
+    }
+    /// Lo cuenta el gancho cada vez que sigue solo.
+    func autopilotTurn(left: Int, place: String) {
+        autopilotLeft = left
+        flashNote(left > 0 ? T.s("Autopilot · \(left) left", "Piloto · quedan \(left)") : T.s("Autopilot done", "Piloto terminado"), for: 3)
+    }
+
     // MARK: - Sobre lo seleccionado o en pantalla
 
     /// El último chat de IA que tuviste delante: ahí van «Explica» y «Captura».
@@ -354,20 +375,6 @@ final class DeskStore: ObservableObject {
               let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return "" }
         if let m = j["last_assistant_message"] as? String, !m.isEmpty { return m }
         if let m = j["message"] as? String, !m.isEmpty, j["hook_event_name"] as? String == "Notification" { return m }
-        // la transcripción de Claude Code: solo dentro de ~/.claude, y solo el final del archivo
-        guard let tp = j["transcript_path"] as? String, tp.hasSuffix(".jsonl"),
-              tp.hasPrefix(FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude").path),
-              let h = FileHandle(forReadingAtPath: tp) else { return "" }
-        defer { try? h.close() }
-        let size = (try? h.seekToEnd()) ?? 0
-        try? h.seek(toOffset: size > 2_000_000 ? size - 2_000_000 : 0)
-        guard let tail = try? h.readToEnd(), let text = String(data: tail, encoding: .utf8) else { return "" }
-        for line in text.split(separator: "\n").reversed() {
-            guard let o = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any], o["type"] as? String == "assistant",
-                  let msg = o["message"] as? [String: Any], let parts = msg["content"] as? [[String: Any]] else { continue }
-            let t = parts.filter { $0["type"] as? String == "text" }.compactMap { $0["text"] as? String }.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-            if !t.isEmpty { return t }
-        }
-        return ""
+        return Autopilot.lastAssistantText(transcript: j["transcript_path"] as? String ?? "")
     }
 }
