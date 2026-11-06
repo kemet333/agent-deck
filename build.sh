@@ -11,7 +11,7 @@ xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" 
   -module-cache-path "$build_dir/modules" -parse-as-library \
   "$project_dir"/Sources/AgentDeskApp.swift "$project_dir"/Sources/DeskModel.swift \
   "$project_dir"/Sources/DeskView.swift "$project_dir"/Sources/FloatingPanel.swift "$project_dir"/Sources/Sender.swift \
-  "$project_dir"/Sources/Dictation.swift "$project_dir"/Sources/Strings.swift \
+  "$project_dir"/Sources/Dictation.swift "$project_dir"/Sources/Strings.swift "$project_dir"/Sources/FnKey.swift \
   -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation \
   -o "$app_dir/Contents/MacOS/AgentDesk"
 xcrun swiftc -swift-version 5 -O -sdk "$sdk_dir" -module-cache-path "$build_dir/modules" \

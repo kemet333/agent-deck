@@ -132,7 +132,10 @@ final class FloatingPanel: NSPanel {
         host.layoutSubtreeIfNeeded()
         let size = host.fittingSize
         var anchor: NSPoint
-        if !orbMode { edge = nil } // al desplegarse, la barra vuelve entera a la pantalla
+        // al tocar el orbe escondido en un lateral, la barra vuelve a su sitio de siempre (centrada abajo);
+        // luego se puede volver a arrastrar donde se quiera
+        var recenter = recenter
+        if !orbMode, edge != nil { edge = nil; recenter = true }
         if let dropped = dropped {
             anchor = dropped
         } else if recenter || savedAnchor == nil {

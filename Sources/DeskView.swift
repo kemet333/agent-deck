@@ -237,7 +237,9 @@ struct Orb: View {
         Button(action: { store.toggleCollapsed() }) {
             HStack(spacing: 10) {
                 ZStack {
-                    if store.listening { Rings(level: store.level) }
+                    if store.listening {
+                        VoiceBlob(level: store.level, size: 30).transition(.scale(scale: 0.5).combined(with: .opacity))
+                    } else {
                     TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                         let t = ctx.date.timeIntervalSinceReferenceDate
                         let breath = 0.5 + 0.5 * sin(t * 1.4)
@@ -246,12 +248,13 @@ struct Orb: View {
                             .frame(width: store.listening ? 9 : 7 + 1.5 * breath, height: store.listening ? 9 : 7 + 1.5 * breath)
                             .shadow(color: th.accent.opacity(0.35 + 0.35 * breath), radius: store.listening ? 10 : 4 + 4 * breath)
                     }
+                    }
                     if hover && !store.listening {
                         Image(systemName: "chevron.up").font(.system(size: 9, weight: .bold)).foregroundColor(th.ink)
                             .offset(y: -13).transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
                 }
-                .frame(width: 22, height: 22)
+                .frame(width: store.listening ? 30 : 22, height: store.listening ? 30 : 22)
                 if store.listening {
                     Text(store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial)
                         .font(.system(size: 11.5, weight: .medium)).foregroundColor(th.style == .metal ? th.ink : th.accent).lineLimit(1)
@@ -268,6 +271,44 @@ struct Orb: View {
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .help(T.s("Unfold Agent Deck (⌃⌥D)", "Desplegar Agent Deck (⌃⌥D)"))
+    }
+}
+
+/// Escuchando: luz líquida que gira dentro de una esfera, como Siri, y crece con tu voz.
+/// En los naranjas de la marca (Agent Bar), no en el arcoíris de Apple.
+struct VoiceBlob: View {
+    let level: Float
+    var size: CGFloat = 30
+    var body: some View {
+        TimelineView(.animation) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            let l = CGFloat(min(level * 7, 1))
+            ZStack {
+                Circle().fill(Color(hex: 0x1c0c06))
+                blob(Color(hex: 0xff5b1f), t, 1.4, 0, l)
+                blob(Color(hex: 0xff2f6d), t, 1.9, 2.1, l)
+                blob(Color(hex: 0xffb02e), t, 1.15, 4.2, l)
+                blob(.white, t, 2.6, 1.0, l).opacity(0.25)
+            }
+            .frame(width: size, height: size)
+            .compositingGroup()
+            .blur(radius: size * 0.1)
+            .clipShape(Circle())
+            .overlay(Circle().strokeBorder(.white.opacity(0.32), lineWidth: 0.8))
+            .overlay(Circle().inset(by: size * 0.08).strokeBorder(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
+            .scaleEffect(1 + 0.2 * l)
+            .shadow(color: Color(hex: 0xff5b1f).opacity(0.5 + 0.35 * l), radius: size * (0.25 + 0.35 * l))
+            .animation(.easeOut(duration: 0.12), value: l)
+        }
+        .frame(width: size, height: size)
+    }
+    private func blob(_ c: Color, _ t: Double, _ speed: Double, _ phase: Double, _ l: CGFloat) -> some View {
+        let r = size * (0.16 + 0.14 * l)
+        return Ellipse().fill(c.opacity(0.62))
+            .frame(width: size * 0.7, height: size * 0.54)
+            .rotationEffect(.radians(t * speed * 0.7 + phase))
+            .offset(x: CGFloat(cos(t * speed + phase)) * r, y: CGFloat(sin(t * speed * 1.27 + phase)) * r)
+            .blendMode(.plusLighter)
     }
 }
 
@@ -488,12 +529,13 @@ struct DictateItem: View {
         Button(action: { DeskStore.haptic(.levelChange); store.toggleDictation() }) {
             VStack(spacing: 4) {
                 ZStack {
-                    if store.listening { Rings(level: store.level) }
-                    Image(systemName: store.listening ? "waveform" : "mic")
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundColor(store.listening ? th.accent : (hover ? th.ink : th.text))
-                        .symbolEffect(.variableColor.iterative.dimInactiveLayers, isActive: store.listening)
-                        .contentTransition(.symbolEffect(.replace))
+                    if store.listening {
+                        VoiceBlob(level: store.level, size: 22).transition(.scale(scale: 0.5).combined(with: .opacity))
+                    } else {
+                        Image(systemName: "mic")
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundColor(hover ? th.ink : th.text)
+                    }
                 }
                 .frame(width: 40, height: 17)
                 Text(store.listening ? (store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial) : (store.dictationNote.isEmpty ? T.s("Talk", "Hablar") : store.dictationNote))

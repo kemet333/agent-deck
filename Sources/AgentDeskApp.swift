@@ -15,6 +15,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var panel: FloatingPanel!
     var status: NSStatusItem!
     var monitor: Any?
+    let fn = FnKey()
+    var fnRetry: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -28,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.hide = { [weak self] in self?.store.toggleCollapsed() }
         installHotkeys()
         _ = Sender.accessibilityGranted(prompt: true)
+        installFn()
     }
 
     // MARK: URL scheme: agentdeck://toggle · dictate · press?n=3 · send?text=hola · show · style?name=glass
@@ -128,6 +131,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sender.menu?.items.forEach { $0.state = ($0 === sender) ? .on : .off }
     }
     @objc func quit() { NSApp.terminate(nil) }
+
+    // MARK: mantener Fn para hablar
+
+    func installFn() {
+        fn.onStart = { [weak self] in DispatchQueue.main.async { self?.store.holdToTalk(true) } }
+        fn.onEnd = { [weak self] in DispatchQueue.main.async { self?.store.holdToTalk(false) } }
+        fn.onCancel = { [weak self] in DispatchQueue.main.async { self?.store.cancelDictation() } }
+        if fn.install() { return }
+        // sin Accesibilidad todavía: se reintenta hasta que Diego lo permita, sin reabrir la app
+        fnRetry = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] t in
+            if self?.fn.install() == true { t.invalidate() }
+        }
+    }
 
     // MARK: atajos globales ⌃⌥1…9 y ⌃⌥D
 

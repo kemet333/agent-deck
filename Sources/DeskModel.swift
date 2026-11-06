@@ -174,15 +174,38 @@ final class DeskStore: ObservableObject {
         return order.map { ($0, byName[$0]!) }
     }
 
+    /// Mantener Fn: escucha mientras está pulsada (fnHeld) y, al soltar, envía. Si el permiso tarda y Fn
+    /// ya se ha soltado cuando empieza a escuchar, para enseguida y envía lo poco que haya.
+    private var fnHeld = false
+    /// La escucha la empezó Fn (no el botón ni ⌃⌥M).
+    private var fnSession = false
+
+    @MainActor func holdToTalk(_ down: Bool) {
+        fnHeld = down
+        if down { fnSession = true }
+        let d = ensureDictation()
+        if down { if !listening { d.start() } } else if listening { d.stop() }
+    }
+
+    @MainActor func cancelDictation() { fnHeld = false; dictation?.cancel() }
+
     /// Dictar: una pulsación empieza a escuchar, otra para y envía lo oído al chat como una tecla más.
     @MainActor func toggleDictation() {
+        fnSession = false
+        let d = ensureDictation()
+        if listening { d.stop() } else { d.start() }
+    }
+
+    @MainActor private func ensureDictation() -> Dictation {
         if dictation == nil {
             let d = Dictation()
             d.onLevel = { [weak self] l in self?.level = l }
             d.onEvent = { [weak self] state, text, reason in
                 guard let self = self else { return }
                 switch state {
-                case .listening: self.listening = true; self.partial = ""; self.dictationNote = ""
+                case .listening:
+                    self.listening = true; self.partial = ""; self.dictationNote = ""
+                    if !self.fnHeld, self.fnSession { self.dictation?.stop() }
                 case .partial: self.partial = text ?? ""
                 case .final:
                     self.listening = false; self.partial = ""
@@ -199,7 +222,7 @@ final class DeskStore: ObservableObject {
             }
             dictation = d
         }
-        if listening { dictation?.stop() } else { dictation?.start() }
+        return dictation!
     }
 
     /// Última nota de voz transcrita por el inbox de Telegram (la escribe inbox-telegram.py).
