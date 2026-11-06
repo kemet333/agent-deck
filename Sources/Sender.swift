@@ -16,7 +16,26 @@ struct TextTarget {
 }
 @MainActor
 enum Sender {
-    static let keyV: CGKeyCode = 9, keyReturn: CGKeyCode = 36
+    static let keyV: CGKeyCode = 9, keyReturn: CGKeyCode = 36, keyC: CGKeyCode = 8
+
+    /// Lo seleccionado en la app de delante: por Accesibilidad si la app lo da y, si no, con ⌘C
+    /// (devolviendo después el portapapeles como estaba).
+    static func copySelection(_ done: @escaping (String?) -> Void) {
+        if let app = NSWorkspace.shared.frontmostApplication, app.bundleIdentifier != Bundle.main.bundleIdentifier,
+           let f = focused(app.processIdentifier), let s = attribute(f, kAXSelectedTextAttribute) as? String,
+           !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { done(s); return }
+        let pb = NSPasteboard.general, before = pb.changeCount
+        let saved = pb.pasteboardItems?.map { item in Dictionary(uniqueKeysWithValues: item.types.compactMap { t in item.data(forType: t).map { (t, $0) } }) } ?? []
+        tap(keyC, flags: .maskCommand)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            guard pb.changeCount != before else { done(nil); return }
+            let s = pb.string(forType: .string)
+            pb.clearContents()
+            let items = saved.map { entry -> NSPasteboardItem in let i = NSPasteboardItem(); for (t, d) in entry { i.setData(d, forType: t) }; return i }
+            if !items.isEmpty { pb.writeObjects(items) }
+            done(s)
+        }
+    }
     private static var delivering = false
     private static var deliveryRevision=0
     private static var pendingRestore:(()->Void)?

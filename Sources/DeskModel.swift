@@ -272,6 +272,64 @@ final class DeskStore: ObservableObject {
         if a.message.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in if self?.alert == a { self?.alert = nil } } }
     }
 
+    // MARK: - Sobre lo seleccionado o en pantalla
+
+    /// El último chat de IA que tuviste delante: ahí van «Explica» y «Captura».
+    var lastAIApp: String?
+    func noteActivated(_ bundle: String?) { if let b = bundle, VoicePreferences.aiApps.contains(b) { lastAIApp = b } }
+
+    private func aiTarget() -> NSRunningApplication? {
+        let order = [lastAIApp].compactMap { $0 } + ["com.anthropic.claudefordesktop", "com.openai.chat", "com.todesktop.230313mzl4w4u92", "com.openai.codex"]
+        for b in order { if let a = NSRunningApplication.runningApplications(withBundleIdentifier: b).first { return a } }
+        return nil
+    }
+
+    func flashNote(_ text: String, for seconds: Double = 2.4) {
+        flash = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in if self?.flash == text { self?.flash = "" } }
+    }
+
+    /// Lleva a tu chat de IA y hace algo: si ya estás en uno, ahí mismo; si no, trae delante el último que usaste.
+    private func inAIChat(from front: String?, _ action: @escaping () -> Void) {
+        if let f = front, VoicePreferences.aiApps.contains(f) { action(); return }
+        guard let app = aiTarget() else { flashNote(T.s("Open your AI chat first", "Abre antes tu chat de IA")); return }
+        app.activate()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: action)
+    }
+
+    /// «Explica»: lo seleccionado en cualquier app, a tu chat de IA, con «explícame esto y dime qué hacer».
+    @MainActor func explainSelection() {
+        DeskStore.haptic()
+        let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        Sender.copySelection { [weak self] sel in
+            guard let self else { return }
+            guard let sel, !sel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { self.flashNote(T.s("Select some text first", "Selecciona antes un texto")); return }
+            let clip = String(sel.prefix(12_000))
+            let prompt = T.s("Explain this in two lines and tell me what to do:\n\n```\n\(clip)\n```", "Explícame esto en dos líneas y dime qué hacer:\n\n```\n\(clip)\n```")
+            self.inAIChat(from: front) { Sender.send(prompt, enter: true) }
+        }
+    }
+
+    /// «Captura»: eliges una zona de la pantalla y va a tu chat de IA con «¿qué falla aquí?». Esc no manda nada.
+    @MainActor func snapScreen() {
+        DeskStore.haptic()
+        let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        let pb = NSPasteboard.general, before = pb.changeCount
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        p.arguments = ["-i", "-c", "-x"] // zona a elegir, al portapapeles, sin sonido
+        p.terminationHandler = { _ in
+            DispatchQueue.main.async { [weak self] in
+                guard let self, pb.changeCount != before, pb.data(forType: .png) != nil || pb.data(forType: .tiff) != nil else { return }
+                self.inAIChat(from: front) {
+                    Sender.tap(Sender.keyV, flags: .maskCommand) // la imagen
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Sender.send(T.s("What's wrong here?", "¿Qué falla aquí?"), enter: true) }
+                }
+            }
+        }
+        do { try p.run() } catch { flashNote(T.s("Couldn't take the screenshot", "No se ha podido hacer la captura")) }
+    }
+
     /// Contestar desde el aviso: trae delante la app de esa sesión, escribe la respuesta y la envía.
     func reply(_ text: String, to a: AgentAlert) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
