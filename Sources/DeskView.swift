@@ -349,12 +349,7 @@ struct Bar: View {
                 .padding(.leading, 2)
             Divider_()
             DictateItem(store: store)
-            if store.voiceNeedsAttention {
-                DockGlyph(symbol: "text.bubble", size: 13, weight: .regular, help: T.s("Review voice draft", "Revisar borrador de voz")) { store.voice.showWorkspace?() }
-                if !store.voice.draft.isEmpty && store.voice.canInsertOriginal {
-                    DockGlyph(symbol: "arrow.turn.down.left", size: 13, weight: .regular, help: T.s("Insert in the original field", "Insertar en el campo original")) { store.voice.insertDraft() }
-                }
-            }
+            // borradores e historial de voz: en el engranaje (Voz, borradores e historial…), no en la barra
             DockItem(id: nil, icon: "tray.and.arrow.down", label: "Inbox", hotkey: nil, main: false, editing: false, tint: nil, store: store,
                      help: T.s("Sends the last transcribed voice note from your inbox to the chat", "Manda al chat la última nota de voz del inbox, ya transcrita"),
                      press: { store.sendInbox() }, edit: {}, remove: {})
