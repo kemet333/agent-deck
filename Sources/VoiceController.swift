@@ -51,7 +51,7 @@ final class VoiceController: ObservableObject {
         case .cleaning: return T.s("Preparing text…","Preparando texto…")
         case .inserting: return T.s("Inserting…","Insertando…")
         case .draft: return T.s("Draft ready","Borrador listo")
-        case .failed: return T.s("Review voice","Revisar voz")
+        case .failed: return message.isEmpty ? T.s("Review voice","Revisar voz") : message // el motivo real, unos segundos
         case .idle: return T.s("Dictate","Dictar")
         }
     }
@@ -148,7 +148,10 @@ final class VoiceController: ObservableObject {
         phase = .cleaning
         operation=Task{[weak self] in
             guard let self else{return}
-            do{let transformed=try await self.client.transform(text,selection:self.purpose == .command ? self.target?.selectedText:nil,key:self.key(),preferences:self.snapshot,tone:tone,summary:self.purpose == .summary);guard self.sessionID==id,!Task.isCancelled else{return};self.complete(self.snapshot.expand(transformed),id:id)}catch is CancellationError{}catch{guard self.sessionID==id else{return};self.draft=self.purpose == .command ? self.target?.selectedText ?? "":text;self.fail(error.localizedDescription)}
+            do{let transformed=try await self.client.transform(text,selection:self.purpose == .command ? self.target?.selectedText:nil,key:self.key(),preferences:self.snapshot,tone:tone,summary:self.purpose == .summary);guard self.sessionID==id,!Task.isCancelled else{return};self.complete(self.snapshot.expand(transformed),id:id)}catch is CancellationError{}catch{guard self.sessionID==id else{return}
+                // como Vowen: si la limpieza falla en una dictado, se pega lo transcrito tal cual en vez de pararse
+                if self.purpose == .dictation { self.note(error.localizedDescription);self.complete(self.snapshot.expand(text),id:id);return }
+                self.draft=self.purpose == .command ? self.target?.selectedText ?? "":text;self.fail(error.localizedDescription)}
         }
     }
     private func complete(_ text:String,id:UUID) {
@@ -198,5 +201,18 @@ final class VoiceController: ObservableObject {
     }
 
     func removeHistory(_ id:UUID){history.removeAll{$0.id==id};persistHistory()}
-    private func fail(_ text:String){phase = .failed;level=0;message=text;NSLog("Agent Deck voz: %@", text)} // solo el motivo, nunca lo dictado
+    private func fail(_ text:String){
+        phase = .failed;level=0;message=text
+        // solo el motivo, nunca lo dictado: en Application Support/Agent Deck/voice.log
+        let line="\(ISO8601DateFormatter().string(from:Date())) \(snapshot.engine.rawValue) \(text)\n"
+        let log=storage.folder.appendingPathComponent("voice.log")
+        if let h=try? FileHandle(forWritingTo:log){h.seekToEndOfFile();h.write(Data(line.utf8));try? h.close()}else{try? Data(line.utf8).write(to:log)}
+        // el aviso no se queda para siempre: a los 6 s vuelve a reposo; lo dictado queda en el historial
+        let failedSession=sessionID
+        DispatchQueue.main.asyncAfter(deadline:.now()+6){[weak self] in
+            guard let self,self.phase == .failed,self.sessionID==failedSession else{return}
+            if !self.draft.isEmpty{if self.recordedID == nil{self.remember(self.draft,id:UUID(),kind:"draft")};self.draft=""}
+            self.raw="";self.audio=nil;self.message="";self.phase = .idle
+        }
+    }
 }
