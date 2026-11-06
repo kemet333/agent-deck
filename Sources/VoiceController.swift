@@ -149,7 +149,17 @@ final class VoiceController: ObservableObject {
         raw=text;partial="";draft=purpose == .command ? target?.selectedText ?? "":text
         let tone=snapshot.tone(for:capturedBundle)
         guard purpose == .command || purpose == .summary || tone != .verbatim else{complete(snapshot.expand(text),id:id);return}
+        // una frase corta ya viene bien puntuada de la transcripción: se pega sin esperar a la limpieza
+        if purpose == .dictation && text.split(whereSeparator:{$0.isWhitespace}).count <= 6 { complete(snapshot.expand(text),id:id);return }
         phase = .cleaning
+        // tope de espera: si la limpieza tarda más de 2,5 s, se pega lo transcrito tal cual
+        if purpose == .dictation {
+            DispatchQueue.main.asyncAfter(deadline:.now()+2.5){[weak self] in
+                guard let self,self.sessionID==id,self.phase == .cleaning else{return}
+                self.operation?.cancel();self.operation=nil
+                self.complete(self.snapshot.expand(text),id:id)
+            }
+        }
         operation=Task{[weak self] in
             guard let self else{return}
             do{let transformed=try await self.client.transform(text,selection:self.purpose == .command ? self.target?.selectedText:nil,key:self.key(),preferences:self.snapshot,tone:tone,summary:self.purpose == .summary);guard self.sessionID==id,!Task.isCancelled else{return};self.complete(self.snapshot.expand(transformed),id:id)}catch is CancellationError{}catch{guard self.sessionID==id else{return}
