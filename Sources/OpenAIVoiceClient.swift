@@ -3,6 +3,8 @@ import Foundation
 struct VoiceServiceError: LocalizedError {
     let message: String
     var errorDescription: String? { message }
+    /// El último motivo que dio OpenAI, solo para voice.log.
+    nonisolated(unsafe) static var lastDetail = ""
     static let missingKey = Self(message: T.s("Add your OpenAI API key in Voice settings.", "Añade tu clave de la API de OpenAI en los ajustes de Voz."))
 }
 // Direct provider connection only. A key is never placed in preferences, URLs, logs or history.
@@ -35,6 +37,11 @@ final class OpenAIVoiceClient: NSObject, URLSessionTaskDelegate, @unchecked Send
             case 429: text = T.s("OpenAI quota or rate limit reached. Check your API account before retrying.", "Has alcanzado la cuota o el límite de OpenAI. Revisa tu cuenta de la API antes de reintentar.")
             case 413: text = T.s("Audio exceeds the provider limit of 25 MB.", "El audio supera el límite de 25 MB del proveedor.")
             default: text = T.s("OpenAI could not complete the request", "OpenAI no ha podido completar la petición") + " (HTTP \(http.statusCode))."
+            }
+            // lo que dice OpenAI (sin ningún trozo de clave) va al registro para saber si es la clave, el saldo o el modelo
+            if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let err = obj["error"] as? [String: Any], let m = err["message"] as? String {
+                let clean = m.replacingOccurrences(of: "sk-[A-Za-z0-9_*\\-]+", with: "sk-…", options: .regularExpression).prefix(240)
+                VoiceServiceError.lastDetail = "HTTP \(http.statusCode) \(request.url?.lastPathComponent ?? ""): \(clean)"
             }
             throw VoiceServiceError(message: text)
         }

@@ -74,7 +74,11 @@ final class VoiceController: ObservableObject {
     private func savePreferences() { do{try storage.save(preferences,name:"voice-settings.json")}catch{message=T.s("Could not save voice preferences.","No se han podido guardar los ajustes de voz.")} }
     private func key()->String { keyProvider() }
     func refreshKey() { keyConfigured = !key().isEmpty }
-    func saveKey(_ value:String) { guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try saveCredential(value);refreshKey();message=T.s("Key saved in this Mac's Keychain. It will be checked on the next request.","Clave guardada en el Llavero de este Mac. Se comprobará en la próxima petición.")}catch{message=error.localizedDescription} }
+    func saveKey(_ value:String) {
+        // una clave de OpenAI empieza por «sk-» y es larga: así no se guarda una letra suelta al pegar mal
+        let v=value.trimmingCharacters(in:.whitespacesAndNewlines)
+        guard v.hasPrefix("sk-"),v.count>=20 else{message=T.s("That doesn't look like an OpenAI key (it starts with sk-). Paste it with ⌘V.","Eso no parece una clave de OpenAI (empieza por sk-). Pégala con ⌘V.");return}
+        guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try saveCredential(value);refreshKey();message=T.s("Key saved in this Mac's Keychain. It will be checked on the next request.","Clave guardada en el Llavero de este Mac. Se comprobará en la próxima petición.")}catch{message=error.localizedDescription} }
     func removeKey() { guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try removeCredential();refreshKey();message=T.s("Key removed from Keychain.","Clave eliminada del Llavero.")}catch{message=error.localizedDescription} }
     private func persistDraft(){
         guard draft.utf8.count<=1_000_000 else{message=T.s("This draft is too large to save automatically. Export it before closing.","El borrador es demasiado grande para guardarlo automáticamente. Expórtalo antes de cerrar.");return}
@@ -204,7 +208,8 @@ final class VoiceController: ObservableObject {
     private func fail(_ text:String){
         phase = .failed;level=0;message=text
         // solo el motivo, nunca lo dictado: en Application Support/Agent Deck/voice.log
-        let line="\(ISO8601DateFormatter().string(from:Date())) \(snapshot.engine.rawValue) \(text)\n"
+        let detail=VoiceServiceError.lastDetail;VoiceServiceError.lastDetail=""
+        let line="\(ISO8601DateFormatter().string(from:Date())) \(snapshot.engine.rawValue) \(snapshot.transcriptionModel)/\(snapshot.textModel) \(text)\(detail.isEmpty ? "" : " · "+detail)\n"
         let log=storage.folder.appendingPathComponent("voice.log")
         if let h=try? FileHandle(forWritingTo:log){h.seekToEndOfFile();h.write(Data(line.utf8));try? h.close()}else{try? Data(line.utf8).write(to:log)}
         // el aviso no se queda para siempre: a los 6 s vuelve a reposo; lo dictado queda en el historial
