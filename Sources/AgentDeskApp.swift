@@ -38,6 +38,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.hide = { [weak self] in self?.store.toggleCollapsed() }
         installHotkeys()
         voiceHotkeys = VoiceHotkeys(voice: store.voice); voiceHotkeys?.install()
+        // sin Accesibilidad todavía, el tap de Fn no se crea: se reintenta hasta que se dé el permiso, sin reabrir la app
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] t in
+            MainActor.assumeIsolated {
+                guard let self, let hk = self.voiceHotkeys else { t.invalidate(); return }
+                if hk.hasTap { t.invalidate(); return }
+                if Sender.accessibilityGranted(prompt: false) { hk.install() }
+            }
+        }
         store.voice.showWorkspace = { [weak self] in self?.openVoice() }
         store.voice.showDeck = { [weak self] in guard let self else{return};self.voiceWindow?.orderOut(nil);self.store.collapsed=false;self.panel.orderFrontRegardless() }
         store.voice.onShortcutsChanged = { [weak self] in if self?.store.voice.active == true{self?.store.voice.cancel()};self?.voiceHotkeys?.install() }
