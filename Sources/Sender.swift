@@ -106,7 +106,7 @@ enum Sender {
         DispatchQueue.main.asyncAfter(deadline:.now()+0.05){
             guard deliveryRevision==epoch,allow(),matches(target,selection:true),pasteboard.changeCount==written else { restore();completion(.failure(VoiceServiceError(message:T.s("The destination or clipboard changed before insertion. Your draft is kept.","El destino o el portapapeles cambió antes de insertar. Se conserva el borrador."))));return }
             guard tap(keyV,flags:.maskCommand) else{restore();completion(.failure(VoiceServiceError(message:T.s("The paste event could not be created. Your draft is kept.","No se ha podido crear el evento de pegado. Se conserva el borrador."))));return}
-            DispatchQueue.main.asyncAfter(deadline:.now()+0.18){
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.3){ // los chats Electron/web tardan algo en meter el pegado
                 guard deliveryRevision==epoch,allow() else{restore();completion(.failure(CancellationError()));return}
                 // Enter is only sent to the same field and never runs a terminal command automatically.
                 if enter && !(guardTerminal && isTerminal(target)) {

@@ -59,7 +59,7 @@ final class VoiceController: ObservableObject {
         self.frontApp=frontApp ?? {let app=NSWorkspace.shared.frontmostApplication;return(app?.localizedName ?? "App",app?.bundleIdentifier)}
         self.saveCredential=saveCredential ?? VoiceKeychain.save;self.removeCredential=removeCredential ?? VoiceKeychain.remove
         self.captureTarget=captureTarget ?? {try Sender.capture(selection:$0)}
-        self.deliverText=deliverText ?? {text,target,enter,method,guardTerminal,allow,done in Sender.deliver(text,to:target,enter:enter,method:method,guardTerminal:guardTerminal,allow:allow,completion:done)}
+        self.deliverText=deliverText ?? {text,target,enter,method,guardTerminal,allow,done in Sender.deliver(text,to:target,enter:enter,method:method,guardTerminal:guardTerminal,verifyBeforeEnter:false,allow:allow,completion:done)} // los chats tardan en reflejar el pegado: Intro solo exige seguir en el mismo campo
         self.storage=storage;self.client=client;self.recorder=recorder ?? VoiceRecorder()
         self.keyProvider=keyProvider ?? {VoiceKeychain.read() ?? ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""}
         self.microphonePermission=microphonePermission ?? {
@@ -191,8 +191,7 @@ final class VoiceController: ObservableObject {
                 self.onDelivered?(text)
             case .failure(let error):
                 // sin «Borrador listo» colgado: el texto queda en el historial y en el portapapeles para pegarlo a mano
-                NSLog("Agent Deck voz: %@", error.localizedDescription)
-                if !(error is CancellationError) { Sender.copy(text) }
+                if !(error is CancellationError) { Sender.copy(text);self.log("envío: "+error.localizedDescription) }
                 self.draft="";self.raw="";self.phase = .idle;self.message=""}
         }
     }
@@ -215,13 +214,17 @@ final class VoiceController: ObservableObject {
     }
 
     func removeHistory(_ id:UUID){history.removeAll{$0.id==id};persistHistory()}
+    /// Solo motivos, nunca lo dictado: en Application Support/Agent Deck/voice.log.
+    private func log(_ text:String){
+        let detail=VoiceServiceError.lastDetail;VoiceServiceError.lastDetail=""
+        let line="\(ISO8601DateFormatter().string(from:Date())) \(snapshot.engine.rawValue) \(snapshot.transcriptionModel)/\(snapshot.textModel) \(text)\(detail.isEmpty ? "" : " · "+detail)\n"
+        let file=storage.folder.appendingPathComponent("voice.log")
+        if let h=try? FileHandle(forWritingTo:file){h.seekToEndOfFile();h.write(Data(line.utf8));try? h.close()}else{try? Data(line.utf8).write(to:file)}
+    }
     private func fail(_ text:String){
         phase = .failed;level=0;message=text
         // solo el motivo, nunca lo dictado: en Application Support/Agent Deck/voice.log
-        let detail=VoiceServiceError.lastDetail;VoiceServiceError.lastDetail=""
-        let line="\(ISO8601DateFormatter().string(from:Date())) \(snapshot.engine.rawValue) \(snapshot.transcriptionModel)/\(snapshot.textModel) \(text)\(detail.isEmpty ? "" : " · "+detail)\n"
-        let log=storage.folder.appendingPathComponent("voice.log")
-        if let h=try? FileHandle(forWritingTo:log){h.seekToEndOfFile();h.write(Data(line.utf8));try? h.close()}else{try? Data(line.utf8).write(to:log)}
+        log(text)
         // el aviso no se queda para siempre: a los 6 s vuelve a reposo; lo dictado queda en el historial
         let failedSession=sessionID
         DispatchQueue.main.asyncAfter(deadline:.now()+6){[weak self] in
