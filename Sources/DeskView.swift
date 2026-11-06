@@ -310,7 +310,7 @@ struct AlertPill: View {
                                 .font(.system(size: 11.5, weight: .semibold)).foregroundColor(Color(hex: 0x2a0d02))
                                 .padding(.horizontal, 12).padding(.vertical, 7)
                                 .background(Capsule().fill(Color(hex: 0xff5b1f)))
-                        }.buttonStyle(.plain).keyboardShortcut(.defaultAction)
+                        }.buttonStyle(.plain) // solo con clic: un Intro escrito en otra app no debe contestar por ti
                         if let autopilot, answer.isEmpty {
                             Button(action: autopilot) {
                                 Label("×5", systemImage: "airplane").font(.system(size: 11.5, weight: .semibold)).foregroundColor(th.ink)
