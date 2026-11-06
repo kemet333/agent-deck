@@ -81,6 +81,7 @@ struct VoiceWorkspaceView: View {
             }
             card(T.s("Your writing style","Tu forma de escribir")){
                 Picker(T.s("Tone","Tono"),selection:$voice.preferences.tone){ForEach(VoiceTone.allCases,id:\.self){Text($0.title).tag($0)}}
+                Toggle(T.s("In AI chats, turn longer dictation into a clear prompt","En los chats de IA, convertir lo dictado largo en un prompt claro"),isOn:$voice.preferences.promptInAIApps)
                 Text(T.s("Verbatim skips AI cleanup. Other tones and selection editing use the configured OpenAI text model.","Literal omite la limpieza con IA. Los demás tonos y la edición de selecciones usan el modelo de texto de OpenAI configurado.")).font(.system(size:10)).foregroundStyle(Palette.mute)
                 Text(T.s("Custom style instructions","Instrucciones de estilo")).font(.system(size:11));TextEditor(text:$voice.preferences.instructions).frame(height:65).scrollContentBackground(.hidden).padding(6).background(Color.black.opacity(0.2),in:RoundedRectangle(cornerRadius:7))
                 DisclosureGroup(T.s("Tone by app","Tono por aplicación")){

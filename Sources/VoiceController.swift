@@ -172,14 +172,18 @@ final class VoiceController: ObservableObject {
     }
     private func process(_ text:String,id:UUID) {
         raw=text;partial="";draft=purpose == .command ? target?.selectedText ?? "":text
-        let tone=snapshot.tone(for:capturedBundle)
+        var tone=snapshot.tone(for:capturedBundle)
+        // Voz → prompt: en un chat de IA, lo que pasa de 12 palabras se ordena como un prompt (salvo un tono propio para esa app)
+        let words=text.split(whereSeparator:{$0.isWhitespace}).count
+        if purpose == .dictation, snapshot.promptInAIApps, tone != .verbatim, words > 12,
+           let b=capturedBundle, VoicePreferences.aiApps.contains(b), snapshot.appTones[b] == nil { tone = .prompt }
         guard purpose == .command || purpose == .summary || tone != .verbatim else{complete(snapshot.expand(text),id:id);return}
         // una frase corta ya viene bien puntuada de la transcripción: se pega sin esperar a la limpieza
         if purpose == .dictation && text.split(whereSeparator:{$0.isWhitespace}).count <= 6 { complete(snapshot.expand(text),id:id);return }
         phase = .cleaning
         // tope de espera: si la limpieza tarda más de 2,5 s, se pega lo transcrito tal cual
         if purpose == .dictation {
-            DispatchQueue.main.asyncAfter(deadline:.now()+2.5){[weak self] in
+            DispatchQueue.main.asyncAfter(deadline:.now()+(tone == .prompt ? 7 : 2.5)){[weak self] in
                 guard let self,self.sessionID==id,self.phase == .cleaning else{return}
                 self.operation?.cancel();self.operation=nil
                 self.complete(self.snapshot.expand(text),id:id)
