@@ -37,6 +37,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
         }
         store.hide = { [weak self] in self?.store.toggleCollapsed() }
+        // el último chat de IA que tuviste delante, para «Explica» y «Captura»
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] n in
+            let b = (n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier
+            MainActor.assumeIsolated { self?.store.noteActivated(b) }
+        }
         installHotkeys()
         voiceHotkeys = VoiceHotkeys(voice: store.voice); voiceHotkeys?.install()
         // sin Accesibilidad todavía, el tap de Fn no se crea: se reintenta hasta que se dé el permiso, sin reabrir la app
@@ -260,6 +265,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if code == 43 { self.openVoice(); return }
                 if code == 37 { self.store.voice.pasteLast(); return }
                 if code == 46 { self.store.toggleDictation(); return }
+                if code == 14 { self.store.explainSelection(); return } // E
+                if code == 1 { self.store.snapScreen(); return }        // S
                 if let chars,let n=Int(chars),(1...9).contains(n){self.store.press(hotkey:n)}
             }
         }

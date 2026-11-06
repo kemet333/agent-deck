@@ -439,6 +439,12 @@ struct Bar: View {
             Divider_()
             DictateItem(store: store)
             // borradores e historial de voz: en el engranaje (Voz, borradores e historial…), no en la barra
+            DockItem(id: nil, icon: "text.magnifyingglass", label: T.s("Explain", "Explica"), hotkey: nil, main: false, editing: false, tint: nil, store: store,
+                     help: T.s("Sends what you've selected, in any app, to your AI chat to explain it (⌃⌥E)", "Manda lo que tengas seleccionado, en cualquier app, a tu chat de IA para que lo explique (⌃⌥E)"),
+                     press: { store.explainSelection() }, edit: {}, remove: {})
+            DockItem(id: nil, icon: "camera.viewfinder", label: T.s("Snap", "Captura"), hotkey: nil, main: false, editing: false, tint: nil, store: store,
+                     help: T.s("Pick an area of the screen and ask your AI chat what's wrong (⌃⌥S)", "Elige una zona de la pantalla y pregunta a tu chat de IA qué falla (⌃⌥S)"),
+                     press: { store.snapScreen() }, edit: {}, remove: {})
             DockItem(id: nil, icon: "tray.and.arrow.down", label: "Inbox", hotkey: nil, main: false, editing: false, tint: nil, store: store,
                      help: T.s("Sends the last transcribed voice note from your inbox to the chat", "Manda al chat la última nota de voz del inbox, ya transcrita"),
                      press: { store.sendInbox() }, edit: {}, remove: {})
