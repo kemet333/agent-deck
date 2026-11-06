@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Key packs · Agent Bar</title>
+<meta name="description" content="Ready-made Agent Bar keys for Claude Code, Cursor, ChatGPT and writing. One click adds them to your bar.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="packs.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a class="brand" href="../"><span class="mark"><i></i><i></i></span>Agent Bar</a><a class="btn btn--ghost" href="https://github.com/kemet333/agent-deck/releases/latest/download/AgentBar.dmg">Download for Mac</a></div>
+  <h1>Key packs.</h1>
+  <p class="lead">Ready-made keys for the tools you use. Click «Add to Agent Bar»: it asks whether to add them to your keys or replace them. Want to share yours? Menu → Key packs → Share my keys.</p>
+  <div class="grid" id="grid"></div>
+</main>
+<script>
+var PACKS = [
+  {name:"Claude Code",keys:[
+    {label:"Plan first",text:"make a plan first and wait for my ok",icon:"list.bullet.clipboard",enter:true},
+    {label:"Continue",text:"continue",icon:"arrow.right.circle",enter:true},
+    {label:"Test it",text:"run the tests and tell me what fails",icon:"testtube.2",enter:true},
+    {label:"Fix it",text:"fix those errors, then continue",icon:"wrench.and.screwdriver",enter:true},
+    {label:"Commit",text:"commit this with a clear message",icon:"checkmark.seal",enter:true},
+    {label:"Recap",text:"short recap: where are we and what's left",icon:"list.bullet.rectangle",enter:true}]},
+  {name:"Cursor",keys:[
+    {label:"Continue",text:"continue",icon:"arrow.right.circle",enter:true},
+    {label:"Smaller",text:"make a smaller change, only what's needed",icon:"scissors",enter:true},
+    {label:"Explain",text:"explain what you changed and why, in 3 lines",icon:"text.quote",enter:true},
+    {label:"Fix lint",text:"fix the lint and type errors",icon:"hammer",enter:true},
+    {label:"Undo",text:"undo that last change",icon:"arrow.uturn.backward.circle",enter:true}]},
+  {name:"ChatGPT",keys:[
+    {label:"Go on",text:"go on",icon:"arrow.right.circle",enter:true},
+    {label:"Shorter",text:"shorter, half the length",icon:"text.badge.minus",enter:true},
+    {label:"Simpler",text:"explain it like I'm new to this",icon:"lightbulb",enter:true},
+    {label:"Table",text:"put that in a table",icon:"tablecells",enter:true},
+    {label:"Sources",text:"give me the sources with links",icon:"link",enter:true}]},
+  {name:"Writing",keys:[
+    {label:"Shorter",text:"make it shorter and clearer",icon:"text.badge.minus",enter:true},
+    {label:"Friendlier",text:"make the tone warmer and more natural",icon:"face.smiling",enter:true},
+    {label:"Formal",text:"make it formal and professional",icon:"briefcase",enter:true},
+    {label:"3 options",text:"give me 3 different versions",icon:"square.stack.3d.up",enter:true},
+    {label:"Translate",text:"translate it to Spanish",icon:"globe",enter:true}]}
+];
+function enc(p){var b=btoa(unescape(encodeURIComponent(JSON.stringify(p))));return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var g=document.getElementById('grid');
+PACKS.forEach(function(p){
+  var d=enc(p), el=document.createElement('article'); el.className='pack';
+  el.innerHTML='<h2>'+esc(p.name)+'</h2><ul class="keys">'+p.keys.map(function(k){return '<li><b>'+esc(k.label)+'</b><span>«'+esc(k.text)+'»</span></li>';}).join('')+'</ul>'+
+    '<div class="row"><a class="btn" href="agentdeck://pack?d='+d+'"><span class="dot"></span>Add to Agent Bar</a><a class="btn btn--ghost" href="../p/#'+d+'">Share link</a></div>';
+  g.appendChild(el);
+});
+</script>
+</body>
+</html>

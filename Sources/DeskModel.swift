@@ -267,6 +267,24 @@ final class DeskStore: ObservableObject {
 
     func restoreDefaults() { keys = DeskStore.defaults }
 
+    /// Tus teclas como pack, para compartirlas con un enlace.
+    var currentPack: KeyPack {
+        KeyPack(name: T.s("My keys", "Mis teclas"), keys: keys.prefix(12).map { KeyPack.Key(label: String($0.label.prefix(24)), text: String($0.text.prefix(2000)), icon: $0.icon, enter: $0.sendEnter) })
+    }
+    /// Instala un pack: «reemplazar» deja solo sus teclas (⌃⌥1…); «añadir» las pone detrás, con los atajos que queden libres.
+    func install(_ pack: KeyPack, replace: Bool) {
+        let group = String(pack.name.prefix(40))
+        var new: [DeskKey] = replace ? [] : keys
+        var used = Set(new.compactMap { $0.hotkey })
+        for k in pack.keys {
+            let free = (1...9).first { !used.contains($0) }
+            if let f = free { used.insert(f) }
+            new.append(DeskKey(label: k.label.isEmpty ? String(k.text.prefix(16)) : k.label, text: k.text, hotkey: free, sendEnter: k.enter, icon: k.icon.isEmpty ? "sparkles" : k.icon, group: group))
+        }
+        keys = new
+        flashNote(T.s("Pack «\(group)» added", "Pack «\(group)» añadido"))
+    }
+
     /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
     func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false) {
         let a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),

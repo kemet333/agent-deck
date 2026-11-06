@@ -89,6 +89,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 store.autopilotTurn(left: Int(v("left")) ?? 0, place: v("place"))
             case "press":
                 if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
+            case "pack": // agentdeck://pack?d=<base64url>: un pack compartido; siempre pregunta antes
+                if let d = q.first(where: { $0.name == "d" })?.value, let p = KeyPack.decode(d) { offerPack(p) }
+                else { store.flashNote(T.s("That pack link isn't valid", "Ese enlace de pack no es válido")) }
             case "send":
                 if let t = q.first(where: { $0.name == "text" })?.value, !t.isEmpty {
                     Sender.send(t, enter: (q.first { $0.name == "enter" }?.value ?? "1") != "0")
@@ -151,6 +154,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
         menu.addItem(withTitle: T.s("Accessibility permission…", "Permiso de Accesibilidad…"), action: #selector(openAccessibility), keyEquivalent: "")
+        let packsItem = NSMenuItem(title: T.s("Key packs", "Packs de teclas"), action: nil, keyEquivalent: "")
+        let packs = NSMenu()
+        for (i, p) in KeyPack.builtIn.enumerated() { let it = NSMenuItem(title: p.name + "…", action: #selector(pickPack(_:)), keyEquivalent: ""); it.tag = i; it.target = self; packs.addItem(it) }
+        packs.addItem(.separator())
+        let share = NSMenuItem(title: T.s("Share my keys (copy link)", "Compartir mis teclas (copiar enlace)"), action: #selector(shareKeys), keyEquivalent: ""); share.target = self
+        packs.addItem(share)
+        let more = NSMenuItem(title: T.s("More packs on getagentbar.com…", "Más packs en getagentbar.com…"), action: #selector(morePacks), keyEquivalent: ""); more.target = self
+        packs.addItem(more)
+        packsItem.submenu = packs
+        menu.addItem(packsItem)
         menu.addItem(withTitle: T.s("Restore default keys", "Restaurar teclas de fábrica"), action: #selector(restoreDefaults), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: T.s("Quit Agent Deck", "Salir de Agent Deck"), action: #selector(quit), keyEquivalent: "q")
@@ -179,6 +192,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func restoreDefaults() { store.restoreDefaults() }
     @objc func pasteLastVoice() { store.voice.pasteLast() }
+    /// Un pack (de la lista o de un enlace): enseña sus teclas y pregunta si añadirlas o reemplazar las tuyas.
+    func offerPack(_ p: KeyPack) {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        a.messageText = T.s("Add the «\(p.name)» pack?", "¿Añadir el pack «\(p.name)»?")
+        a.informativeText = p.keys.prefix(12).map { "• \($0.label) — «\($0.text.prefix(80))»" }.joined(separator: "\n")
+        a.addButton(withTitle: T.s("Add to my keys", "Añadir a mis teclas"))
+        a.addButton(withTitle: T.s("Replace my keys", "Reemplazar mis teclas"))
+        a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        switch a.runModal() {
+        case .alertFirstButtonReturn: store.install(p, replace: false)
+        case .alertSecondButtonReturn: store.install(p, replace: true)
+        default: break
+        }
+    }
+    @objc func pickPack(_ sender: NSMenuItem) { if KeyPack.builtIn.indices.contains(sender.tag) { offerPack(KeyPack.builtIn[sender.tag]) } }
+    @objc func shareKeys() {
+        Sender.copy(store.currentPack.shareURL)
+        store.flashNote(T.s("Link copied: paste it anywhere", "Enlace copiado: pégalo donde quieras"), for: 3)
+    }
+    @objc func morePacks() { if let u = URL(string: "https://getagentbar.com/packs/") { NSWorkspace.shared.open(u) } }
     @objc func setPilot(_ sender: NSMenuItem) {
         if sender.tag > 0 && !ClaudeHooks.installed { connectClaude(); if !ClaudeHooks.installed { return } }
         store.setAutopilot(sender.tag)
