@@ -63,6 +63,10 @@ struct AgentAlert: Equatable {
     var message: String = ""
     /// La app donde corre esa sesión (bundle id), para contestar allí.
     var host: String = ""
+    /// El archivo del gancho de esa conversación; si su gancho espera respuesta, contestar va justo a ella.
+    var token: String = ""
+    var waiting: Bool = false
+    var created = Date()
     let id = UUID()
     var title: String { ask ? T.s("\(app) is waiting for you", "\(app) te espera") : T.s("\(app) is done", "\(app) ha terminado") }
 }
@@ -75,7 +79,9 @@ final class DeskStore: ObservableObject {
     @Published var style: BarStyle { didSet { UserDefaults.standard.set(style.rawValue, forKey: "style") } }
     @Published var lastSent: String = ""
     /// Aviso de un agente: ha terminado o te espera. Lo trae agentdeck://alert (ganchos de Claude Code u otros).
-    @Published var alert: AgentAlert?
+    /// Un aviso por conversación (Claude Code puede tener varias terminando a la vez); el último, abajo.
+    @Published var alerts: [AgentAlert] = []
+    var alert: AgentAlert? { alerts.last }
     @Published var editing: Bool = false
     /// Dictado: escuchando, texto parcial y nivel del micro (para el icono).
     @Published var listening: Bool = false
@@ -262,14 +268,16 @@ final class DeskStore: ObservableObject {
     func restoreDefaults() { keys = DeskStore.defaults }
 
     /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
-    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "") {
+    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false) {
         let a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),
-                           message: String(message.prefix(4000)), host: String(host.prefix(120)))
-        alert = a
+                           message: String(message.prefix(4000)), host: String(host.prefix(120)), token: token, waiting: waiting && !token.isEmpty)
+        alerts.append(a)
+        // como mucho 4: el más antiguo se suelta (su conversación se para como siempre)
+        while alerts.count > 4 { let old = alerts.removeFirst(); release(old) }
         NSSound(named: ask ? "Ping" : "Glass")?.play()
         DeskStore.haptic(.levelChange)
         // sin mensaje se va solo; con mensaje se queda hasta que contestes o lo cierres
-        if a.message.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in if self?.alert == a { self?.alert = nil } } }
+        if a.message.isEmpty && !a.waiting { DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in self?.alerts.removeAll { $0.id == a.id } } }
     }
 
     // MARK: - Piloto automático (Claude Code)
@@ -351,11 +359,32 @@ final class DeskStore: ObservableObject {
         do { try p.run() } catch { flashNote(T.s("Couldn't take the screenshot", "No se ha podido hacer la captura")) }
     }
 
-    /// Contestar desde el aviso: trae delante la app de esa sesión, escribe la respuesta y la envía.
+    /// La respuesta para el gancho que espera en esa conversación: Application Support/Agent Deck/hooks/<archivo>.decision
+    private func decide(_ a: AgentAlert, _ obj: [String: String]) -> Bool {
+        guard a.waiting, a.token.range(of: "^[0-9]+-[0-9]+\\.json$", options: .regularExpression) != nil,
+              Date().timeIntervalSince(a.created) < ClaudeHooks.waitSeconds - 5,
+              let d = try? JSONSerialization.data(withJSONObject: obj) else { return false }
+        let url = Self.folder.appendingPathComponent("hooks").appendingPathComponent(a.token + ".decision")
+        return (try? d.write(to: url, options: .atomic)) != nil
+    }
+    /// Cerrar un aviso: si su gancho esperaba, se le suelta y esa conversación se para como siempre.
+    func dismissAlert(_ a: AgentAlert) { alerts.removeAll { $0.id == a.id }; release(a) }
+    private func release(_ a: AgentAlert) { _ = decide(a, ["action": "release"]) }
+    /// El gancho dejó de esperar (pasó el tiempo): contestar irá por la ventana.
+    func alertReleased(token: String) { if let i = alerts.firstIndex(where: { $0.token == token }) { alerts[i].waiting = false } }
+
+    /// Contestar desde el aviso. Si su gancho espera, la respuesta va por él a esa misma conversación de Claude Code,
+    /// tengas delante la ventana que tengas. Si no, trae delante su app y la escribe allí.
     func reply(_ text: String, to a: AgentAlert) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
-        alert = nil
+        alerts.removeAll { $0.id == a.id }
+        if decide(a, ["action": "continue", "text": t]) {
+            let f = DateFormatter(); f.dateFormat = "HH:mm"
+            lastSent = "\(f.string(from: Date())) · \(t)"
+            flashNote(T.s("Sent to \(a.place.isEmpty ? a.app : a.place)", "Enviado a \(a.place.isEmpty ? a.app : a.place)"))
+            return
+        }
         let app = a.host.isEmpty ? nil : NSRunningApplication.runningApplications(withBundleIdentifier: a.host).first
         app?.activate()
         DispatchQueue.main.asyncAfter(deadline: .now() + (app == nil ? 0.05 : 0.35)) {

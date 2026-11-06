@@ -81,7 +81,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "alert": // agentdeck://alert?app=Claude%20Code&kind=done|ask&place=proyecto
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
                 let msg = v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file"))
-                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"))
+                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1")
+            case "released": // el gancho de esa conversación dejó de esperar
+                store.alertReleased(token: q.first(where: { $0.name == "file" })?.value ?? "")
             case "autopilot": // lo manda AgentBarClaudeHook cada vez que el piloto sigue solo
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
                 store.autopilotTurn(left: Int(v("left")) ?? 0, place: v("place"))

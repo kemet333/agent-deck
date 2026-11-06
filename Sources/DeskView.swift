@@ -221,8 +221,8 @@ struct DockView: View {
     @ObservedObject var store: DeskStore
     var body: some View {
         VStack(spacing: 10) {
-            if let a = store.alert {
-                AlertPill(alert: a, dismiss: { store.alert = nil }, reply: { store.reply($0, to: a) },
+            ForEach(store.alerts.suffix(3), id: \.id) { a in
+                AlertPill(alert: a, dismiss: { store.dismissAlert(a) }, reply: { store.reply($0, to: a) },
                           autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.keys.first?.text ?? T.s("continue", "continúa"), to: a) } : nil)
                     .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8, anchor: .bottom)))
             }
@@ -239,7 +239,7 @@ struct DockView: View {
         }
         .animation(Motion.fold, value: store.collapsed)
         }
-        .animation(Motion.settle, value: store.alert)
+        .animation(Motion.settle, value: store.alerts)
         .padding(.horizontal, 30).padding(.top, 36).padding(.bottom, 14) // sitio para la sombra y los rebotes
         .focusEffectDisabled()
     }

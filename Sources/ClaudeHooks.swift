@@ -11,9 +11,11 @@ enum ClaudeHooks {
     static var helper: String { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AgentBarClaudeHook").path }
     static let helperName = "AgentBarClaudeHook"
     static func command(kind: String) -> String { "\"\(helper)\" \(kind)" }
+    /// Lo que el gancho de una conversación terminada espera tu respuesta en la tarjeta (luego para como siempre).
+    static let waitSeconds: Double = 600
 
     /// Ganchos de esta versión, apuntando a esta copia de la app.
-    static var installed: Bool { text.contains(helper) }
+    static var installed: Bool { text.contains(helper) && text.contains("\"timeout\"") }
     static var oldVersion: Bool { (text.contains(marker) || text.contains(helperName)) && !installed }
     private static var text: String { (try? String(contentsOf: settings, encoding: .utf8)) ?? "" }
 
@@ -42,7 +44,10 @@ enum ClaudeHooks {
             var list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
                 !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
             }
-            list.append(["hooks": [["type": "command", "command": command(kind: kind)]]])
+            // Stop espera tu respuesta en la tarjeta hasta 10 min: Claude Code no debe cortarlo antes
+            var hook: [String: Any] = ["type": "command", "command": command(kind: kind)]
+            if event == "Stop" { hook["timeout"] = Int(waitSeconds) + 60 }
+            list.append(["hooks": [hook]])
             hooks[event] = list
         }
         root["hooks"] = hooks
