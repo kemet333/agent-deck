@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Agent Bar · Press one key. Your AI keeps going.</title>
-<meta name="description" content="Agent Bar types continue, next and do it into any chat, so you stop babysitting your agents. Free for Mac. Made by Prompted.">
+<meta name="description" content="Stop typing continue. Agent Bar answers your AI agents with one key or your voice, turns what you say into a clear prompt and tells you when Claude Code is done. Free for Mac. Made by Prompted.">
 <meta property="og:title" content="Agent Bar · Press one key. Your AI keeps going.">
 <meta property="og:description" content="One key for what you type a hundred times a day. Free for Mac.">
 <meta property="og:type" content="website">
@@ -75,7 +75,7 @@ p{margin:0;text-wrap:pretty}
 /* Reveal */
 .rv{opacity:0;transform:translateY(28px);filter:blur(6px);transition:opacity .9s var(--ease),transform .9s var(--ease),filter .9s var(--ease)}
 .rv.in{opacity:1;transform:none;filter:none}
-@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}.al i{animation:none}}
 
 /* Hero */
 .hero{padding:150px 0 40px}
@@ -171,8 +171,22 @@ p{margin:0;text-wrap:pretty}
 .cell .soon{font:500 12px var(--mono);color:var(--mute)}
 .cell--tap{grid-column:span 7;grid-row:span 2;min-height:560px}
 .cell--talk{grid-column:span 5}
-.cell--repeat{grid-column:span 5;background:var(--accent);color:var(--accent-ink);box-shadow:none}
-.cell--repeat p,.cell--repeat .soon{color:rgba(26,10,3,.72)}
+.cell--prompt{grid-column:span 5;background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.cell--prompt p,.cell--prompt .soon{color:rgba(26,10,3,.72)}
+.cell--alert,.cell--repeat,.cell--style{grid-column:span 4}
+.pp{display:grid;gap:10px;font:500 12.5px/1.45 var(--mono)}
+.pp__said{opacity:.72}
+.pp__out{padding:12px 14px;border-radius:12px;background:rgba(26,10,3,.1)}
+.pp__out b{font-weight:600}
+.al{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;padding:10px 14px;border-radius:16px;background:#17171a;color:#f5f5f7;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.al i{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 10px rgba(255,255,255,.8);animation:pulse 2.4s var(--ease) infinite}
+.al span{display:grid;gap:1px}.al b{font:600 13px var(--sans)}.al em{font:500 10.5px var(--mono);font-style:normal;color:#8e8e93}
+@keyframes pulse{50%{opacity:.45}}
+.sws{display:flex;gap:10px}
+.sw2{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line)}
+.sw2--glass{background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.06)),#2a2a30}
+.sw2--classic{background:#0b0d10}
+.sw2--metal{background:conic-gradient(from 210deg,var(--accent) 0 25%,#dcdcd8 25% 100%)}
 .caps{display:flex;gap:10px;flex-wrap:wrap}
 .cap{min-width:72px;height:72px;padding:0 18px;border-radius:16px;display:grid;place-items:center;font:500 24px var(--mono);background:var(--bg);box-shadow:inset 0 -4px 0 var(--line-2),inset 0 0 0 1px var(--line);color:var(--ink)}
 .cap.sm{min-width:46px;height:46px;padding:0 12px;border-radius:12px;font-size:17px}
@@ -243,7 +257,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .hero__grid,.hero__top,.pad__grid,.privacy__in{grid-template-columns:1fr;gap:28px}
   .hero__media,.pad .frame{transform:none}
   .bento__grid{grid-template-columns:1fr}
-  .cell--tap,.cell--talk,.cell--repeat{grid-column:auto;grid-row:auto;min-height:280px}
+  .cell--tap,.cell--talk,.cell--prompt,.cell--alert,.cell--repeat,.cell--style{grid-column:auto;grid-row:auto;min-height:260px}
   .band__img img{aspect-ratio:4/3}
   .band__img h2{left:24px;bottom:22px}
   .stage{aspect-ratio:auto;padding:28px 14px}
@@ -328,17 +342,44 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
         <article class="cell cell--talk rv">
           <div class="fn" aria-hidden="true">fn</div>
           <div>
-            <span class="soon">Pro · coming soon</span>
+            <span class="soon">Free</span>
             <h3 style="margin-top:10px">Talk</h3>
-            <p>Hold fn and speak. Agent Bar cleans it up and types it in.</p>
+            <p>Hold fn and speak. Let go and it's typed and sent. The Mac's own dictation, or OpenAI with your key for cleaner text.</p>
+          </div>
+        </article>
+        <article class="cell cell--prompt rv">
+          <div class="pp" aria-hidden="true">
+            <span class="pp__said">“so fix the login and don't break the tests and check sign-up too”</span>
+            <span class="pp__out"><b>Fix the login.</b><br>· Don't break the tests<br>· Check the sign-up form<br>Done when: tests pass</span>
+          </div>
+          <div>
+            <span class="soon">Free · new</span>
+            <h3 style="margin-top:10px">Talk, get a prompt</h3>
+            <p>In Claude, ChatGPT or Cursor, a long ramble becomes a clear prompt. Nothing added, nothing lost.</p>
+          </div>
+        </article>
+        <article class="cell cell--alert rv">
+          <div class="al" aria-hidden="true"><i></i><span><b>Claude Code is done</b><em>my-app</em></span></div>
+          <div>
+            <span class="soon">Free · new</span>
+            <h3 style="margin-top:10px">Know when it's done</h3>
+            <p>The orb lights up and chimes when Claude Code finishes or needs your yes. Walk away, come back on time.</p>
           </div>
         </article>
         <article class="cell cell--repeat rv">
-          <div class="queue" aria-hidden="true">next × 10</div>
+          <div class="queue" aria-hidden="true">next × 5</div>
           <div>
-            <span class="soon">Pro · coming soon</span>
+            <span class="soon">For Codex</span>
             <h3 style="margin-top:10px">Repeat</h3>
-            <p>Queue it once. Each time your agent finishes, the next step goes in.</p>
+            <p>Queue it once. Each time Codex finishes, the next step goes in.</p>
+          </div>
+        </article>
+        <article class="cell cell--style rv">
+          <div class="sws" aria-hidden="true"><span class="sw2 sw2--glass"></span><span class="sw2 sw2--classic"></span><span class="sw2 sw2--metal"></span></div>
+          <div>
+            <span class="soon">Free · new</span>
+            <h3 style="margin-top:10px">Make it yours</h3>
+            <p>Glass, Classic or Metal. Drag the orb anywhere, or fling it to the edge to tuck it away.</p>
           </div>
         </article>
       </div>
@@ -355,7 +396,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <div class="rv"><div class="frame"><img src="img/pad.jpg" alt="Agent Bar Pad: an aluminium keypad with seven keys, one orange, and a dial" width="1800" height="1350" loading="lazy"></div></div>
       <div class="rv">
         <h2>A real button for your agents.</h2>
-        <p>Agent Bar Pad puts your keys under your fingers: talk, continue, next, do it, stop and retry. The orange one keeps your agent going.</p>
+        <p>Agent Bar Pad puts your keys under your fingers: talk, continue, test, fix, undo and stop. The orange one keeps your agent going.</p>
         <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pad%20%C2%B7%20Notify%20me">Notify me<span class="ic"><i class="ph ph-bell-simple"></i></span></a>
         <div class="pad__note">Coming soon. No payment now.</div>
       </div>
@@ -370,10 +411,11 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
           <div class="plan__name">Free</div>
           <div class="plan__price">€0</div>
           <ul>
-            <li><i class="ph ph-check"></i>Eight keys, plus your own</li>
-            <li><i class="ph ph-check"></i>Shortcuts from any app</li>
-            <li><i class="ph ph-check"></i>Works anywhere you type</li>
-            <li><i class="ph ph-check"></i>No account, open source</li>
+            <li><i class="ph ph-check"></i>Six keys, plus your own words</li>
+            <li><i class="ph ph-check"></i>Hold fn to talk: Mac dictation, or OpenAI with your key</li>
+            <li><i class="ph ph-check"></i>Talk, get a prompt in AI chats</li>
+            <li><i class="ph ph-check"></i>Alerts when Claude Code is done</li>
+            <li><i class="ph ph-check"></i>Three styles, no account, open source</li>
           </ul>
           <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
         </div></article>
@@ -382,8 +424,9 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
           <div class="plan__price">Waitlist</div>
           <ul>
             <li><i class="ph ph-check"></i>Everything in Free</li>
-            <li><i class="ph ph-check"></i>Talk: hold fn and speak</li>
-            <li><i class="ph ph-check"></i>Repeat: queues that run while you're away</li>
+            <li><i class="ph ph-check"></i>Voice included, no API key needed</li>
+            <li><i class="ph ph-check"></i>Autopilot: keeps going while you're away, stops when it needs you</li>
+            <li><i class="ph ph-check"></i>Approve and continue from your iPhone</li>
             <li><i class="ph ph-check"></i>Works with Agent Bar Pad</li>
           </ul>
           <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the Pro waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
@@ -394,9 +437,9 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 
   <section class="privacy">
     <div class="wrap privacy__in rv">
-      <h2>It presses ⌘V and Enter for you. That's all it does.</h2>
+      <h2>It presses ⌘V and Enter for you. No account, no server.</h2>
       <div>
-        <p>macOS asks once for Accessibility, the permission that lets an app press keys. The free version has no account, no network calls and no analytics. Your keys live on your Mac, and the code is on <a class="link" href="https://github.com/kemet333/agent-deck">GitHub</a>.</p>
+        <p>macOS asks once for Accessibility, the permission that lets an app press keys, and for the microphone when you talk. There's no account, no analytics and no Agent Bar server. Voice goes to Apple's dictation or, with your own key, straight to OpenAI. Your keys and history live on your Mac, and the code is on <a class="link" href="https://github.com/kemet333/agent-deck">GitHub</a>.</p>
       </div>
     </div>
   </section>
@@ -406,9 +449,11 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <h2 class="rv">Questions.</h2>
       <div class="faq__grid">
         <div class="rv"><h3>Which apps does it work with?</h3><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></div>
-        <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, shortcuts and your own words are free and open source. Pro will add voice and queues.</p></div>
+        <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, voice with fn, prompts and alerts are free and open source. OpenAI voice uses your own key. Pro will add voice without a key, autopilot and iPhone.</p></div>
+        <div class="rv"><h3>Do I need an OpenAI key to talk?</h3><p>No. Without one, fn uses the Mac's dictation. With a key, the text comes out cleaner and long requests turn into a prompt.</p></div>
+        <div class="rv"><h3>How do alerts know my agent is done?</h3><p>Claude Code tells it. One click adds two hooks to your Claude Code settings, with a backup first. Nothing guesses or reads your screen.</p></div>
         <div class="rv"><h3>Windows or Linux?</h3><p>Mac only for now, on Apple Silicon with macOS 14 or newer.</p></div>
-        <div class="rv"><h3>Why does the download say Agent Deck?</h3><p>That was its first name. The next release ships as Agent Bar.</p></div>
+        <div class="rv"><h3>Why does the download say Agent Deck?</h3><p>That was its first name. The app is becoming Agent Bar; everything works the same.</p></div>
       </div>
     </div>
   </section>
