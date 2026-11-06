@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        if offerMoveToApplications() { return }
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
@@ -71,7 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             case "alert": // agentdeck://alert?app=Claude%20Code&kind=done|ask&place=proyecto
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
-                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"))
+                let msg = v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file"))
+                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"))
             case "press":
                 if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
             case "send":
@@ -183,6 +185,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.style = st
         sender.menu?.items.forEach { $0.state = ($0 === sender) ? .on : .off }
     }
+    /// Abierta desde Descargas o desde el disco, macOS la ejecuta desde una carpeta temporal y no deja darle
+    /// Accesibilidad ni micrófono de forma estable. Se ofrece a copiarse en Aplicaciones y abrirse desde allí.
+    /// Devuelve true si va a relanzarse desde Aplicaciones.
+    func offerMoveToApplications() -> Bool {
+        let here = Bundle.main.bundleURL.resolvingSymlinksInPath()
+        let path = here.path
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        if path.hasPrefix("/Applications/") || path.hasPrefix(home + "/Applications/") { return false }
+        if path.hasPrefix(home + "/Agent-Deck/") || UserDefaults.standard.bool(forKey: "neverMoveToApplications") { return false } // copia de desarrollo
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        a.messageText = T.s("Move Agent Bar to Applications?", "¿Muevo Agent Bar a Aplicaciones?")
+        a.informativeText = T.s("macOS only keeps Accessibility and the microphone for apps in Applications. It will open from there.", "macOS solo mantiene Accesibilidad y el micrófono para las apps de Aplicaciones. Se abrirá desde allí.")
+        a.addButton(withTitle: T.s("Move to Applications", "Mover a Aplicaciones"))
+        a.addButton(withTitle: T.s("Not now", "Ahora no"))
+        a.showsSuppressionButton = true
+        a.suppressionButton?.title = T.s("Don't ask again", "No volver a preguntar")
+        let answer = a.runModal()
+        if a.suppressionButton?.state == .on { UserDefaults.standard.set(true, forKey: "neverMoveToApplications") }
+        guard answer == .alertFirstButtonReturn else { return false }
+        let dest = URL(fileURLWithPath: "/Applications").appendingPathComponent(here.lastPathComponent)
+        let fm = FileManager.default
+        do {
+            if fm.fileExists(atPath: dest.path) { try fm.trashItem(at: dest, resultingItemURL: nil) } // la versión anterior, a la Papelera
+            try fm.copyItem(at: here, to: dest)
+        } catch {
+            let e = NSAlert()
+            e.messageText = T.s("Couldn't move it", "No se ha podido mover")
+            e.informativeText = T.s("Drag Agent Bar into Applications in the Finder, then open it from there.", "Arrastra Agent Bar a Aplicaciones en el Finder y ábrela desde allí.")
+            e.runModal()
+            NSWorkspace.shared.activateFileViewerSelecting([here])
+            return false
+        }
+        // el original, si está en una carpeta normal (no la temporal de macOS), a la Papelera
+        if !path.contains("/AppTranslocation/") && !path.hasPrefix("/Volumes/") { try? fm.trashItem(at: here, resultingItemURL: nil) }
+        let cfg = NSWorkspace.OpenConfiguration(); cfg.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: dest, configuration: cfg) { _, _ in DispatchQueue.main.async { NSApp.terminate(nil) } }
+        return true
+    }
+
     /// Conectar los avisos de Claude Code: pregunta antes y explica exactamente qué cambia.
     @objc func connectClaude() {
         NSApp.activate(ignoringOtherApps: true)

@@ -1,6 +1,7 @@
 import AppKit
 import AVFoundation
 import Combine
+import Speech
 
 @MainActor
 final class VoiceController: ObservableObject {
@@ -14,6 +15,64 @@ final class VoiceController: ObservableObject {
     @Published private(set) var message = ""
     @Published private(set) var keyConfigured = false
     @Published var shortcutStatus = ""
+    /// Resultado de «Probar clave»: si la clave vale, si hay saldo y si llega a los modelos elegidos.
+    @Published var keyTest = ""
+    @Published var keyTesting = false
+    /// Estado del motor de Apple, en una línea, para los ajustes de Voz.
+    @Published var appleStatus = ""
+
+    /// Prueba la clave sin grabar nada: lista el modelo de transcripción y hace una llamada mínima al de texto
+    /// (unas centésimas de céntimo), que es la que dice si hay saldo.
+    func testKey() {
+        let k=key()
+        guard !k.isEmpty else { keyTest=T.s("No key saved yet.","Aún no hay ninguna clave guardada.");return }
+        keyTesting=true;keyTest=T.s("Testing…","Probando…")
+        let tm=preferences.transcriptionModel, xm=preferences.textModel
+        Task{ [weak self] in
+            func call(_ r:URLRequest) async -> (Int,String) {
+                guard let (d,resp)=try? await URLSession.shared.data(for:r),let h=resp as? HTTPURLResponse else{return (-1,"")}
+                let m=((try? JSONSerialization.jsonObject(with:d)) as? [String:Any]).flatMap{($0["error"] as? [String:Any])?["code"] as? String ?? ($0["error"] as? [String:Any])?["type"] as? String} ?? ""
+                return (h.statusCode,m)
+            }
+            var a=URLRequest(url:URL(string:"https://api.openai.com/v1/models/\(tm)")!);a.setValue("Bearer \(k)",forHTTPHeaderField:"Authorization")
+            let (s1,c1)=await call(a)
+            var out:String
+            if s1 == -1 { out=T.s("Couldn't reach OpenAI. Check your connection.","No se ha podido conectar con OpenAI. Revisa la conexión.") }
+            else if s1 == 401 { out=T.s("OpenAI says the key is wrong. Paste it again (it starts with sk-).","OpenAI dice que la clave no es correcta. Vuelve a pegarla (empieza por sk-).") }
+            else if s1 == 404 || s1 == 403 { out=T.s("The key works, but has no access to \(tm). Change the transcription model.","La clave vale, pero no tiene acceso a \(tm). Cambia el modelo de transcripción.") }
+            else {
+                var b=URLRequest(url:URL(string:"https://api.openai.com/v1/responses")!);b.httpMethod="POST"
+                b.setValue("Bearer \(k)",forHTTPHeaderField:"Authorization");b.setValue("application/json",forHTTPHeaderField:"Content-Type")
+                b.httpBody=try? JSONSerialization.data(withJSONObject:["model":xm,"input":"ok","max_output_tokens":16,"store":false])
+                let (s2,c2)=await call(b)
+                if (200..<300).contains(s2) { out=T.s("✓ Key works, with credit, for \(tm) and \(xm).","✓ La clave funciona, con saldo, para \(tm) y \(xm).") }
+                else if s2 == 429 && (c2.contains("quota") || c1.contains("quota")) { out=T.s("The key is right but the account has no credit. Add credit at platform.openai.com → Billing.","La clave es correcta, pero la cuenta no tiene saldo. Añádelo en platform.openai.com → Billing.") }
+                else if s2 == 429 { out=T.s("OpenAI's rate limit was hit. Try again in a minute.","Has llegado al límite de OpenAI. Prueba otra vez en un minuto.") }
+                else if s2 == 404 || s2 == 403 || s2 == 400 { out=T.s("The key works for \(tm), but not for \(xm). Change the text model.","La clave vale para \(tm), pero no para \(xm). Cambia el modelo de texto.") }
+                else { out=T.s("OpenAI answered with error \(s2).","OpenAI ha respondido con el error \(s2).") }
+            }
+            await MainActor.run{ self?.keyTest=out;self?.keyTesting=false;self?.log("probar clave: "+out) }
+        }
+    }
+
+    /// El motor de Apple, sin jerga: si tiene permiso y si funciona en este Mac.
+    func refreshAppleStatus() {
+        let speech=SFSpeechRecognizer.authorizationStatus(),mic=AVCaptureDevice.authorizationStatus(for:.audio)
+        let r=SFSpeechRecognizer(locale:T.speechLocale)
+        if speech == .denied || speech == .restricted { appleStatus=T.s("Speech recognition is blocked. Turn it on in System Settings → Privacy & Security → Speech Recognition.","El reconocimiento de voz está bloqueado. Actívalo en Ajustes del Sistema → Privacidad y seguridad → Reconocimiento de voz.") }
+        else if mic == .denied || mic == .restricted { appleStatus=T.s("The microphone is blocked for Agent Deck in System Settings → Privacy & Security → Microphone.","El micrófono está bloqueado para Agent Deck en Ajustes del Sistema → Privacidad y seguridad → Micrófono.") }
+        else if speech == .notDetermined || mic == .notDetermined { appleStatus=T.s("Ready once you allow it: press «Allow» (macOS asks once).","Listo en cuanto lo permitas: pulsa «Permitir» (macOS lo pregunta una vez).") }
+        else if r?.isAvailable != true { appleStatus=T.s("Apple dictation isn't available right now (check the internet or the language).","El dictado de Apple no está disponible ahora (revisa internet o el idioma).") }
+        else { appleStatus=(r?.supportsOnDeviceRecognition == true) ? T.s("✓ Ready, on this Mac, free and without a key.","✓ Listo, en este Mac, gratis y sin clave.") : T.s("✓ Ready, free and without a key (uses Apple's dictation).","✓ Listo, gratis y sin clave (usa el dictado de Apple).") }
+    }
+    func allowApple() {
+        SFSpeechRecognizer.requestAuthorization{ [weak self] _ in
+            Task{ @MainActor in
+                if AVCaptureDevice.authorizationStatus(for:.audio) == .notDetermined { _ = await AVCaptureDevice.requestAccess(for:.audio) }
+                self?.refreshAppleStatus()
+            }
+        }
+    }
     var onShortcutsChanged: (()->Void)?
     var onDelivered: ((String)->Void)?
     /// En la app de verdad, el dictado a un chat va por el camino de las teclas; las pruebas usan su entrega falsa.
@@ -95,8 +154,8 @@ final class VoiceController: ObservableObject {
         // una clave de OpenAI empieza por «sk-» y es larga: así no se guarda una letra suelta al pegar mal
         let v=value.trimmingCharacters(in:.whitespacesAndNewlines)
         guard v.hasPrefix("sk-"),v.count>=20 else{message=T.s("That doesn't look like an OpenAI key (it starts with sk-). Paste it with ⌘V.","Eso no parece una clave de OpenAI (empieza por sk-). Pégala con ⌘V.");return}
-        guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try saveCredential(value);refreshKey();message=T.s("Key saved in this Mac's Keychain. It will be checked on the next request.","Clave guardada en el Llavero de este Mac. Se comprobará en la próxima petición.")}catch{message=error.localizedDescription} }
-    func removeKey() { guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try removeCredential();refreshKey();message=T.s("Key removed from Keychain.","Clave eliminada del Llavero.")}catch{message=error.localizedDescription} }
+        guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try saveCredential(value);refreshKey();message=T.s("Key saved on this Mac (only your user can read it). Press «Test key» to check it.","Clave guardada en este Mac (solo tu usuario puede leerla). Pulsa «Probar clave» para comprobarla.")}catch{message=error.localizedDescription} }
+    func removeKey() { guard !active else{message=T.s("Finish voice processing before changing the key.","Termina el procesamiento de voz antes de cambiar la clave.");return};do{try removeCredential();refreshKey();message=T.s("Key removed.","Clave eliminada.")}catch{message=error.localizedDescription} }
     private func persistDraft(){
         guard draft.utf8.count<=1_000_000 else{message=T.s("This draft is too large to save automatically. Export it before closing.","El borrador es demasiado grande para guardarlo automáticamente. Expórtalo antes de cerrar.");return}
         do{try storage.save(VoiceDraft(text:draft,source:source),name:"voice-draft.json")}catch{message=T.s("Could not save this draft on the Mac. Copy it before closing.","No se ha podido guardar el borrador en el Mac. Cópialo antes de cerrar.")}
@@ -113,6 +172,8 @@ final class VoiceController: ObservableObject {
         let app=frontApp()
         do{target = snapshot.autoPaste || command ? try captureTarget(command):nil}catch{fail(error.localizedDescription);showWorkspace?();return}
         capturedBundle=target?.bundle ?? app.bundle
+        // Apple sin clave de OpenAI: se escribe tal cual (limpiar necesitaría la clave), salvo un tono puesto a propósito para esa app
+        if !command && key().isEmpty && snapshot.engine == .apple && snapshot.appTones[capturedBundle ?? ""] == nil { snapshot.tone = .verbatim }
         if snapshot.engine == .openAI || command || snapshot.tone(for:capturedBundle) != .verbatim { guard !key().isEmpty else{fail(VoiceServiceError.missingKey.localizedDescription);showWorkspace?();return} }
         source=target?.app ?? app.name;filename="recording.m4a";audio=nil;raw="";partial="";message="";recordedID=nil
         let id=UUID();sessionID=id;phase = .permission
