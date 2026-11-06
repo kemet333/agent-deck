@@ -18,17 +18,25 @@ final class Dictation {
     private var tapInstalled = false
     private var finishing: DispatchWorkItem?
     private var stopRequested = false
+    private var generation: UUID?
+    private var requesting = false
     private(set) var active = false
 
     func start() {
-        guard !active else { return }
+        guard !active, !requesting else { return }
+        let id = UUID(); generation = id; requesting = true
+        start(id: id)
+    }
+
+    private func start(id: UUID) {
+        guard generation == id else { return }
         stopRequested = false
         switch SFSpeechRecognizer.authorizationStatus() {
         case .authorized: break
         case .notDetermined:
             SFSpeechRecognizer.requestAuthorization { [weak self] status in
                 DispatchQueue.main.async {
-                    if status == .authorized { self?.start() } else { self?.onEvent?(.unavailable, nil, "speech-denied") }
+                    guard self?.generation == id else { return }; if status == .authorized { self?.start(id: id) } else { self?.requesting = false; self?.onEvent?(.unavailable, nil, "speech-denied") }
                 }
             }
             return
@@ -39,7 +47,7 @@ final class Dictation {
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
                 DispatchQueue.main.async {
-                    if granted { self?.start() } else { self?.onEvent?(.unavailable, nil, "mic-denied") }
+                    guard self?.generation == id else { return }; if granted { self?.start(id: id) } else { self?.requesting = false; self?.onEvent?(.unavailable, nil, "mic-denied") }
                 }
             }
             return
@@ -50,7 +58,7 @@ final class Dictation {
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         request.addsPunctuation = true
-        if recognizer.supportsOnDeviceRecognition { request.requiresOnDeviceRecognition = true }
+        guard recognizer.supportsOnDeviceRecognition else { requesting=false;onEvent?(.unavailable,nil,"on-device-unavailable");return };request.requiresOnDeviceRecognition = true
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else { onEvent?(.unavailable, nil, "no-input"); return }
@@ -76,7 +84,7 @@ final class Dictation {
         }
         self.request = request
         latest = ""
-        active = true
+        active = true; requesting = false
         task = recognizer.recognitionTask(with: request) { [weak self] result, error in
             let text = result?.bestTranscription.formattedString
             let isFinal = result?.isFinal ?? false
@@ -98,7 +106,7 @@ final class Dictation {
     }
 
     func cancel() {
-        guard active else { return }
+        guard active || requesting else { return }
         task?.cancel()
         teardown()
         onEvent?(.idle, nil, "cancelled")
@@ -130,7 +138,7 @@ final class Dictation {
         stopAudio()
         request = nil
         task = nil
-        active = false
+        active = false; requesting = false; generation = nil
         stopRequested = false
     }
 }

@@ -21,6 +21,7 @@ enum Motion {
     static let fold = Animation.spring(response: 0.46, dampingFraction: 0.82)
 }
 
+@MainActor
 struct VisualEffect: NSViewRepresentable {
     var material: NSVisualEffectView.Material = .hudWindow
     func makeNSView(context: Context) -> NSVisualEffectView {
@@ -34,6 +35,7 @@ struct VisualEffect: NSViewRepresentable {
 }
 
 /// Cristal oscuro: desenfoque real detrás, velo casi negro encima, filo claro arriba, sombra propia.
+@MainActor
 struct Glass: ViewModifier {
     var radius: CGFloat
     var veil: Double = 0.8
@@ -191,6 +193,7 @@ struct KeyFace: ViewModifier {
 }
 
 /// Elige el modo. Es la raíz que el panel dibuja.
+@MainActor
 struct DeskRoot: View {
     @ObservedObject var store: DeskStore
     var body: some View {
@@ -207,6 +210,7 @@ struct DeskRoot: View {
 
 // MARK: - Modo dock: la barra, o el orbe cuando está plegada
 
+@MainActor
 struct DockView: View {
     @ObservedObject var store: DeskStore
     var body: some View {
@@ -229,6 +233,7 @@ struct DockView: View {
 
 /// El copiloto plegado: un orbe de cristal con un punto dorado que respira. Clic: se despliega.
 /// Si dictas con ⌃⌥M estando plegado, el orbe se abre en una cápsula con la onda y lo que va oyendo.
+@MainActor
 struct Orb: View {
     @ObservedObject var store: DeskStore
     @Environment(\.barTheme) private var th
@@ -255,14 +260,14 @@ struct Orb: View {
                     }
                 }
                 .frame(width: store.listening ? 30 : 22, height: store.listening ? 30 : 22)
-                if store.listening {
+                if store.voiceExpanded {
                     Text(store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial)
                         .font(.system(size: 11.5, weight: .medium)).foregroundColor(th.style == .metal ? th.ink : th.accent).lineLimit(1)
                         .frame(maxWidth: 260, alignment: .leading)
                         .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
-            .padding(.horizontal, store.listening ? 14 : 9).padding(.vertical, 9)
+            .padding(.horizontal, store.voiceExpanded ? 14 : 9).padding(.vertical, 9)
             .modifier(Surface(radius: 22, veil: 0.8))
             .scaleEffect(hover ? 1.06 : 1)
             .animation(Motion.tap, value: hover)
@@ -313,6 +318,7 @@ struct VoiceBlob: View {
 }
 
 /// Anillos que respiran con tu voz, alrededor del micro o del orbe.
+@MainActor
 struct Rings: View {
     let level: Float
     @Environment(\.barTheme) private var th
@@ -328,6 +334,7 @@ struct Rings: View {
 }
 
 /// La barra desplegada.
+@MainActor
 struct Bar: View {
     @ObservedObject var store: DeskStore
     @Environment(\.barTheme) private var th
@@ -341,6 +348,12 @@ struct Bar: View {
                 .padding(.leading, 2)
             Divider_()
             DictateItem(store: store)
+            if store.voiceNeedsAttention {
+                DockGlyph(symbol: "text.bubble", size: 13, weight: .regular, help: T.s("Review voice draft", "Revisar borrador de voz")) { store.voice.showWorkspace?() }
+                if !store.voice.draft.isEmpty && store.voice.canInsertOriginal {
+                    DockGlyph(symbol: "arrow.turn.down.left", size: 13, weight: .regular, help: T.s("Insert in the original field", "Insertar en el campo original")) { store.voice.insertDraft() }
+                }
+            }
             DockItem(id: nil, icon: "tray.and.arrow.down", label: "Inbox", hotkey: nil, main: false, editing: false, tint: nil, store: store,
                      help: T.s("Sends the last transcribed voice note from your inbox to the chat", "Manda al chat la última nota de voz del inbox, ya transcrita"),
                      press: { store.sendInbox() }, edit: {}, remove: {})
@@ -369,6 +382,7 @@ struct Bar: View {
                       help: store.editing ? T.s("Done editing", "Terminar edición") : T.s("Edit keys", "Editar teclas"), tint: store.editing ? th.accent : nil) {
                 withAnimation(Motion.settle) { store.editing.toggle() }
             }
+            DockGlyph(symbol: "arrow.triangle.branch", size: 12, weight: .regular, help: T.s("Message flows", "Flujos de mensajes")) { store.showFlows?() }
             DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: T.s("Agent Deck settings", "Ajustes de Agent Deck")) { store.showMenu?() }
                 .padding(.trailing, 2)
         }
@@ -385,6 +399,7 @@ struct Bar: View {
     }
 }
 
+@MainActor
 struct Divider_: View {
     @Environment(\.barTheme) private var th
     var body: some View {
@@ -393,6 +408,7 @@ struct Divider_: View {
 }
 
 /// Un control redondo pequeño (la aspa, la edición, el engranaje).
+@MainActor
 struct DockGlyph: View {
     let symbol: String
     let size: CGFloat
@@ -423,6 +439,7 @@ struct DockGlyph: View {
 
 /// Una tecla de la barra: icono arriba, etiqueta debajo, el número del atajo al pasar el ratón.
 /// Al pulsar: el icono rebota, la etiqueta se enciende en dorado un instante y un anillo se expande.
+@MainActor
 struct DockItem: View {
     let id: UUID?
     let icon: String
@@ -500,6 +517,7 @@ struct DockItem: View {
 }
 
 /// Un anillo dorado que nace en la tecla y se desvanece al crecer.
+@MainActor
 struct Burst: View {
     let trigger: Int
     @Environment(\.barTheme) private var th
@@ -520,6 +538,7 @@ struct Burst: View {
 }
 
 /// La tecla de dictar: micro en reposo; escuchando, onda dorada y anillos que siguen tu voz, el texto parcial debajo.
+@MainActor
 struct DictateItem: View {
     @ObservedObject var store: DeskStore
     @Environment(\.barTheme) private var th
@@ -532,9 +551,10 @@ struct DictateItem: View {
                     if store.listening {
                         VoiceBlob(level: store.level, size: 22).transition(.scale(scale: 0.5).combined(with: .opacity))
                     } else {
-                        Image(systemName: "mic")
+                        Image(systemName: store.voiceWorking ? "hourglass" : "mic")
                             .font(.system(size: 15, weight: .regular))
                             .foregroundColor(hover ? th.ink : th.text)
+                            .contentTransition(.symbolEffect(.replace))
                     }
                 }
                 .frame(width: 40, height: 17)
@@ -542,7 +562,7 @@ struct DictateItem: View {
                     .font(.system(size: 9.5, weight: .medium))
                     .foregroundColor(store.listening ? th.accent : (hover ? th.ink : th.mute))
                     .lineLimit(1)
-                    .frame(maxWidth: store.listening ? 200 : 70)
+                    .frame(maxWidth: store.voiceExpanded ? 170 : 70)
             }
             .frame(minWidth: 54)
             .padding(.horizontal, 6).padding(.vertical, 6)
@@ -558,12 +578,13 @@ struct DictateItem: View {
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .pressEvents(onPress: { pressed = true }, onRelease: { pressed = false })
-        .help(T.s("Dictate to the chat (⌃⌥M): one press listens, the next sends", "Dictar al chat (⌃⌥M): una pulsación escucha, otra envía"))
+        .help(T.s("Fn: hold to speak. ⌃⌥M toggles recording. Choose paste or send in Voice settings.", "Fn: mantén para hablar. ⌃⌥M alterna la grabación. Elige pegar o enviar en los ajustes de Voz."))
     }
 }
 
 // MARK: - Modo tarjeta: la paleta flotante
 
+@MainActor
 struct CardView: View {
     @ObservedObject var store: DeskStore
     @Environment(\.barTheme) private var th
@@ -649,10 +670,12 @@ struct CardView: View {
                 .foregroundColor(store.lastSent.isEmpty ? th.faint : (th.style == .metal ? th.accent : Palette.green))
                 .lineLimit(1)
             Spacer()
+            Button { store.showFlows?() } label: { Label(T.s("Flows", "Flujos"), systemImage: "arrow.triangle.branch") }.buttonStyle(.plain).font(.system(size: 10)).foregroundColor(Palette.gold)
         }
     }
 }
 
+@MainActor
 struct Tile: View {
     let key: DeskKey
     let editing: Bool
@@ -697,6 +720,7 @@ struct Tile: View {
 
 // MARK: - Editor de una tecla
 
+@MainActor
 struct KeyEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State var key: DeskKey
