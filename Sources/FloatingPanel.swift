@@ -48,6 +48,10 @@ final class FloatingPanel: NSPanel {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.relayout(animated: true, recenter: false) }
         }.store(in: &bag)
         store.$listening.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$alert.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
+            self?.relayout(animated: true, recenter: false)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { self?.relayout(animated: true, recenter: false) }
+        }.store(in: &bag)
         store.$voiceWorking.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$voiceNeedsAttention.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$partial.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: false, recenter: false) }.store(in: &bag)
@@ -155,7 +159,7 @@ final class FloatingPanel: NSPanel {
         let v = screen.visibleFrame
         target.origin.x = min(max(target.origin.x, v.minX - 20), v.maxX - target.width + 20)
         target.origin.y = min(max(target.origin.y, v.minY - 10), v.maxY - target.height + 30)
-        if orbMode, !store.listening, let side = edge { // dictando, la cápsula sale entera para leer lo que oye
+        if orbMode, !store.listening, store.alert == nil, let side = edge { // dictando, la cápsula sale entera para leer lo que oye
             // el orbe mide su anchura menos el margen de la sombra (30 a cada lado, DockView)
             let orb = max(size.width - 60, 30)
             let mid = side == "left" ? v.minX - orb / 2 + peek : v.maxX + orb / 2 - peek

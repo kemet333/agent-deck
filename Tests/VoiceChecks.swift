@@ -127,6 +127,8 @@ struct VoiceChecks {
         let recoveredProcessing=VoiceController(storage:VoiceStorage(folder:root.appendingPathComponent("ready")),client:api,recorder:FakeRecorder(),keyProvider:{""},microphonePermission:{false},frontApp:{("Synthetic app","test.synthetic")})
         check("shutdown during cleanup preserves the original transcript",recoveredProcessing.draft=="Recover this transcript" && recoveredProcessing.phase == .draft)
         try? await Task.sleep(nanoseconds:150_000_000);check("cancelled cleanup cannot overwrite recovered transcript",recoveredProcessing.draft=="Recover this transcript")
+        let oldSettings=try? JSONDecoder().decode(VoicePreferences.self,from:Data(#"{"engine":"apple","autoEnter":false,"tone":"formal"}"#.utf8))
+        check("older settings files keep their values and get new defaults",oldSettings?.engine == .apple && oldSettings?.autoEnter == false && oldSettings?.tone == .formal && oldSettings?.promptInAIApps == true)
         check("voice sends with Enter by default (Diego, 06/11), terminals stay guarded",VoicePreferences().autoEnter && VoicePreferences().guardTerminal)
         var localPermissionRequests=0
         let localOverride=VoiceController(storage:VoiceStorage(folder:root.appendingPathComponent("tone-local")),client:api,recorder:FakeRecorder(),keyProvider:{""},microphonePermission:{localPermissionRequests+=1;return false},frontApp:{("Synthetic", "test.synthetic")})

@@ -3,8 +3,8 @@ import Foundation
 enum VoiceInsertion: String, Codable, CaseIterable { case paste, direct }
 enum VoiceEngine: String, Codable, CaseIterable { case openAI, apple }
 enum VoiceTone: String, Codable, CaseIterable {
-    case clean, verbatim, formal, casual
-    var title: String { switch self { case .clean: return T.s("Clean", "Limpio"); case .verbatim: return T.s("Verbatim", "Literal"); case .formal: return T.s("Formal", "Formal"); case .casual: return T.s("Casual", "Informal") } }
+    case clean, verbatim, formal, casual, prompt
+    var title: String { switch self { case .clean: return T.s("Clean", "Limpio"); case .verbatim: return T.s("Verbatim", "Literal"); case .formal: return T.s("Formal", "Formal"); case .casual: return T.s("Casual", "Informal"); case .prompt: return T.s("Prompt for an AI", "Prompt para una IA") } }
 }
 enum VoicePurpose: Equatable { case dictation, command, file, summary }
 enum VoicePhase: String { case idle, permission, listening, transcribing, cleaning, inserting, draft, failed }
@@ -25,6 +25,8 @@ struct VoicePreferences: Codable {
     var expansions = ""
     var appTones: [String: VoiceTone] = [:]
     var saveHistory = true
+    /// En los chats de IA (Claude, ChatGPT, Cursor, Codex), lo dictado de más de 12 palabras se convierte en un prompt.
+    var promptInAIApps = true
 
     var keywords: [String] { dictionary.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && !$0.contains("<") && !$0.contains(">") }.prefix(100).map { String($0.prefix(100)) } }
     func tone(for bundle: String?) -> VoiceTone { bundle.flatMap { appTones[$0] } ?? tone }
@@ -105,4 +107,33 @@ struct FnGesture {
         state = .idle
         return active ? [.cancel] : []
     }
+}
+
+/// Los ajustes guardados por versiones anteriores no traen los campos nuevos: se leen uno a uno y lo que falta
+/// toma su valor por defecto, en vez de perder todos los ajustes.
+extension VoicePreferences {
+    private enum K: String, CodingKey { case engine, fnEnabled, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps }
+    init(from decoder: Decoder) throws {
+        self.init()
+        let c = try decoder.container(keyedBy: K.self)
+        engine = (try? c.decodeIfPresent(VoiceEngine.self, forKey: .engine)) ?? engine
+        fnEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .fnEnabled)) ?? fnEnabled
+        avoidVowenConflict = (try? c.decodeIfPresent(Bool.self, forKey: .avoidVowenConflict)) ?? avoidVowenConflict
+        autoPaste = (try? c.decodeIfPresent(Bool.self, forKey: .autoPaste)) ?? autoPaste
+        insertion = (try? c.decodeIfPresent(VoiceInsertion.self, forKey: .insertion)) ?? insertion
+        autoEnter = (try? c.decodeIfPresent(Bool.self, forKey: .autoEnter)) ?? autoEnter
+        guardTerminal = (try? c.decodeIfPresent(Bool.self, forKey: .guardTerminal)) ?? guardTerminal
+        transcriptionModel = (try? c.decodeIfPresent(String.self, forKey: .transcriptionModel)) ?? transcriptionModel
+        textModel = (try? c.decodeIfPresent(String.self, forKey: .textModel)) ?? textModel
+        language = (try? c.decodeIfPresent(String.self, forKey: .language)) ?? language
+        tone = (try? c.decodeIfPresent(VoiceTone.self, forKey: .tone)) ?? tone
+        dictionary = (try? c.decodeIfPresent(String.self, forKey: .dictionary)) ?? dictionary
+        instructions = (try? c.decodeIfPresent(String.self, forKey: .instructions)) ?? instructions
+        expansions = (try? c.decodeIfPresent(String.self, forKey: .expansions)) ?? expansions
+        appTones = (try? c.decodeIfPresent([String: VoiceTone].self, forKey: .appTones)) ?? appTones
+        saveHistory = (try? c.decodeIfPresent(Bool.self, forKey: .saveHistory)) ?? saveHistory
+        promptInAIApps = (try? c.decodeIfPresent(Bool.self, forKey: .promptInAIApps)) ?? promptInAIApps
+    }
+    /// Chats y editores de IA donde «Voz → prompt» tiene sentido.
+    static let aiApps: Set<String> = ["com.anthropic.claudefordesktop", "com.openai.chat", "com.openai.codex", "com.todesktop.230313mzl4w4u92", "com.exafunction.windsurf", "ai.perplexity.mac"]
 }

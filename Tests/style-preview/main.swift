@@ -31,6 +31,17 @@ MainActor.assumeIsolated {
         if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("listening.png")) }
         store.listening = false; store.partial = ""; store.level = 0
     }
+    // aviso de un agente encima del orbe
+    do {
+        store.collapsed = true
+        store.alert = AgentAlert(app: "Claude Code", ask: false, place: "Diego-Operating-System")
+        let view = ZStack { Image(nsImage: wall).resizable(); DockView(store: store) }
+            .frame(width: size.width, height: size.height)
+            .environment(\.barTheme, Theme.of(.glass)).environment(\.snapshotBackdrop, wall)
+        let r = ImageRenderer(content: view); r.scale = 2
+        if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("alert.png")) }
+        store.alert = nil; store.collapsed = false
+    }
     for st in BarStyle.allCases {
         for orb in [false, true] {
             let view = ZStack {

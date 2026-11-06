@@ -69,6 +69,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         $0.state = ($0.representedObject as? String) == n ? .on : .off
                     }
                 }
+            case "alert": // agentdeck://alert?app=Claude%20Code&kind=done|ask&place=proyecto
+                let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
+                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"))
             case "press":
                 if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
             case "send":
@@ -101,6 +104,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Paste last transcription", "Pegar última transcripción"), action: #selector(pasteLastVoice), keyEquivalent: "l")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        let hooksItem = NSMenuItem(title: T.s("Claude Code alerts…", "Avisos de Claude Code…"), action: #selector(connectClaude), keyEquivalent: "")
+        hooksItem.target = self
+        menu.addItem(hooksItem)
         let modeItem = NSMenuItem(title: T.s("Mode", "Modo"), action: nil, keyEquivalent: "")
         let modes = NSMenu()
         let dock = NSMenuItem(title: T.s("Bar (bottom of the screen)", "Barra (abajo)"), action: #selector(setDock), keyEquivalent: ""); dock.target = self
@@ -176,6 +182,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let raw = sender.representedObject as? String, let st = BarStyle(rawValue: raw) else { return }
         store.style = st
         sender.menu?.items.forEach { $0.state = ($0 === sender) ? .on : .off }
+    }
+    /// Conectar los avisos de Claude Code: pregunta antes y explica exactamente qué cambia.
+    @objc func connectClaude() {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        if ClaudeHooks.installed {
+            a.messageText = T.s("Claude Code alerts are on", "Los avisos de Claude Code están activos")
+            a.informativeText = T.s("When Claude Code finishes or needs you, Agent Deck lights up and plays a sound. To turn them off, remove the two hooks with «agentdeck://alert» from ~/.claude/settings.json.", "Cuando Claude Code termina o te necesita, Agent Deck se enciende y suena. Para quitarlos, borra los dos ganchos con «agentdeck://alert» de ~/.claude/settings.json.")
+            a.addButton(withTitle: T.s("Try an alert", "Probar un aviso")); a.addButton(withTitle: "OK")
+            if a.runModal() == .alertFirstButtonReturn { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba")) }
+            return
+        }
+        a.messageText = T.s("Get an alert when Claude Code finishes?", "¿Avisarte cuando Claude Code termine?")
+        a.informativeText = T.s("Agent Deck will add two hooks to ~/.claude/settings.json: one when Claude Code finishes (Stop) and one when it needs your permission or answer (Notification). A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Deck añadirá dos ganchos a ~/.claude/settings.json: uno cuando Claude Code termina (Stop) y otro cuando necesita tu permiso o tu respuesta (Notification). Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los lean.")
+        a.addButton(withTitle: T.s("Turn on alerts", "Activar avisos")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        switch ClaudeHooks.install() {
+        case .added, .alreadyThere: store.raiseAlert(app: "Claude Code", ask: false, place: T.s("alerts on", "avisos activos"))
+        case .failed(let why): let e = NSAlert(); e.messageText = why; e.runModal()
+        }
     }
     @objc func quit() { NSApp.terminate(nil) }
 
