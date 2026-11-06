@@ -84,12 +84,20 @@ final class VoiceController: ObservableObject {
     func prewarm() {
         guard usesQuickSend, !active, !prewarmed, draft.isEmpty, preferences.engine == .openAI, !key().isEmpty,
               AVCaptureDevice.authorizationStatus(for:.audio) == .authorized else { return }
-        do { try recorder.start(); prewarmed = true } catch { prewarmed = false }
+        do { try recorder.start(); prewarmed = true; startLive() } catch { prewarmed = false }
+    }
+    /// Transcribir mientras hablas: conexión en tiempo real con OpenAI, en paralelo a la grabación normal (red de seguridad).
+    private let live = RealtimeTranscriber()
+    private func startLive() {
+        guard usesQuickSend, preferences.streaming, preferences.engine == .openAI, !live.running else { return }
+        let k = key(); guard !k.isEmpty else { return }
+        live.onPartial = { [weak self] t in guard let self, self.phase == .listening || self.prewarmed else { return }; self.partial = t }
+        _ = live.start(key: k, model: preferences.liveModel, language: preferences.language, keywords: preferences.keywords)
     }
     /// Fn subió sin llegar a dictar (un toque, o un atajo con Fn): se tira lo grabado.
     func dropPrewarm() {
         guard prewarmed, !active else { return }
-        prewarmed = false; recorder.cancel()
+        prewarmed = false; recorder.cancel(); live.cancel()
     }
     var showWorkspace: (()->Void)?
     var showDeck: (()->Void)?
@@ -184,7 +192,7 @@ final class VoiceController: ObservableObject {
             guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Deck.","Permite el micrófono para Agent Deck en Ajustes del Sistema."));return}
             if self.snapshot.engine == .apple {self.startApple(id:id)}else{
                 if self.prewarmed { self.prewarmed=false;self.phase = .listening;return } // ya grababa desde que bajó Fn
-                do{try self.recorder.start();self.phase = .listening}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
+                do{try self.recorder.start();self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
             }
         }
     }
@@ -215,12 +223,19 @@ final class VoiceController: ObservableObject {
         let tail = usesQuickSend ? 0.25 : 0
         let finish = { [weak self] in
             guard let self, self.sessionID==id, self.phase == .transcribing else { return }
-            do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)}
+            let batch = { do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)} }
+            guard self.live.running else { batch(); return }
+            // el texto en tiempo real ya está casi listo; si no llega en 3 s, la grabación normal
+            self.live.finish(timeout: 3) { [weak self] text in
+                guard let self, self.sessionID==id, self.phase == .transcribing else { return }
+                if let text, !text.isEmpty { self.recorder.cancel(); self.audio=nil; self.process(text,id:id) }
+                else { if !VoiceServiceError.lastDetail.isEmpty { self.log("tiempo real: sin texto, uso la grabación") }; batch() }
+            }
         }
         if tail > 0 { DispatchQueue.main.asyncAfter(deadline:.now()+tail, execute:finish) } else { finish() }
     }
     func cancel() {
-        prewarmed=false
+        prewarmed=false;live.cancel()
         sessionID=nil;operation?.cancel();operation=nil;recorder.cancel();apple?.cancel();apple=nil;audio=nil;raw="";draft="";partial="";level=0;target=nil;phase = .idle;message="";recordedID=nil
     }
     private func transcribe(id:UUID) {

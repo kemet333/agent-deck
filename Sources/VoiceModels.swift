@@ -27,6 +27,9 @@ struct VoicePreferences: Codable {
     var saveHistory = true
     /// En los chats de IA (Claude, ChatGPT, Cursor, Codex), lo dictado de más de 12 palabras se convierte en un prompt.
     var promptInAIApps = true
+    /// Transcribir mientras hablas (Realtime de OpenAI); al soltar Fn el texto ya está casi listo.
+    var streaming = true
+    var liveModel = "gpt-live-transcribe"
 
     var keywords: [String] { dictionary.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && !$0.contains("<") && !$0.contains(">") }.prefix(100).map { String($0.prefix(100)) } }
     func tone(for bundle: String?) -> VoiceTone { bundle.flatMap { appTones[$0] } ?? tone }
@@ -112,7 +115,7 @@ struct FnGesture {
 /// Los ajustes guardados por versiones anteriores no traen los campos nuevos: se leen uno a uno y lo que falta
 /// toma su valor por defecto, en vez de perder todos los ajustes.
 extension VoicePreferences {
-    private enum K: String, CodingKey { case engine, fnEnabled, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps }
+    private enum K: String, CodingKey { case engine, fnEnabled, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps, streaming, liveModel }
     init(from decoder: Decoder) throws {
         self.init()
         let c = try decoder.container(keyedBy: K.self)
@@ -133,6 +136,8 @@ extension VoicePreferences {
         appTones = (try? c.decodeIfPresent([String: VoiceTone].self, forKey: .appTones)) ?? appTones
         saveHistory = (try? c.decodeIfPresent(Bool.self, forKey: .saveHistory)) ?? saveHistory
         promptInAIApps = (try? c.decodeIfPresent(Bool.self, forKey: .promptInAIApps)) ?? promptInAIApps
+        streaming = (try? c.decodeIfPresent(Bool.self, forKey: .streaming)) ?? streaming
+        liveModel = (try? c.decodeIfPresent(String.self, forKey: .liveModel)) ?? liveModel
     }
     /// Chats y editores de IA donde «Voz → prompt» tiene sentido.
     static let aiApps: Set<String> = ["com.anthropic.claudefordesktop", "com.openai.chat", "com.openai.codex", "com.todesktop.230313mzl4w4u92", "com.exafunction.windsurf", "ai.perplexity.mac"]
