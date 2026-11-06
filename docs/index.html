@@ -78,15 +78,15 @@ p{margin:0;text-wrap:pretty}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}}
 
 /* Hero */
-.hero{padding:128px 0 40px}
-.hero__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:56px}
-.hero__top{display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:44px;align-items:end}
+.hero{padding:150px 0 40px}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1fr);gap:64px}
+.hero__top{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center;gap:24px}
 .hero__top .hero__sub{margin-top:0}
-.hero__top .hero__cta{margin-top:24px}
-.hero h1{font-size:clamp(40px,4.5vw,68px);line-height:1}
+.hero__top .hero__cta{margin-top:32px;justify-content:center}
+.hero h1{font-size:clamp(40px,5.6vw,84px);line-height:1;letter-spacing:-.04em}
 .hero h1 span{color:var(--mute)}
 @media (min-width:901px){.hero h1 .ln{white-space:nowrap}}
-.hero__sub{margin-top:26px;font-size:clamp(18px,1.5vw,20px);color:var(--ink-2);max-width:34ch}
+.hero__sub{margin:0 auto;font-size:clamp(18px,1.5vw,21px);color:var(--ink-2);max-width:42ch;text-wrap:balance}
 .hero__cta{display:flex;align-items:center;gap:26px;margin-top:36px;flex-wrap:wrap}
 .frame{padding:8px;border-radius:var(--r-lg);background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line)}
 .frame>img{border-radius:calc(var(--r-lg) - 8px);width:100%;aspect-ratio:4/3;object-fit:cover;box-shadow:var(--shadow)}
@@ -112,10 +112,13 @@ p{margin:0;text-wrap:pretty}
 
 
 /* Stage: the app on a Mac desktop */
-.stage{position:relative;aspect-ratio:2.15/1;border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line),var(--shadow);container-type:inline-size;isolation:isolate}
+.stage{position:relative;aspect-ratio:2.15/1;border-radius:var(--r-lg);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line),var(--shadow);container-type:inline-size;isolation:isolate;display:grid;place-items:center;padding:clamp(24px,4cqw,56px) 16px}
+.demo{display:grid;width:max-content;min-width:min(100%,600px);max-width:100%;gap:clamp(12px,1.6cqw,18px)}
+.demo .chatbox,.demo .ask{contain:inline-size} /* el ancho lo marca la barra, no lo que se escribe */
+.demo .hud{justify-self:center;max-width:100%;margin-top:clamp(18px,4cqw,56px)}
 .stage{background:radial-gradient(60% 80% at 12% 100%,rgba(255,91,31,.55),transparent 70%),radial-gradient(50% 60% at 92% 0%,rgba(255,140,80,.22),transparent 70%),radial-gradient(80% 90% at 50% 40%,#1c1c21,#0b0b0d)}
-.chatbox{position:absolute;left:50%;top:40%;transform:translateX(-50%);width:min(64%,720px);display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;border-radius:16px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.14),0 14px 40px -18px rgba(0,0,0,.6);color:#f5f5f7;font:500 clamp(12px,2.1cqw,15px)/1.3 var(--sans)}
-.ask{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(64%,720px);display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.chatbox{position:relative;width:100%;display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;border-radius:16px;background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.14),0 14px 40px -18px rgba(0,0,0,.6);color:#f5f5f7;font:500 clamp(12px,2.1cqw,15px)/1.3 var(--sans)}
+.ask{display:flex;align-items:flex-end;min-height:calc(2.9em + 20px);font-size:clamp(13px,1.45cqw,15.5px)}
 .ask__who{font:500 10.5px var(--mono);color:#8e8e93;padding-left:4px}
 .ask__msg{max-width:100%;padding:10px 14px;border-radius:15px 15px 15px 5px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#d1d1d6;font:400 clamp(13px,1.45cqw,15.5px)/1.45 var(--sans);transition:opacity .25s var(--ease),transform .4s var(--spring)}
 .ask__msg b{font-weight:500;color:#fff}
@@ -130,7 +133,7 @@ p{margin:0;text-wrap:pretty}
 .chatbox__sent.on{opacity:1;transform:scale(1.08);background:var(--accent)}
 @keyframes blink{50%{opacity:0}}
 
-.hud{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:5px 6px;border-radius:16px;max-width:94%;overflow-x:auto;scrollbar-width:none;transition:background .5s var(--ease),box-shadow .5s var(--ease)}
+.hud{position:relative;display:flex;align-items:center;gap:2px;padding:5px 6px;border-radius:16px;max-width:94%;overflow-x:auto;scrollbar-width:none;transition:background .5s var(--ease),box-shadow .5s var(--ease)}
 .hud::-webkit-scrollbar{display:none}
 .hud .sep{width:1px;height:clamp(22px,3cqw,34px);margin:0 4px;flex:0 0 auto}
 .hud .g{flex:0 0 auto;width:clamp(22px,2.6cqw,32px);height:clamp(22px,2.6cqw,32px);display:grid;place-items:center;font-size:clamp(11px,1.3cqw,15px)}
@@ -243,9 +246,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .cell--tap,.cell--talk,.cell--repeat{grid-column:auto;grid-row:auto;min-height:280px}
   .band__img img{aspect-ratio:4/3}
   .band__img h2{left:24px;bottom:22px}
-  .stage{aspect-ratio:4/3.4}
-  .chatbox{width:88%;top:34%}
-  .ask{width:88%;top:6%}
+  .stage{aspect-ratio:auto;padding:28px 14px}
+  .demo{min-width:100%}
   .hud .k--wide{display:none}
   .hud .g,.hud .g+.sep,.hud .sep:has(+.g){display:none}
   .plans__grid,.faq__grid{grid-template-columns:1fr}
@@ -285,7 +287,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <div class="hero__media rv">
         <div class="stage" id="stage">
           
-          <div class="ask" aria-live="polite"><span class="ask__who" id="who">Claude</span><span class="ask__msg" id="ask">Step 2 of 5 done: the login page works. <b>Shall I keep going?</b></span></div>
+          <div class="demo">
+          <div class="ask" aria-live="polite"><span class="ask__msg" id="ask">Step 2 of 5 done: the login page works. <b>Shall I keep going?</b></span></div>
           <div class="chatbox"><span class="chatbox__app" id="app">Claude</span><span class="chatbox__text"><span id="typed"></span><span class="caret" aria-hidden="true"></span><span class="chatbox__ph" id="ph">Message…</span></span><span class="chatbox__sent" id="sent"><i class="ph ph-arrow-elbow-down-left"></i></span></div>
           <div class="hud" id="bar" role="group" aria-label="Agent Bar keys">
             <span class="g"><i class="ph ph-x"></i></span><span class="sep"></span>
@@ -298,6 +301,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <button class="k k--wide" data-say="undo that last change" data-reply="Undone. <b>Back to how it was.</b>"><i class="ph ph-arrow-counter-clockwise"></i><b>Undo</b></button>
             <button class="k" data-say="stop, don't go on with that" data-reply="Stopped. <b>I won't touch anything else.</b>"><i class="ph ph-stop-circle"></i><b>Stop</b></button>
             <span class="sep"></span><span class="g"><i class="ph ph-sliders-horizontal"></i></span><span class="g"><i class="ph ph-gear-six"></i></span>
+          </div>
           </div>
         </div>
       </div>
@@ -461,7 +465,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   }
   function loop() {
     step = (step + 1) % story.length;
-    if (step === 0) { a = (a + 1) % apps.length; appEl.textContent = who.textContent = apps[a]; }
+    if (step === 0) { a = (a + 1) % apps.length; appEl.textContent = apps[a]; }
     var k = [].filter.call(bar.querySelectorAll('.k'), function (x) { return x.dataset.say === story[step] && x.offsetParent; })[0];
     if (!k) return loop();
     press(k);
