@@ -75,7 +75,7 @@ enum Sender {
                 defer{if deliveryRevision==epoch{delivering=false}}
                 guard deliveryRevision==epoch,allow(),matches(target,selection:false) else{completion(.failure(VoiceServiceError(message:T.s("Text was inserted; the destination changed before Enter. Review the field.","El texto se insertó; el destino cambió antes de Intro. Revisa el campo."))));return}
                 if enter && !(guardTerminal && isTerminal(target)){
-                    guard !verifyBeforeEnter || (expected != nil && attribute(target.field,kAXValueAttribute) as? String == expected) else{completion(.failure(VoiceServiceError(message:T.s("Direct insertion could not be verified, so Enter was not sent. Review the field.","No se ha podido verificar la inserción directa y no se ha pulsado Intro. Revisa el campo."))));return}
+                    guard !verifyBeforeEnter || pasteLanded(target,before:before,expected:expected) else{completion(.failure(VoiceServiceError(message:T.s("Direct insertion could not be verified, so Enter was not sent. Review the field.","No se ha podido verificar la inserción directa y no se ha pulsado Intro. Revisa el campo."))));return}
                     guard tap(keyReturn,flags:[]) else{completion(.failure(VoiceServiceError(message:T.s("Text inserted, but Enter could not be sent.","El texto se insertó, pero no se ha podido pulsar Intro."))));return}
                 }
                 completion(.success(()))
@@ -111,12 +111,20 @@ enum Sender {
                 // Enter is only sent to the same field and never runs a terminal command automatically.
                 if enter && !(guardTerminal && isTerminal(target)) {
                     guard allow(),matches(target,selection:false) else { restore();completion(.failure(VoiceServiceError(message:T.s("Text was pasted; the destination changed before Enter. Review it before sending again.","El texto se pegó; el destino cambió antes de Intro. Revísalo antes de enviarlo otra vez."))));return }
-                    guard !verifyBeforeEnter || (expected != nil && attribute(target.field,kAXValueAttribute) as? String == expected) else{restore();completion(.failure(VoiceServiceError(message:T.s("Paste could not be verified, so Enter was not sent. Review the field before retrying.","No se ha podido verificar el pegado y no se ha pulsado Intro. Revisa el campo antes de reintentar."))));return}
+                    guard !verifyBeforeEnter || pasteLanded(target,before:before,expected:expected) else{restore();completion(.failure(VoiceServiceError(message:T.s("Paste could not be verified, so Enter was not sent. Review the field before retrying.","No se ha podido verificar el pegado y no se ha pulsado Intro. Revisa el campo antes de reintentar."))));return}
                     guard tap(keyReturn,flags:[]) else{restore();completion(.failure(VoiceServiceError(message:T.s("Text pasted, but Enter could not be sent.","El texto se pegó, pero no se ha podido pulsar Intro."))));return}
                 }
                 DispatchQueue.main.asyncAfter(deadline:.now()+0.45){restore();completion(.success(()))}
             }
         }
+    }
+    /// Los chats (Electron, web) no devuelven por Accesibilidad el texto tal cual: solo se da por fallido el pegado
+    /// si el campo se puede leer y sigue igual que antes (el texto no ha entrado).
+    static func pasteLanded(_ target:TextTarget,before:String?,expected:String?)->Bool{
+        let after=attribute(target.field,kAXValueAttribute) as? String
+        if let after,let expected,after==expected{return true}
+        guard let before,let after else{return true}
+        return after != before
     }
     static func isTerminal(_ target:TextTarget)->Bool{["com.apple.Terminal","com.googlecode.iterm2","dev.warp.Warp-Stable","com.mitchellh.ghostty","com.github.wez.wezterm","com.microsoft.VSCode","com.microsoft.VSCodeInsiders","com.todesktop.230313mzl4w4u92","dev.zed.Zed"].contains(target.bundle)}
     static func copy(_ text:String) { NSPasteboard.general.clearContents();NSPasteboard.general.setString(text,forType:.string) }

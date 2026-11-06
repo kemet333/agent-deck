@@ -84,6 +84,7 @@ final class VoiceController: ObservableObject {
     func toggle() { if phase == .listening || phase == .permission {stop()}else if working{cancel()}else{start()} }
     func start(command:Bool=false) {
         guard !active else{return}
+        if !draft.isEmpty && audio == nil && !active { if recordedID == nil { remember(draft,id:UUID(),kind:"draft") }; cancel() }
         guard draft.isEmpty && audio == nil else{message=T.s("Copy or discard the pending draft before recording again.","Copia o descarta el borrador pendiente antes de volver a grabar.");showWorkspace?();return}
         snapshot=preferences;purpose=command ? .command:.dictation
         // sin clave de OpenAI, Fn sigue funcionando con el dictado del Mac (en el propio equipo) y sin limpieza
@@ -171,7 +172,11 @@ final class VoiceController: ObservableObject {
                 if self.draft==text{self.draft="";self.raw="";self.phase = .idle}else{self.phase = .draft;self.message=T.s("The previous version was inserted. Your edited draft is kept.","Se ha insertado la versión anterior. Se conserva el borrador editado.")}
                 if self.snapshot.autoEnter && self.snapshot.guardTerminal && Sender.isTerminal(target){self.message=T.s("Pasted without Enter in a protected terminal/editor. Submit it manually.","Pegado sin Intro en un terminal/editor protegido. Envíalo manualmente.")}
                 self.onDelivered?(text)
-            case .failure(let error):self.phase = .draft;self.message=error.localizedDescription}
+            case .failure(let error):
+                // sin «Borrador listo» colgado: el texto queda en el historial y en el portapapeles para pegarlo a mano
+                NSLog("Agent Deck voz: %@", error.localizedDescription)
+                if !(error is CancellationError) { Sender.copy(text) }
+                self.draft="";self.raw="";self.phase = .idle;self.message=""}
         }
     }
     func copyDraft(){guard !draft.isEmpty else{return};Sender.copy(draft);message=T.s("Copied. The draft remains available.","Copiado. El borrador sigue disponible.")}
@@ -193,5 +198,5 @@ final class VoiceController: ObservableObject {
     }
 
     func removeHistory(_ id:UUID){history.removeAll{$0.id==id};persistHistory()}
-    private func fail(_ text:String){phase = .failed;level=0;message=text}
+    private func fail(_ text:String){phase = .failed;level=0;message=text;NSLog("Agent Deck voz: %@", text)} // solo el motivo, nunca lo dictado
 }

@@ -58,7 +58,8 @@ final class Dictation {
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         request.addsPunctuation = true
-        guard recognizer.supportsOnDeviceRecognition else { requesting=false;onEvent?(.unavailable,nil,"on-device-unavailable");return };request.requiresOnDeviceRecognition = true
+        // en el propio Mac si tiene el modelo; si no, el dictado normal de Apple (lo que hace el dictado de macOS)
+        if recognizer.supportsOnDeviceRecognition { request.requiresOnDeviceRecognition = true }
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else { onEvent?(.unavailable, nil, "no-input"); return }

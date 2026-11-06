@@ -262,8 +262,9 @@ struct Orb: View {
                 .frame(width: store.listening ? 30 : 22, height: store.listening ? 30 : 22)
                 if store.voiceExpanded {
                     Text(store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial)
+                        .truncationMode(.head) // un mensaje largo: solo las últimas palabras
                         .font(.system(size: 11.5, weight: .medium)).foregroundColor(th.style == .metal ? th.ink : th.accent).lineLimit(1)
-                        .frame(maxWidth: 260, alignment: .leading)
+                        .frame(maxWidth: 220, alignment: .leading)
                         .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
@@ -559,6 +560,7 @@ struct DictateItem: View {
                 }
                 .frame(width: 40, height: 17)
                 Text(store.listening ? (store.partial.isEmpty ? T.s("Listening…", "Escuchando…") : store.partial) : (store.dictationNote.isEmpty ? T.s("Talk", "Hablar") : store.dictationNote))
+                    .truncationMode(.head)
                     .font(.system(size: 9.5, weight: .medium))
                     .foregroundColor(store.listening ? th.accent : (hover ? th.ink : th.mute))
                     .lineLimit(1)
