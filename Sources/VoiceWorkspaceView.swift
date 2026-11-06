@@ -61,9 +61,14 @@ struct VoiceWorkspaceView: View {
     private var settings: some View {
         VStack(alignment:.leading,spacing:18){
             card(T.s("Voice engine","Motor de voz")){
-                Picker(T.s("Transcription","Transcripción"),selection:$voice.preferences.engine){Text("OpenAI API").tag(VoiceEngine.openAI);Text(T.s("Apple (existing local option)","Apple (opción local existente)")).tag(VoiceEngine.apple)}.onChange(of:voice.preferences.engine){_,engine in if engine == .apple{voice.preferences.tone = .verbatim}}
+                Picker(T.s("Transcription","Transcripción"),selection:$voice.preferences.engine){Text("OpenAI API").tag(VoiceEngine.openAI);Text(T.s("Apple (on the Mac, free, no key)","Apple (del Mac, gratis, sin clave)")).tag(VoiceEngine.apple)}.onChange(of:voice.preferences.engine){_,engine in if engine == .apple{voice.preferences.tone = .verbatim}}
+                if voice.preferences.engine == .apple {
+                    HStack(spacing:8){Text(voice.appleStatus).font(.system(size:11)).foregroundStyle(Palette.text);Spacer();if !voice.appleStatus.hasPrefix("✓"){Button(T.s("Allow","Permitir")){voice.allowApple()}.controlSize(.small)}}
+                        .onAppear{voice.refreshAppleStatus()}
+                }
                 HStack{SecureField(T.s("OpenAI API key","Clave de la API de OpenAI"),text:$apiKey).textFieldStyle(.roundedBorder).disabled(reviewMode || voice.active);Button(T.s("Save in Keychain","Guardar en Llavero")){voice.saveKey(apiKey);apiKey=""}.disabled(reviewMode || voice.active || apiKey.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)}
                 HStack{Text(voice.keyConfigured ? T.s("Key configured. Actual access is checked when you use voice.","Clave configurada. El acceso real se comprueba al usar la voz."):T.s("No OpenAI key configured.","No hay clave de OpenAI configurada.")).font(.system(size:10)).foregroundStyle(Palette.mute);Spacer();if voice.keyConfigured{Button(T.s("Remove key","Eliminar clave")){voice.removeKey()}.disabled(reviewMode || voice.active).controlSize(.small)}}
+                HStack(spacing:8){Button(T.s("Test key","Probar clave")){voice.testKey()}.disabled(voice.keyTesting || !voice.keyConfigured).controlSize(.small);Text(voice.keyTest).font(.system(size:11)).foregroundStyle(Palette.text).lineLimit(2)}
                 TextField(T.s("Transcription model","Modelo de transcripción"),text:$voice.preferences.transcriptionModel)
                 TextField(T.s("Text model","Modelo para limpiar/editar"),text:$voice.preferences.textModel)
                 TextField(T.s("Language hint (es, en…), blank for automatic","Idioma (es, en…), vacío para automático"),text:$voice.preferences.language)

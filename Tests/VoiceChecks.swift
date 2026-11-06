@@ -134,6 +134,10 @@ struct VoiceChecks {
         let localOverride=VoiceController(storage:VoiceStorage(folder:root.appendingPathComponent("tone-local")),client:api,recorder:FakeRecorder(),keyProvider:{""},microphonePermission:{localPermissionRequests+=1;return false},frontApp:{("Synthetic", "test.synthetic")})
         localOverride.preferences.engine = .apple;localOverride.preferences.autoPaste=false;localOverride.preferences.tone = .clean;localOverride.preferences.appTones["test.synthetic"] = .verbatim
         localOverride.start();await wait{localOverride.phase == .failed};check("per-app verbatim override does not require OpenAI key",localPermissionRequests==1)
+        var appleAsks=0
+        let appleDefault=VoiceController(storage:VoiceStorage(folder:root.appendingPathComponent("apple-default")),client:api,recorder:FakeRecorder(),keyProvider:{""},microphonePermission:{appleAsks+=1;return false},frontApp:{("Synthetic", "test.synthetic")})
+        appleDefault.preferences.engine = .apple;appleDefault.preferences.autoPaste=false;appleDefault.preferences.tone = .clean
+        appleDefault.start();await wait{appleDefault.phase == .failed};check("Apple works without an OpenAI key on default settings",appleAsks==1)
         let cloudOverride=VoiceController(storage:VoiceStorage(folder:root.appendingPathComponent("tone-cloud")),client:api,recorder:FakeRecorder(),keyProvider:{""},microphonePermission:{localPermissionRequests+=1;return false},frontApp:{("Synthetic", "test.synthetic")})
         cloudOverride.preferences.engine = .apple;cloudOverride.preferences.autoPaste=false;cloudOverride.preferences.tone = .verbatim;cloudOverride.preferences.appTones["test.synthetic"] = .clean
         cloudOverride.start();check("per-app cleanup requires key before recording",cloudOverride.phase == .failed && localPermissionRequests==1)

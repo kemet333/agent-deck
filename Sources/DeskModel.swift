@@ -59,6 +59,10 @@ struct AgentAlert: Equatable {
     let app: String
     let ask: Bool
     let place: String
+    /// Lo último que dijo el agente (o lo que pide), para leerlo sin cambiar de ventana.
+    var message: String = ""
+    /// La app donde corre esa sesión (bundle id), para contestar allí.
+    var host: String = ""
     let id = UUID()
     var title: String { ask ? T.s("\(app) is waiting for you", "\(app) te espera") : T.s("\(app) is done", "\(app) ha terminado") }
 }
@@ -251,11 +255,54 @@ final class DeskStore: ObservableObject {
     func restoreDefaults() { keys = DeskStore.defaults }
 
     /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
-    func raiseAlert(app: String, ask: Bool, place: String) {
-        let a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)))
+    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "") {
+        let a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),
+                           message: String(message.prefix(4000)), host: String(host.prefix(120)))
         alert = a
         NSSound(named: ask ? "Ping" : "Glass")?.play()
         DeskStore.haptic(.levelChange)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in if self?.alert == a { self?.alert = nil } }
+        // sin mensaje se va solo; con mensaje se queda hasta que contestes o lo cierres
+        if a.message.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in if self?.alert == a { self?.alert = nil } } }
+    }
+
+    /// Contestar desde el aviso: trae delante la app de esa sesión, escribe la respuesta y la envía.
+    func reply(_ text: String, to a: AgentAlert) {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        alert = nil
+        let app = a.host.isEmpty ? nil : NSRunningApplication.runningApplications(withBundleIdentifier: a.host).first
+        app?.activate()
+        DispatchQueue.main.asyncAfter(deadline: .now() + (app == nil ? 0.05 : 0.35)) {
+            Sender.send(t, enter: true)
+            let f = DateFormatter(); f.dateFormat = "HH:mm"
+            self.lastSent = "\(f.string(from: Date())) · \(t)"
+        }
+    }
+
+    /// Lo que dejó un gancho de Claude Code en Application Support/Agent Deck/hooks/<n>.json: la última respuesta
+    /// del agente (de su transcripción) o el aviso que manda. Se lee una vez y se borra.
+    static func hookMessage(file name: String) -> String {
+        guard name.range(of: "^[0-9]+-[0-9]+\\.json$", options: .regularExpression) != nil else { return "" }
+        let url = folder.appendingPathComponent("hooks").appendingPathComponent(name)
+        defer { try? FileManager.default.removeItem(at: url) }
+        guard let data = try? Data(contentsOf: url), data.count < 1_000_000,
+              let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return "" }
+        if let m = j["last_assistant_message"] as? String, !m.isEmpty { return m }
+        if let m = j["message"] as? String, !m.isEmpty, j["hook_event_name"] as? String == "Notification" { return m }
+        // la transcripción de Claude Code: solo dentro de ~/.claude, y solo el final del archivo
+        guard let tp = j["transcript_path"] as? String, tp.hasSuffix(".jsonl"),
+              tp.hasPrefix(FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude").path),
+              let h = FileHandle(forReadingAtPath: tp) else { return "" }
+        defer { try? h.close() }
+        let size = (try? h.seekToEnd()) ?? 0
+        try? h.seek(toOffset: size > 2_000_000 ? size - 2_000_000 : 0)
+        guard let tail = try? h.readToEnd(), let text = String(data: tail, encoding: .utf8) else { return "" }
+        for line in text.split(separator: "\n").reversed() {
+            guard let o = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any], o["type"] as? String == "assistant",
+                  let msg = o["message"] as? [String: Any], let parts = msg["content"] as? [[String: Any]] else { continue }
+            let t = parts.filter { $0["type"] as? String == "text" }.compactMap { $0["text"] as? String }.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty { return t }
+        }
+        return ""
     }
 }
