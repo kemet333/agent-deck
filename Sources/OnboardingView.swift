@@ -146,8 +146,8 @@ struct OnboardingView: View {
 
     private var alerts: some View {
         step("bell.badge", T.s("Know when Claude Code is done", "Entérate cuando Claude Code termina"),
-             T.s("If you use Claude Code, Agent Bar can light up and chime when it finishes or needs your yes. The alert shows its answer, and you can reply or press Continue right there.",
-                  "Si usas Claude Code, Agent Bar se enciende y suena cuando termina o necesita tu sí. El aviso enseña su respuesta y puedes contestar o pulsar Continúa ahí mismo.")) {
+             T.s("If you use Claude Code, a small one-line alert appears above the orb when a conversation finishes or needs your yes, with a one-sentence summary. Hover it to reply: talk with the mic, press Continue or type. The answer goes to that exact conversation, even with several open.",
+                  "Si usas Claude Code, cuando una conversación termina o necesita tu sí aparece encima del orbe un aviso de una línea con un resumen en una frase. Pasa el ratón por encima para contestar: habla con el micro, pulsa Continúa o escribe. La respuesta va a esa conversación exacta, aunque tengas varias abiertas.")) {
             HStack {
                 Button(claudeOK ? T.s("Alerts are on", "Avisos activados") : T.s("Turn on Claude Code alerts", "Activar avisos de Claude Code")) { connectClaude() }.disabled(claudeOK)
                 if claudeOK { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }

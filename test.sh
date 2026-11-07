@@ -12,3 +12,6 @@ xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_
 xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
  "$project_dir/Sources/Autopilot.swift" "$project_dir/Tests/AutopilotChecks.swift" -o "$voice_test_dir/autopilot-checks"
 "$voice_test_dir/autopilot-checks"
+xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
+ "$project_dir/Sources/Strings.swift" "$project_dir/Sources/KeyPacks.swift" "$project_dir/Tests/PacksChecks.swift" -o "$voice_test_dir/packs-checks"
+"$voice_test_dir/packs-checks"

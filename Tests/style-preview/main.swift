@@ -34,25 +34,40 @@ MainActor.assumeIsolated {
     // aviso de un agente encima del orbe
     do {
         store.collapsed = true
-        store.alert = AgentAlert(app: "Claude Code", ask: false, place: "Diego-Operating-System")
+        store.alerts = [AgentAlert(app: "Claude Code", ask: false, place: "Diego-Operating-System")]
         let view = ZStack { Image(nsImage: wall).resizable(); DockView(store: store) }
             .frame(width: size.width, height: size.height)
             .environment(\.barTheme, Theme.of(.glass)).environment(\.snapshotBackdrop, wall)
         let r = ImageRenderer(content: view); r.scale = 2
         if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("alert.png")) }
-        store.alert = nil; store.collapsed = false
+        store.alerts = []; store.collapsed = false
     }
     do {
         store.collapsed = true
-        store.alert = AgentAlert(app: "Claude Code", ask: false, place: "my-app",
-            message: "Done. The login page now validates the email and shows a clear error.\n\nI ran the tests: 43 passed. Next I can wire the sign-up form. Shall I go on?", host: "com.apple.Terminal")
+        var a1 = AgentAlert(app: "Claude Code", ask: false, place: "2026-11-06-full-visual-kc", message: "x"); a1.summary = "Las tres aperturas del reto entregadas; checks y revisiones OK."
+        var a2 = AgentAlert(app: "Claude Code", ask: false, place: "full-visual", message: "x"); a2.summary = "El render de la apertura 1 vuelve a correr tras dos timeouts."
+        var a3 = AgentAlert(app: "Claude Code", ask: true, place: "traders-fondeados", message: "x"); a3.summary = "Precios de TF guardados. ¿Publico el fichero del día?"
+        store.alerts = [a1, a2, a3]
         let tall = CGSize(width: 1100, height: 440)
         let view = ZStack { Image(nsImage: wall).resizable(); DockView(store: store) }
             .frame(width: tall.width, height: tall.height)
             .environment(\.barTheme, Theme.of(.glass)).environment(\.snapshotBackdrop, wall)
         let r = ImageRenderer(content: view); r.scale = 2
         if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("reply.png")) }
-        store.alert = nil; store.collapsed = false
+        store.alerts = []; store.collapsed = false
+    }
+    // la barra entera sobre blanco, con el margen de su ventana: la sombra no debe cortarse en caja
+    do {
+        store.collapsed = false
+        let wr = ImageRenderer(content: Color.white.frame(width: 1400, height: 260)); wr.scale = 2
+        let white = wr.nsImage!
+        for st in BarStyle.allCases {
+            let view = ZStack { Color.white; DockView(store: store).background(Color(white: 0.985)) }
+                .frame(width: 1400, height: 260)
+                .environment(\.barTheme, Theme.of(st)).environment(\.snapshotBackdrop, white)
+            let r = ImageRenderer(content: view); r.scale = 2
+            if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("white-\(st.rawValue).png")) }
+        }
     }
     for st in BarStyle.allCases {
         for orb in [false, true] {

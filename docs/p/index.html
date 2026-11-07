@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A key pack for Agent Bar</title>
+<meta name="description" content="Someone shared their Agent Bar keys with you. Add them to your bar with one click.">
+<meta property="og:title" content="A key pack for Agent Bar"><meta property="og:description" content="One key for what you type to your AI a hundred times a day.">
+<meta property="og:image" content="https://getagentbar.com/img/desk.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../packs/packs.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a class="brand" href="../"><span class="mark"><i></i><i></i></span>Agent Bar</a><a class="btn btn--ghost" href="../packs/">All packs</a></div>
+  <div id="out"></div>
+</main>
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var out=document.getElementById('out'), d=(location.hash||'').slice(1), p=null;
+try{var b=d.replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';p=JSON.parse(decodeURIComponent(escape(atob(b))));}catch(e){}
+if(!p||!p.name||!Array.isArray(p.keys)||!p.keys.length||p.keys.length>12){
+  out.innerHTML='<p class="empty">This pack link isn\'t complete. Ask for the link again, or browse <a href="../packs/" style="text-decoration:underline">all packs</a>.</p>';
+}else{
+  document.title=p.name+' · Agent Bar keys';
+  out.innerHTML='<h1>'+esc(p.name)+'</h1><p class="lead">Someone shared their Agent Bar keys with you. Each one types its words into your AI chat and sends them, with one click or ⌃⌥ and a number.</p>'+
+    '<article class="pack" style="max-width:620px"><ul class="keys">'+p.keys.map(function(k){return '<li><b>'+esc(k.label)+'</b><span>«'+esc(k.text)+'»</span></li>';}).join('')+'</ul>'+
+    '<div class="row"><a class="btn" href="agentdeck://pack?d='+d+'"><span class="dot"></span>Add to Agent Bar</a><a class="btn btn--ghost" href="https://github.com/kemet333/agent-deck/releases/latest/download/AgentBar.dmg">Get Agent Bar (free, Mac)</a></div>'+
+    '<p class="note">«Add to Agent Bar» opens the app and asks before changing anything. Don\'t have it yet? Get it first, then come back to this link.</p></article>';
+}
+</script>
+</body>
+</html>

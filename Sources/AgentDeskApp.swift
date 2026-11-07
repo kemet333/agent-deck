@@ -15,7 +15,7 @@ struct AgentDeskApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let store = DeskStore()
     var panel: FloatingPanel!
     var status: NSStatusItem!
@@ -81,12 +81,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "alert": // agentdeck://alert?app=Claude%20Code&kind=done|ask&place=proyecto
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
                 let msg = v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file"))
-                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"))
+                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1")
+            case "released": // el gancho de esa conversación dejó de esperar
+                store.alertReleased(token: q.first(where: { $0.name == "file" })?.value ?? "")
             case "autopilot": // lo manda AgentBarClaudeHook cada vez que el piloto sigue solo
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
                 store.autopilotTurn(left: Int(v("left")) ?? 0, place: v("place"))
             case "press":
                 if let n = q.first(where: { $0.name == "n" })?.value.flatMap(Int.init) { store.press(hotkey: n) }
+            case "pack": // agentdeck://pack?d=<base64url>: un pack compartido; siempre pregunta antes
+                if let d = q.first(where: { $0.name == "d" })?.value, let p = KeyPack.decode(d) { offerPack(p) }
+                else { store.flashNote(T.s("That pack link isn't valid", "Ese enlace de pack no es válido")) }
             case "send":
                 if let t = q.first(where: { $0.name == "text" })?.value, !t.isEmpty {
                     Sender.send(t, enter: (q.first { $0.name == "enter" }?.value ?? "1") != "0")
@@ -125,8 +130,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pilot.addItem(.separator()); pilot.addItem(offIt)
         pilotItem.submenu = pilot
         menu.addItem(pilotItem)
-        let hooksItem = NSMenuItem(title: T.s("Claude Code alerts…", "Avisos de Claude Code…"), action: #selector(connectClaude), keyEquivalent: "")
-        hooksItem.target = self
+        if FileManager.default.fileExists(atPath: WhatsAppRelay.folder.path) {
+            let wa = NSMenuItem(title: T.s("Alerts to Alfred's WhatsApp when I'm away", "Avisos al WhatsApp de Alfred si no estoy"), action: #selector(toggleWhatsApp(_:)), keyEquivalent: "")
+            wa.target = self; wa.state = (UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true) ? .on : .off
+            menu.addItem(wa)
+        }
+        let hooksItem = NSMenuItem(title: T.s("Claude Code alerts", "Avisos de Claude Code"), action: nil, keyEquivalent: "")
+        let hooksMenu = NSMenu(); hooksMenu.delegate = self
+        hooksItem.submenu = hooksMenu
         menu.addItem(hooksItem)
         let modeItem = NSMenuItem(title: T.s("Mode", "Modo"), action: nil, keyEquivalent: "")
         let modes = NSMenu()
@@ -149,6 +160,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
         menu.addItem(withTitle: T.s("Accessibility permission…", "Permiso de Accesibilidad…"), action: #selector(openAccessibility), keyEquivalent: "")
+        let packsItem = NSMenuItem(title: T.s("Key packs", "Packs de teclas"), action: nil, keyEquivalent: "")
+        let packs = NSMenu()
+        for (i, p) in KeyPack.builtIn.enumerated() { let it = NSMenuItem(title: p.name + "…", action: #selector(pickPack(_:)), keyEquivalent: ""); it.tag = i; it.target = self; packs.addItem(it) }
+        packs.addItem(.separator())
+        let share = NSMenuItem(title: T.s("Share my keys (copy link)", "Compartir mis teclas (copiar enlace)"), action: #selector(shareKeys), keyEquivalent: ""); share.target = self
+        packs.addItem(share)
+        let more = NSMenuItem(title: T.s("More packs on getagentbar.com…", "Más packs en getagentbar.com…"), action: #selector(morePacks), keyEquivalent: ""); more.target = self
+        packs.addItem(more)
+        packsItem.submenu = packs
+        menu.addItem(packsItem)
         menu.addItem(withTitle: T.s("Restore default keys", "Restaurar teclas de fábrica"), action: #selector(restoreDefaults), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: T.s("Quit Agent Deck", "Salir de Agent Deck"), action: #selector(quit), keyEquivalent: "q")
@@ -177,6 +198,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func restoreDefaults() { store.restoreDefaults() }
     @objc func pasteLastVoice() { store.voice.pasteLast() }
+    /// Un pack (de la lista o de un enlace): enseña sus teclas y pregunta si añadirlas o reemplazar las tuyas.
+    func offerPack(_ p: KeyPack) {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        a.messageText = T.s("Add the «\(p.name)» pack?", "¿Añadir el pack «\(p.name)»?")
+        a.informativeText = p.keys.prefix(12).map { "• \($0.label) — «\($0.text.prefix(80))»" }.joined(separator: "\n")
+        a.addButton(withTitle: T.s("Add to my keys", "Añadir a mis teclas"))
+        a.addButton(withTitle: T.s("Replace my keys", "Reemplazar mis teclas"))
+        a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        switch a.runModal() {
+        case .alertFirstButtonReturn: store.install(p, replace: false)
+        case .alertSecondButtonReturn: store.install(p, replace: true)
+        default: break
+        }
+    }
+    @objc func toggleWhatsApp(_ sender: NSMenuItem) {
+        let on = !(UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true)
+        UserDefaults.standard.set(on, forKey: "whatsappAlerts"); sender.state = on ? .on : .off
+    }
+    @objc func pickPack(_ sender: NSMenuItem) { if KeyPack.builtIn.indices.contains(sender.tag) { offerPack(KeyPack.builtIn[sender.tag]) } }
+    @objc func shareKeys() {
+        Sender.copy(store.currentPack.shareURL)
+        store.flashNote(T.s("Link copied: paste it anywhere", "Enlace copiado: pégalo donde quieras"), for: 3)
+    }
+    @objc func morePacks() { if let u = URL(string: "https://getagentbar.com/packs/") { NSWorkspace.shared.open(u) } }
     @objc func setPilot(_ sender: NSMenuItem) {
         if sender.tag > 0 && !ClaudeHooks.installed { connectClaude(); if !ClaudeHooks.installed { return } }
         store.setAutopilot(sender.tag)
@@ -261,6 +307,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Conectar los avisos de Claude Code: pregunta antes y explica exactamente qué cambia.
+    // MARK: avisos de Claude Code: encender, apagar, quitar
+
+    /// El submenú se rehace cada vez que se abre, con el estado real.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu.supermenu != nil, menu.items.isEmpty || menu.items.first?.tag == 7001 else { return }
+        menu.removeAllItems()
+        if ClaudeHooks.installed {
+            let on = NSMenuItem(title: T.s("On", "Activados"), action: #selector(toggleClaudeAlerts(_:)), keyEquivalent: "")
+            on.state = ClaudeHooks.paused ? .off : .on; on.target = self; on.tag = 7001
+            menu.addItem(on)
+            let test = NSMenuItem(title: T.s("Try an alert", "Probar un aviso"), action: #selector(tryAlert), keyEquivalent: ""); test.target = self
+            menu.addItem(test)
+            menu.addItem(.separator())
+            let rm = NSMenuItem(title: T.s("Remove from Claude Code…", "Quitar de Claude Code…"), action: #selector(removeClaudeAlerts), keyEquivalent: ""); rm.target = self
+            menu.addItem(rm)
+        } else {
+            let add = NSMenuItem(title: ClaudeHooks.oldVersion ? T.s("Update alerts…", "Actualizar avisos…") : T.s("Turn on…", "Activar…"), action: #selector(connectClaude), keyEquivalent: "")
+            add.target = self; add.tag = 7001
+            menu.addItem(add)
+        }
+    }
+    @objc func toggleClaudeAlerts(_ sender: NSMenuItem) {
+        ClaudeHooks.paused.toggle()
+        if ClaudeHooks.paused { store.setAutopilot(0) }
+        store.flashNote(ClaudeHooks.paused ? T.s("Claude Code alerts off", "Avisos de Claude Code apagados") : T.s("Claude Code alerts on", "Avisos de Claude Code activados"))
+    }
+    @objc func tryAlert() { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba"), message: T.s("This is how an alert looks.", "Así se ve un aviso.")) }
+    @objc func removeClaudeAlerts() {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        a.messageText = T.s("Remove Agent Bar from Claude Code?", "¿Quitar Agent Bar de Claude Code?")
+        a.informativeText = T.s("The two Agent Bar hooks are removed from ~/.claude/settings.json (a backup is saved first). Nothing else changes. Restart Claude Code sessions. You can turn them on again any time.", "Se quitan los dos ganchos de Agent Bar de ~/.claude/settings.json (antes se guarda una copia). No cambia nada más. Reinicia las sesiones de Claude Code. Puedes volver a activarlos cuando quieras.")
+        a.addButton(withTitle: T.s("Remove", "Quitar")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        switch ClaudeHooks.uninstall() {
+        case .failed(let why): let e = NSAlert(); e.messageText = why; e.runModal()
+        default: store.setAutopilot(0); store.flashNote(T.s("Removed from Claude Code", "Quitado de Claude Code"))
+        }
+    }
+
     @objc func connectClaude() {
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
