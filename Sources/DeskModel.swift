@@ -350,7 +350,10 @@ final class DeskStore: ObservableObject {
         autopilotLeft = n
         flashNote(n > 0 ? T.s("Autopilot: \(n) turns", "Piloto: \(n) vueltas") : T.s("Autopilot off", "Piloto apagado"))
     }
+    /// Lo pone el AppDelegate: abre la ventana de Pro.
+    var showPro: (() -> Void)?
     func toggleAutopilot() {
+        if autopilotLeft == 0 && !License.shared.unlocked { showPro?(); return }
         if autopilotLeft == 0 && !ClaudeHooks.installed { flashNote(T.s("Turn on Claude Code alerts first (menu)", "Activa antes los avisos de Claude Code (menú)"), for: 3.5); return }
         setAutopilot(autopilotLeft > 0 ? 0 : 5)
     }

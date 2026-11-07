@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var voiceHotkeys: VoiceHotkeys?
     var voiceWindow: NSWindow?
     var tutorialWindow: NSWindow?
+    var proWindow: NSWindow?
     var flowWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -38,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
         }
         store.hide = { [weak self] in self?.store.toggleCollapsed() }
+        store.showPro = { [weak self] in self?.openPro() }
         // el último chat de IA que tuviste delante, para «Explica» y «Captura»
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] n in
             let b = (n.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier
@@ -118,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Dictate to the chat", "Dictar al chat"), action: #selector(dictate), keyEquivalent: "m")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
+        menu.addItem(withTitle: T.s("Agent Bar Pro…", "Agent Bar Pro…"), action: #selector(openPro), keyEquivalent: "")
         menu.addItem(withTitle: T.s("Tutorial…", "Tutorial…"), action: #selector(openTutorial), keyEquivalent: "")
         menu.addItem(withTitle: T.s("Voice, drafts & history…", "Voz, borradores e historial…"), action: #selector(openVoice), keyEquivalent: ",")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
@@ -224,8 +227,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     @objc func morePacks() { if let u = URL(string: "https://getagentbar.com/packs/") { NSWorkspace.shared.open(u) } }
     @objc func setPilot(_ sender: NSMenuItem) {
+        if sender.tag > 0 && !License.shared.unlocked { openPro(); return }
         if sender.tag > 0 && !ClaudeHooks.installed { connectClaude(); if !ClaudeHooks.installed { return } }
         store.setAutopilot(sender.tag)
+    }
+    @objc func openPro() {
+        if proWindow == nil {
+            let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 420), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            w.title = "Agent Bar Pro"; w.isReleasedWhenClosed = false
+            w.contentView = NSHostingView(rootView: ProView(license: License.shared)); w.center(); proWindow = w
+        }
+        proWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
     @objc func openTutorial() {
         if tutorialWindow == nil {
