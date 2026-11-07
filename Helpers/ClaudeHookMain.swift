@@ -33,6 +33,9 @@ enum ClaudeHookMain {
             Autopilot.save(nil) // un permiso o una pregunta de Claude Code: el piloto se para
         }
 
+        // avisos apagados desde el menú: Claude Code para como siempre, sin aviso ni espera
+        if FileManager.default.fileExists(atPath: Autopilot.folder.appendingPathComponent("alerts-off").path) { return }
+
         // el aviso: lo que mandó Claude Code se deja en hooks/ para que la app lea su respuesta
         let dir = Autopilot.folder.appendingPathComponent("hooks")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

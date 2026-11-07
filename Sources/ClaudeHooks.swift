@@ -19,6 +19,39 @@ enum ClaudeHooks {
     static var oldVersion: Bool { (text.contains(marker) || text.contains(helperName)) && !installed }
     private static var text: String { (try? String(contentsOf: settings, encoding: .utf8)) ?? "" }
 
+    /// Apagados desde el menú: los ganchos siguen puestos, pero no avisan ni esperan (al momento, sin reiniciar Claude Code).
+    static var offFile: URL { Autopilot.folder.appendingPathComponent("alerts-off") }
+    static var paused: Bool {
+        get { FileManager.default.fileExists(atPath: offFile.path) }
+        set {
+            if newValue { try? FileManager.default.createDirectory(at: Autopilot.folder, withIntermediateDirectories: true); try? Data().write(to: offFile) }
+            else { try? FileManager.default.removeItem(at: offFile) }
+        }
+    }
+
+    /// Quitar los ganchos de Agent Bar de ~/.claude/settings.json (con copia antes); el resto de tu configuración no se toca.
+    static func uninstall() -> Outcome {
+        let fm = FileManager.default
+        guard let data = try? Data(contentsOf: settings), var root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return .alreadyThere }
+        guard text.contains(marker) || text.contains(helperName) else { return .alreadyThere }
+        let backup = settings.deletingLastPathComponent().appendingPathComponent("settings.json.agentdeck-backup")
+        try? fm.removeItem(at: backup)
+        do { try fm.copyItem(at: settings, to: backup) } catch { return .failed(T.s("Couldn't make a backup, so nothing was changed.", "No se ha podido guardar una copia; no se ha cambiado nada.")) }
+        var hooks = root["hooks"] as? [String: Any] ?? [:]
+        for event in ["Stop", "Notification"] {
+            let list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
+                !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
+            }
+            if list.isEmpty { hooks.removeValue(forKey: event) } else { hooks[event] = list }
+        }
+        if hooks.isEmpty { root.removeValue(forKey: "hooks") } else { root["hooks"] = hooks }
+        do {
+            try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]).write(to: settings, options: .atomic)
+            paused = false
+            return .added
+        } catch { return .failed(T.s("Couldn't write ~/.claude/settings.json.", "No se ha podido escribir ~/.claude/settings.json.")) }
+    }
+
     enum Outcome { case added, alreadyThere, failed(String) }
 
     static func install() -> Outcome {

@@ -15,7 +15,7 @@ struct AgentDeskApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let store = DeskStore()
     var panel: FloatingPanel!
     var status: NSStatusItem!
@@ -135,8 +135,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             wa.target = self; wa.state = (UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true) ? .on : .off
             menu.addItem(wa)
         }
-        let hooksItem = NSMenuItem(title: T.s("Claude Code alerts…", "Avisos de Claude Code…"), action: #selector(connectClaude), keyEquivalent: "")
-        hooksItem.target = self
+        let hooksItem = NSMenuItem(title: T.s("Claude Code alerts", "Avisos de Claude Code"), action: nil, keyEquivalent: "")
+        let hooksMenu = NSMenu(); hooksMenu.delegate = self
+        hooksItem.submenu = hooksMenu
         menu.addItem(hooksItem)
         let modeItem = NSMenuItem(title: T.s("Mode", "Modo"), action: nil, keyEquivalent: "")
         let modes = NSMenu()
@@ -306,6 +307,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Conectar los avisos de Claude Code: pregunta antes y explica exactamente qué cambia.
+    // MARK: avisos de Claude Code: encender, apagar, quitar
+
+    /// El submenú se rehace cada vez que se abre, con el estado real.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu.supermenu != nil, menu.items.isEmpty || menu.items.first?.tag == 7001 else { return }
+        menu.removeAllItems()
+        if ClaudeHooks.installed {
+            let on = NSMenuItem(title: T.s("On", "Activados"), action: #selector(toggleClaudeAlerts(_:)), keyEquivalent: "")
+            on.state = ClaudeHooks.paused ? .off : .on; on.target = self; on.tag = 7001
+            menu.addItem(on)
+            let test = NSMenuItem(title: T.s("Try an alert", "Probar un aviso"), action: #selector(tryAlert), keyEquivalent: ""); test.target = self
+            menu.addItem(test)
+            menu.addItem(.separator())
+            let rm = NSMenuItem(title: T.s("Remove from Claude Code…", "Quitar de Claude Code…"), action: #selector(removeClaudeAlerts), keyEquivalent: ""); rm.target = self
+            menu.addItem(rm)
+        } else {
+            let add = NSMenuItem(title: ClaudeHooks.oldVersion ? T.s("Update alerts…", "Actualizar avisos…") : T.s("Turn on…", "Activar…"), action: #selector(connectClaude), keyEquivalent: "")
+            add.target = self; add.tag = 7001
+            menu.addItem(add)
+        }
+    }
+    @objc func toggleClaudeAlerts(_ sender: NSMenuItem) {
+        ClaudeHooks.paused.toggle()
+        if ClaudeHooks.paused { store.setAutopilot(0) }
+        store.flashNote(ClaudeHooks.paused ? T.s("Claude Code alerts off", "Avisos de Claude Code apagados") : T.s("Claude Code alerts on", "Avisos de Claude Code activados"))
+    }
+    @objc func tryAlert() { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba"), message: T.s("This is how an alert looks.", "Así se ve un aviso.")) }
+    @objc func removeClaudeAlerts() {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        a.messageText = T.s("Remove Agent Bar from Claude Code?", "¿Quitar Agent Bar de Claude Code?")
+        a.informativeText = T.s("The two Agent Bar hooks are removed from ~/.claude/settings.json (a backup is saved first). Nothing else changes. Restart Claude Code sessions. You can turn them on again any time.", "Se quitan los dos ganchos de Agent Bar de ~/.claude/settings.json (antes se guarda una copia). No cambia nada más. Reinicia las sesiones de Claude Code. Puedes volver a activarlos cuando quieras.")
+        a.addButton(withTitle: T.s("Remove", "Quitar")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        switch ClaudeHooks.uninstall() {
+        case .failed(let why): let e = NSAlert(); e.messageText = why; e.runModal()
+        default: store.setAutopilot(0); store.flashNote(T.s("Removed from Claude Code", "Quitado de Claude Code"))
+        }
+    }
+
     @objc func connectClaude() {
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
