@@ -56,6 +56,19 @@ MainActor.assumeIsolated {
         if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("reply.png")) }
         store.alerts = []; store.collapsed = false
     }
+    // la barra entera sobre blanco, con el margen de su ventana: la sombra no debe cortarse en caja
+    do {
+        store.collapsed = false
+        let wr = ImageRenderer(content: Color.white.frame(width: 1400, height: 260)); wr.scale = 2
+        let white = wr.nsImage!
+        for st in BarStyle.allCases {
+            let view = ZStack { Color.white; DockView(store: store).background(Color(white: 0.985)) }
+                .frame(width: 1400, height: 260)
+                .environment(\.barTheme, Theme.of(st)).environment(\.snapshotBackdrop, white)
+            let r = ImageRenderer(content: view); r.scale = 2
+            if let cg = r.cgImage { try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: out.appendingPathComponent("white-\(st.rawValue).png")) }
+        }
+    }
     for st in BarStyle.allCases {
         for orb in [false, true] {
             let view = ZStack {

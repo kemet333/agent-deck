@@ -53,7 +53,7 @@ struct Glass: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(Color.white.opacity(0.09), lineWidth: 1))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).inset(by: 1).stroke(Color.white.opacity(0.03), lineWidth: 1))
-            .shadow(color: .black.opacity(lift == .bar ? 0.42 : 0.3), radius: lift == .bar ? 22 : 7, x: 0, y: lift == .bar ? 10 : 3)
+            .shadow(color: .black.opacity(lift == .bar ? 0.22 : 0.3), radius: lift == .bar ? 12 : 7, x: 0, y: lift == .bar ? 5 : 3) // suave: en fondos claros no se ve la caja
     }
 }
 
@@ -153,13 +153,13 @@ struct Surface: ViewModifier {
                 .clipShape(shape)
                 .overlay(shape.strokeBorder(.white.opacity(0.22), lineWidth: 1))
                 .overlay(shape.inset(by: 1).strokeBorder(LinearGradient(colors: [.white.opacity(0.32), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
-                .shadow(color: .black.opacity(lift == .bar ? 0.32 : 0.26), radius: lift == .bar ? 26 : 7, x: 0, y: lift == .bar ? 12 : 3)
+                .shadow(color: .black.opacity(lift == .bar ? 0.16 : 0.26), radius: lift == .bar ? 12 : 7, x: 0, y: lift == .bar ? 5 : 3)
         case .metal:
             content
                 .background(
                     ZStack {
                         shape.fill(Color(hex: 0x8a8a84)).offset(y: 2)
-                            .shadow(color: .black.opacity(lift == .bar ? 0.35 : 0.28), radius: lift == .bar ? 20 : 7, x: 0, y: lift == .bar ? 12 : 3)
+                            .shadow(color: .black.opacity(lift == .bar ? 0.22 : 0.28), radius: lift == .bar ? 12 : 7, x: 0, y: lift == .bar ? 6 : 3)
                         Brushed().clipShape(shape)
                         shape.strokeBorder(.black.opacity(0.16), lineWidth: 1)
                         shape.inset(by: 1).strokeBorder(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.0)], startPoint: .top, endPoint: .center), lineWidth: 1)
@@ -246,7 +246,7 @@ struct DockView: View {
         .animation(Motion.fold, value: store.collapsed)
         }
         .animation(Motion.settle, value: store.alerts)
-        .padding(.horizontal, 30).padding(.top, 36).padding(.bottom, 14) // sitio para la sombra y los rebotes
+        .padding(.horizontal, 30).padding(.top, 36).padding(.bottom, 26) // sitio para que la sombra se apague entera, sin cortes
         .focusEffectDisabled()
     }
 }
