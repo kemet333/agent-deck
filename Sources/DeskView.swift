@@ -219,11 +219,17 @@ struct DeskRoot: View {
 @MainActor
 struct DockView: View {
     @ObservedObject var store: DeskStore
+    @Environment(\.barTheme) private var th
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 6) {
+            if store.alerts.count > 3 {
+                Text("+\(store.alerts.count - 3)").font(.system(size: 10.5, weight: .semibold)).foregroundColor(th.mute)
+                    .padding(.horizontal, 9).padding(.vertical, 3).modifier(Surface(radius: 10))
+            }
             ForEach(store.alerts.suffix(3), id: \.id) { a in
                 AlertPill(alert: a, dismiss: { store.dismissAlert(a) }, reply: { store.reply($0, to: a) },
-                          autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.keys.first?.text ?? T.s("continue", "continúa"), to: a) } : nil)
+                          autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.keys.first?.text ?? T.s("continue", "continúa"), to: a) } : nil,
+                          talk: { store.talkToAlert(a) }, listening: store.alertListening == a.id, level: store.alertLevel)
                     .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8, anchor: .bottom)))
             }
         ZStack(alignment: .bottom) {
@@ -245,87 +251,101 @@ struct DockView: View {
     }
 }
 
-/// El aviso de un agente encima del orbe o de la barra. Sin mensaje: una línea que se quita al tocarla.
-/// Con la respuesta del agente: una tarjeta para leerla y contestar desde aquí, sin ir a su ventana.
+/// El aviso de un agente: una cápsula de una línea con el resumen («Claude Code · carpeta — qué ha hecho»).
+/// Al pasar el ratón se abre un poco: el resumen entero y las respuestas (hablar, Continúa, ×5, escribir).
 struct AlertPill: View {
     let alert: AgentAlert
     let dismiss: () -> Void
     var reply: ((String) -> Void)? = nil
     var autopilot: (() -> Void)? = nil
+    var talk: (() -> Void)? = nil
+    var listening = false
+    var level: Float = 0
     @Environment(\.barTheme) private var th
     @State private var hover = false
+    @State private var typing = false
     @State private var answer = ""
-    @FocusState private var typing: Bool
+    @FocusState private var focused: Bool
 
     private var dotColor: Color { alert.ask ? Color(hex: 0xff5b1f) : th.accent }
-
-    private var header: some View {
-        HStack(spacing: 10) {
-            TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
-                let p = 0.5 + 0.5 * sin(ctx.date.timeIntervalSinceReferenceDate * (alert.ask ? 5 : 2.4))
-                Circle().fill(dotColor).frame(width: 8, height: 8)
-                    .shadow(color: dotColor.opacity(0.4 + 0.5 * p), radius: 3 + 6 * p)
-            }
-            .frame(width: 10, height: 10)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(alert.title).font(.system(size: 12, weight: .semibold)).foregroundColor(th.ink).lineLimit(1)
-                if !alert.place.isEmpty {
-                    Text(alert.place).font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundColor(th.mute).lineLimit(1)
-                }
-            }
-            Spacer(minLength: 8)
-            Button(action: dismiss) {
-                Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundColor(th.faint)
-                    .frame(width: 18, height: 18).contentShape(Rectangle())
-            }.buttonStyle(.plain).opacity(alert.message.isEmpty ? (hover ? 1 : 0) : 1).help(T.s("Dismiss", "Quitar aviso"))
-        }
-    }
+    private var open: Bool { hover || typing || listening }
+    private var summary: String { alert.summary.isEmpty ? alert.message : alert.summary }
 
     var body: some View {
-        if alert.message.isEmpty {
-            Button(action: dismiss) {
-                header.padding(.horizontal, 14).padding(.vertical, 9).fixedSize()
-                    .modifier(Surface(radius: 18))
-                    .scaleEffect(hover ? 1.03 : 1).animation(Motion.tap, value: hover)
+        VStack(alignment: .leading, spacing: open ? 9 : 0) {
+            HStack(spacing: 9) {
+                TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
+                    let p = 0.5 + 0.5 * sin(ctx.date.timeIntervalSinceReferenceDate * (alert.ask ? 5 : 2.4))
+                    Circle().fill(dotColor).frame(width: 7, height: 7)
+                        .shadow(color: dotColor.opacity(0.35 + 0.45 * p), radius: 2 + 5 * p)
+                }.frame(width: 9, height: 9)
+                Text(alert.place.isEmpty ? alert.app : alert.place)
+                    .font(.system(size: 11.5, weight: .semibold)).foregroundColor(th.ink).lineLimit(1).truncationMode(.middle)
+                    .frame(maxWidth: 130, alignment: .leading).fixedSize(horizontal: true, vertical: false)
+                    .help(alert.ask ? T.s("Waiting for you", "Te espera") : T.s("Done", "Ha terminado"))
+                if !open && !summary.isEmpty {
+                    Text(summary).font(.system(size: 11.5)).foregroundColor(th.mute).lineLimit(1).truncationMode(.tail)
+                }
+                Spacer(minLength: 4)
+                if open {
+                    Button(action: dismiss) {
+                        Image(systemName: "xmark").font(.system(size: 8.5, weight: .bold)).foregroundColor(th.faint)
+                            .frame(width: 16, height: 16).contentShape(Rectangle())
+                    }.buttonStyle(.plain).help(T.s("Dismiss: that conversation stops as usual", "Quitar: esa conversación se para como siempre"))
+                }
             }
-            .buttonStyle(.plain).onHover { hover = $0 }
-        } else {
-            VStack(alignment: .leading, spacing: 10) {
-                header
-                Text(alert.message).font(.system(size: 12.5)).foregroundColor(th.text).lineSpacing(2)
-                    .lineLimit(8).truncationMode(.tail)
-                    .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
-                    .textSelection(.enabled)
+            if open {
+                if !summary.isEmpty {
+                    Text(summary).font(.system(size: 12)).foregroundColor(th.text).lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true).transition(.opacity)
+                }
                 if let reply {
-                    HStack(spacing: 6) {
-                        TextField(T.s("Reply…", "Responder…"), text: $answer)
-                            .textFieldStyle(.plain).font(.system(size: 12.5)).foregroundColor(th.ink)
-                            .focused($typing)
-                            .onSubmit { reply(answer); answer = "" }
-                            .padding(.horizontal, 10).padding(.vertical, 7)
-                            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(th.hover.opacity(0.9)))
-                            .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).stroke(th.divider, lineWidth: 1))
-                        Button { reply(answer.isEmpty ? T.s("continue", "continúa") : answer); answer = "" } label: {
-                            Text(answer.isEmpty ? T.s("Continue", "Continúa") : T.s("Send", "Enviar"))
-                                .font(.system(size: 11.5, weight: .semibold)).foregroundColor(Color(hex: 0x2a0d02))
-                                .padding(.horizontal, 12).padding(.vertical, 7)
-                                .background(Capsule().fill(Color(hex: 0xff5b1f)))
-                        }.buttonStyle(.plain) // solo con clic: un Intro escrito en otra app no debe contestar por ti
-                        if let autopilot, answer.isEmpty {
-                            Button(action: autopilot) {
-                                Label("×5", systemImage: "airplane").font(.system(size: 11.5, weight: .semibold)).foregroundColor(th.ink)
-                                    .padding(.horizontal, 10).padding(.vertical, 7)
-                                    .background(Capsule().fill(th.hover.opacity(0.9))).overlay(Capsule().stroke(th.divider, lineWidth: 1))
-                            }.buttonStyle(.plain).help(T.s("Continue, and keep going on your own up to 5 more times", "Continúa y sigue solo hasta 5 veces más"))
+                    if typing {
+                        HStack(spacing: 6) {
+                            TextField(T.s("Reply…", "Responder…"), text: $answer)
+                                .textFieldStyle(.plain).font(.system(size: 12)).foregroundColor(th.ink).focused($focused)
+                                .onSubmit { reply(answer); answer = ""; typing = false }
+                                .padding(.horizontal, 9).padding(.vertical, 6)
+                                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(th.hover.opacity(0.9)))
+                            chip(T.s("Send", "Enviar"), "arrow.up", primary: true) { reply(answer.isEmpty ? T.s("continue", "continúa") : answer); answer = ""; typing = false }
+                        }
+                    } else {
+                        HStack(spacing: 6) {
+                            if let talk {
+                                Button(action: talk) {
+                                    ZStack {
+                                        if listening { VoiceBlob(level: level, size: 20) }
+                                        else { Image(systemName: "mic.fill").font(.system(size: 11, weight: .semibold)).foregroundColor(th.ink) }
+                                    }
+                                    .frame(width: 30, height: 26)
+                                    .background(Capsule().fill(th.hover.opacity(listening ? 0 : 0.9)))
+                                }.buttonStyle(.plain).help(listening ? T.s("Tap to send what you said", "Toca para enviar lo que has dicho") : T.s("Talk: your answer goes to this conversation", "Habla: tu respuesta va a esta conversación"))
+                            }
+                            chip(T.s("Continue", "Continúa"), "arrow.right", primary: true) { reply(T.s("continue", "continúa")) }
+                            if let autopilot { chip("×5", "airplane", primary: false, action: autopilot) }
+                            chip("", "keyboard", primary: false) { typing = true; focused = true }
                         }
                     }
                 }
             }
-            .padding(14)
-            .frame(width: 380)
-            .modifier(Surface(radius: 18))
-            .onHover { hover = $0 }
         }
+        .padding(.horizontal, 12).padding(.vertical, open ? 11 : 8)
+        .frame(width: 330, alignment: .leading)
+        .modifier(Surface(radius: open ? 16 : 18))
+        .animation(Motion.settle, value: open)
+        .onHover { hover = $0 }
+    }
+
+    private func chip(_ text: String, _ icon: String, primary: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon).font(.system(size: 10, weight: .bold))
+                if !text.isEmpty { Text(text).font(.system(size: 11.5, weight: .semibold)) }
+            }
+            .foregroundColor(primary ? Color(hex: 0x2a0d02) : th.ink)
+            .padding(.horizontal, text.isEmpty ? 9 : 11).frame(height: 26)
+            .background(Capsule().fill(primary ? Color(hex: 0xff5b1f) : th.hover.opacity(0.9)))
+        }.buttonStyle(.plain)
     }
 }
 

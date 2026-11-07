@@ -67,9 +67,11 @@ enum WhatsAppRelay {
               let h = j["hora"] as? String, let t = ISO8601DateFormatter().date(from: h.replacingOccurrences(of: "\\.\\d+Z$", with: "Z", options: .regularExpression)) else { return false }
         return Date().timeIntervalSince(t) < 300
     }
-    static func send(_ a: AgentAlert) {
+    @MainActor static func send(_ a: AgentAlert) {
         guard connected, a.waiting, !a.token.isEmpty else { return }
-        let msg = a.message.count > 700 ? String(a.message.prefix(700)) + "…" : a.message
+        // el resumen (si la IA ya lo tiene) en lugar del texto entero
+        let current = DeskStore.shared?.alerts.first(where: { $0.id == a.id })?.summary ?? a.summary
+        let msg = current.isEmpty ? (a.message.count > 300 ? String(a.message.prefix(300)) + "…" : a.message) : current
         let texto = "🤖 \(a.title)" + (a.place.isEmpty ? "" : " · \(a.place)") + (msg.isEmpty ? "" : "\n\n\(msg)") + "\n\n" + T.s("Vote, or reply to this message to answer it.", "Vota, o responde a este mensaje para contestarle.")
         let ref = "ab:" + a.token
         let entry: [String: Any] = ["ref": ref, "responder": true, "texto": texto,
@@ -92,6 +94,8 @@ struct AgentAlert: Equatable {
     var host: String = ""
     /// El archivo del gancho de esa conversación; si su gancho espera respuesta, contestar va justo a ella.
     var token: String = ""
+    /// Lo que ha hecho y lo que necesita, en una frase (la IA lo resume; mientras, su primera frase).
+    var summary: String = ""
     var waiting: Bool = false
     var created = Date()
     let id = UUID()
@@ -101,6 +105,8 @@ struct AgentAlert: Equatable {
 /// Las teclas, guardadas en ~/Library/Application Support/Agent Deck/keys.json; el modo en UserDefaults.
 @MainActor
 final class DeskStore: ObservableObject {
+    /// La de la app (para el aviso de WhatsApp, que lee el resumen más reciente).
+    static weak var shared: DeskStore?
     @Published var keys: [DeskKey] { didSet { save() } }
     @Published var mode: DeskMode { didSet { UserDefaults.standard.set(mode.rawValue, forKey: "mode") } }
     @Published var style: BarStyle { didSet { UserDefaults.standard.set(style.rawValue, forKey: "style") } }
@@ -183,6 +189,7 @@ final class DeskStore: ObservableObject {
     ]
 
     init() {
+        defer { DeskStore.shared = self }
         if let data = try? Data(contentsOf: DeskStore.file),
            let saved = try? JSONDecoder().decode([DeskKey].self, from: data), !saved.isEmpty {
             // archivos de la primera versión (sin icono ni grupo): se completan desde las teclas de fábrica
@@ -314,9 +321,11 @@ final class DeskStore: ObservableObject {
 
     /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
     func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false) {
-        let a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),
+        var a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),
                            message: String(message.prefix(4000)), host: String(host.prefix(120)), token: token, waiting: waiting && !token.isEmpty)
+        a.summary = Self.firstSentence(a.message)
         alerts.append(a)
+        summarize(a)
         // como mucho 4: el más antiguo se suelta (su conversación se para como siempre)
         while alerts.count > 4 { let old = alerts.removeFirst(); release(old) }
         NSSound(named: ask ? "Ping" : "Glass")?.play()
@@ -408,6 +417,84 @@ final class DeskStore: ObservableObject {
         }
         do { try p.run() } catch { flashNote(T.s("Couldn't take the screenshot", "No se ha podido hacer la captura")) }
     }
+
+    // MARK: - Resumen y voz de los avisos
+
+    static func firstSentence(_ t: String) -> String {
+        let s = t.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
+        if let r = s.range(of: "[.!?](\\s|$)", options: .regularExpression) { return String(s[..<r.upperBound]).trimmingCharacters(in: .whitespaces) }
+        return s.count > 140 ? String(s.prefix(140)) + "…" : s
+    }
+
+    /// Una frase con lo que ha hecho y lo que necesita, con tu clave de OpenAI (unas centésimas de céntimo); sin clave, su primera frase.
+    func summarize(_ a: AgentAlert) {
+        guard a.message.count > 90, let key = VoiceKeychain.read(), !key.isEmpty else { return }
+        let model = voice.preferences.textModel
+        let task = "Summarize what this AI coding agent just reported in ONE short sentence (max 14 words) in the same language as the text: what it did and, if it asks or needs something from the user, end with that question. No preamble, no quotes."
+        Task { [weak self] in
+            var req = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!); req.httpMethod = "POST"; req.timeoutInterval = 8
+            req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization"); req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            var body: [String: Any] = ["model": model, "instructions": task, "input": String(a.message.suffix(6000)), "max_output_tokens": 120, "store": false]
+            if let e = OpenAIVoiceClient.efforts.first { body["reasoning"] = ["effort": e] }
+            req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+            guard let (d, r) = try? await URLSession.shared.data(for: req), (r as? HTTPURLResponse)?.statusCode == 200,
+                  let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any],
+                  let out = o["output"] as? [[String: Any]] else { return }
+            let text = out.filter { $0["type"] as? String == "message" }.flatMap { $0["content"] as? [[String: Any]] ?? [] }
+                .compactMap { $0["text"] as? String }.joined().trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else { return }
+            await MainActor.run { if let i = self?.alerts.firstIndex(where: { $0.id == a.id }) { self?.alerts[i].summary = String(text.prefix(200)) } }
+        }
+    }
+
+    /// Contestar hablando a un aviso: tocar el micro empieza, tocarlo otra vez envía lo dicho a esa conversación.
+    @Published var alertListening: UUID?
+    @Published var alertLevel: Float = 0
+    private var alertLive: RealtimeTranscriber?
+    private var alertApple: Dictation?
+    private var alertHeard = ""
+
+    @MainActor func talkToAlert(_ a: AgentAlert) {
+        if alertListening == a.id { finishAlertVoice(a); return }
+        if alertListening != nil { cancelAlertVoice() }
+        alertHeard = ""; alertListening = a.id; DeskStore.haptic(.levelChange)
+        if voice.preferences.engine == .openAI, let k = VoiceKeychain.read(), !k.isEmpty {
+            let live = RealtimeTranscriber(); alertLive = live
+            live.onPartial = { [weak self] t in self?.alertHeard = t }
+            if !live.start(key: k, model: voice.preferences.liveModel, language: voice.preferences.language, keywords: voice.preferences.keywords) {
+                alertListening = nil; flashNote(T.s("The microphone couldn't start", "No se ha podido abrir el micrófono"))
+            }
+        } else {
+            let d = Dictation(); alertApple = d
+            d.onLevel = { [weak self] l in self?.alertLevel = l }
+            d.onEvent = { [weak self] state, text, _ in
+                guard let self else { return }
+                switch state {
+                case .partial: self.alertHeard = text ?? ""
+                case .final: self.alertHeard = text ?? self.alertHeard; self.sendAlertVoice(a)
+                case .unavailable: self.alertListening = nil; self.flashNote(T.s("Voice isn't available: check the microphone", "La voz no está disponible: revisa el micrófono"))
+                default: break
+                }
+            }
+            d.start()
+        }
+    }
+    @MainActor private func finishAlertVoice(_ a: AgentAlert) {
+        if let live = alertLive {
+            live.finish(timeout: 3) { [weak self] text in
+                guard let self else { return }
+                if let text, !text.isEmpty { self.alertHeard = text }
+                self.alertLive = nil; self.sendAlertVoice(a)
+            }
+        } else { alertApple?.stop() }   // el final llega por onEvent
+    }
+    @MainActor private func sendAlertVoice(_ a: AgentAlert) {
+        alertListening = nil; alertLevel = 0; alertApple = nil
+        let t = alertHeard.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { flashNote(T.s("I didn't hear anything", "No he oído nada")); return }
+        reply(t, to: a)
+    }
+    @MainActor private func cancelAlertVoice() { alertLive?.cancel(); alertLive = nil; alertApple?.cancel(); alertApple = nil; alertListening = nil; alertLevel = 0 }
 
     /// La respuesta para el gancho que espera en esa conversación: Application Support/Agent Deck/hooks/<archivo>.decision
     private func decide(_ a: AgentAlert, _ obj: [String: String]) -> Bool {

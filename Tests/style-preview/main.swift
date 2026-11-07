@@ -44,8 +44,10 @@ MainActor.assumeIsolated {
     }
     do {
         store.collapsed = true
-        store.alerts = [AgentAlert(app: "Claude Code", ask: false, place: "my-app",
-            message: "Done. The login page now validates the email and shows a clear error.\n\nI ran the tests: 43 passed. Next I can wire the sign-up form. Shall I go on?", host: "com.apple.Terminal")]
+        var a1 = AgentAlert(app: "Claude Code", ask: false, place: "2026-11-06-full-visual-kc", message: "x"); a1.summary = "Las tres aperturas del reto entregadas; checks y revisiones OK."
+        var a2 = AgentAlert(app: "Claude Code", ask: false, place: "full-visual", message: "x"); a2.summary = "El render de la apertura 1 vuelve a correr tras dos timeouts."
+        var a3 = AgentAlert(app: "Claude Code", ask: true, place: "traders-fondeados", message: "x"); a3.summary = "Precios de TF guardados. ¿Publico el fichero del día?"
+        store.alerts = [a1, a2, a3]
         let tall = CGSize(width: 1100, height: 440)
         let view = ZStack { Image(nsImage: wall).resizable(); DockView(store: store) }
             .frame(width: tall.width, height: tall.height)
