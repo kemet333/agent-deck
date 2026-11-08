@@ -214,10 +214,22 @@ p{margin:0;text-wrap:pretty}
 .pad__eyebrow i{width:8px;height:8px;border-radius:50%;background:#2fbf71;box-shadow:0 0 0 4px rgba(47,191,113,.18)}
 .pad h2{font-size:clamp(36px,4.6vw,68px);line-height:.98}
 .pad__head p{color:var(--ink-2);max-width:40ch}
-.pad__head .link{margin-top:18px}
-.pad__film{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:3/2;background:var(--bg-2);box-shadow:var(--shadow);margin-bottom:14px}
-.pad__film video{width:100%;height:100%;object-fit:cover;display:block}
-@media (max-width:900px){.pad__film{display:none}}
+.pad__head .btn{margin-top:22px}
+.pad__promo{position:relative;display:block;margin-top:96px;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:21/9;background:#111;color:#f4f4f2;box-shadow:var(--shadow);isolation:isolate}
+.pad__promo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.4s var(--ease)}
+.pad__promo:hover video{transform:scale(1.03)}
+.pad__promo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,12,12,.78),rgba(12,12,12,.35) 48%,transparent 70%);z-index:0}
+.pad__promo-in{position:absolute;left:56px;top:50%;transform:translateY(-50%);z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:420px}
+.pad__promo-eyebrow{font:500 13px var(--mono);color:#ff8a5c}
+.pad__promo strong{font-size:clamp(34px,4.2vw,60px);line-height:.98;font-weight:600;letter-spacing:-.035em}
+.pad__promo-sub{color:rgba(244,244,242,.78);font-size:17px}
+.pad__promo .btn{margin-top:8px}
+@media (max-width:900px){
+  .pad__promo{aspect-ratio:4/5;margin-top:64px}
+  .pad__promo::after{background:linear-gradient(0deg,rgba(12,12,12,.85),rgba(12,12,12,.4) 50%,transparent 75%)}
+  .pad__promo-in{left:22px;right:22px;top:auto;bottom:24px;transform:none}
+  .pad__promo .btn{align-self:stretch;justify-content:space-between}
+}
 .pad__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .sku{display:flex;flex-direction:column;border-radius:var(--r-lg);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
 .sku--pro{box-shadow:inset 0 0 0 1.5px rgba(255,91,31,.55)}
@@ -310,6 +322,14 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .k{min-width:62px}
   .screen{font-size:30px;min-height:96px;flex-wrap:wrap}
 }
+.qa{max-width:860px;border-top:1px solid var(--line-2)}
+.qa details{border-bottom:1px solid var(--line-2)}
+.qa summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 2px;cursor:pointer;font-size:18px;font-weight:600;letter-spacing:-.015em}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary i{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--bg-2);font-size:15px;transition:transform .4s var(--spring),background .3s var(--ease)}
+.qa details[open] summary i{transform:rotate(45deg);background:var(--accent);color:var(--accent-ink)}
+.qa summary:hover i{background:var(--line-2)}
+.qa details p{margin:0;padding:0 48px 24px 2px;color:var(--ink-2);font-size:16px}
 </style>
 </head>
 <body>
@@ -470,11 +490,9 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
         </div>
         <div class="rv">
           <p>Your Agent Bar keys under your fingers. Mechanical keys and a dial on your desk: plug it in over USB, press the orange one, and your agent keeps going.</p>
-          <a class="link" href="pad/">Everything about the Pad<i class="ph ph-arrow-right"></i></a>
+          <a class="btn" href="pad/">Everything about the Pad<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></a>
         </div>
       </div>
-
-      <div class="pad__film rv"><video data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-label="A finger presses the orange key on the Agent Pad"></video></div>
 
       <div class="pad__grid">
         <article class="sku rv">
@@ -519,6 +537,16 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
           </ul>
         </div>
       </div>
+
+      <a class="pad__promo rv" href="pad/">
+        <video data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <span class="pad__promo-in">
+          <span class="pad__promo-eyebrow">Agent Pad</span>
+          <strong>See it up close.</strong>
+          <span class="pad__promo-sub">Every model and colour, the unboxing, what each key does and how to order.</span>
+          <span class="btn btn--accent">Everything about the Pad<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></span>
+        </span>
+      </a>
     </div>
   </section>
 
@@ -534,17 +562,17 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   <section class="faq" id="faq">
     <div class="wrap">
       <h2 class="rv">Questions.</h2>
-      <div class="faq__grid">
-        <div class="rv"><h3>How do I install it?</h3><p>Open AgentBar.dmg and drag Agent Bar into Applications, then open it. It isn't notarized by Apple yet, so the first time macOS says it can't check it: press Done, go to System Settings → Privacy &amp; Security, scroll down and press «Open Anyway». A two-minute tutorial then sets everything up.</p></div>
-        <div class="rv"><h3>Which apps does it work with?</h3><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></div>
-        <div class="rv"><h3>Does the Pad need Agent Bar?</h3><p>The Pad is a USB keyboard, so it plugs into any computer. What each key does (talk, continue, test, fix, undo, stop) comes from Agent Bar, which is free for Mac.</p></div>
-        <div class="rv"><h3>Does the Pad work on Windows or Linux?</h3><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></div>
-        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment, and it ships in 3–7 days. The USB-C cable is included, and you have 14 days to return it.</p></div>
-        <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, voice with fn, prompts and alerts are free and open source. OpenAI voice uses your own key. Agent Bar Pro will add voice without a key, autopilot and iPhone.</p></div>
-        <div class="rv"><h3>Do I need an OpenAI key to talk?</h3><p>No. Without one, fn uses the Mac's dictation. With a key, the text comes out cleaner and long requests turn into a prompt.</p></div>
-        <div class="rv"><h3>How do alerts know my agent is done?</h3><p>Claude Code tells it. One click adds two hooks to your Claude Code settings, with a backup first. The hook waits a few minutes for your reply and hands it to that conversation. Nothing guesses or reads your screen.</p></div>
-        <div class="rv"><h3>Windows or Linux?</h3><p>Mac only for now, on Apple Silicon with macOS 14 or newer.</p></div>
-        <div class="rv"><h3>Why does the download say Agent Deck?</h3><p>That was its first name. The app is becoming Agent Bar; everything works the same.</p></div>
+      <div class="qa rv">
+        <details><summary>How do I install it?<i class="ph-bold ph-plus"></i></summary><p>Open AgentBar.dmg and drag Agent Bar into Applications, then open it. It isn't notarized by Apple yet, so the first time macOS says it can't check it: press Done, go to System Settings → Privacy &amp; Security, scroll down and press «Open Anyway». A two-minute tutorial then sets everything up.</p></details>
+        <details><summary>Which apps does it work with?<i class="ph-bold ph-plus"></i></summary><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></details>
+        <details><summary>Does the Pad need Agent Bar?<i class="ph-bold ph-plus"></i></summary><p>The Pad is a USB keyboard, so it plugs into any computer. What each key does (talk, continue, test, fix, undo, stop) comes from Agent Bar, which is free for Mac.</p></details>
+        <details><summary>Does the Pad work on Windows or Linux?<i class="ph-bold ph-plus"></i></summary><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></details>
+        <details><summary>How do I order a Pad?<i class="ph-bold ph-plus"></i></summary><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment, and it ships in 3–7 days. The USB-C cable is included, and you have 14 days to return it.</p></details>
+        <details><summary>Is it really free?<i class="ph-bold ph-plus"></i></summary><p>Yes. Keys, voice with fn, prompts and alerts are free and open source. OpenAI voice uses your own key. Agent Bar Pro will add voice without a key, autopilot and iPhone.</p></details>
+        <details><summary>Do I need an OpenAI key to talk?<i class="ph-bold ph-plus"></i></summary><p>No. Without one, fn uses the Mac's dictation. With a key, the text comes out cleaner and long requests turn into a prompt.</p></details>
+        <details><summary>How do alerts know my agent is done?<i class="ph-bold ph-plus"></i></summary><p>Claude Code tells it. One click adds two hooks to your Claude Code settings, with a backup first. The hook waits a few minutes for your reply and hands it to that conversation. Nothing guesses or reads your screen.</p></details>
+        <details><summary>Windows or Linux?<i class="ph-bold ph-plus"></i></summary><p>Mac only for now, on Apple Silicon with macOS 14 or newer.</p></details>
+        <details><summary>Why does the download say Agent Deck?<i class="ph-bold ph-plus"></i></summary><p>That was its first name. The app is becoming Agent Bar; everything works the same.</p></details>
       </div>
     </div>
   </section>
@@ -611,7 +639,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 
   // Videos load and play only while on screen
   var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } } else v.pause(); }); }, { rootMargin: '200px 0px' });
-  document.querySelectorAll('video[data-lazy]').forEach(function (v) { if (v.offsetParent || getComputedStyle(v.parentElement).display !== 'none') vio.observe(v); });
+  document.querySelectorAll('video[data-lazy]').forEach(function (v) { vio.observe(v); });
 
   // Pad colours: white or black for Original and Pro
   document.querySelectorAll('.swatches[data-model]').forEach(function (g) {

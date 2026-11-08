@@ -207,6 +207,15 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 .swatches span{margin-left:4px}
 .colors{margin-top:18px}
 .colors[hidden]{display:none}
+.qa{max-width:860px;border-top:1px solid var(--line-2)}
+#faq .qa{margin-top:36px}
+.qa details{border-bottom:1px solid var(--line-2)}
+.qa summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 2px;cursor:pointer;font-size:18px;font-weight:600;letter-spacing:-.015em}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary i{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--bg-2);font-size:15px;transition:transform .4s var(--spring),background .3s var(--ease)}
+.qa details[open] summary i{transform:rotate(45deg);background:var(--accent);color:var(--accent-ink)}
+.qa summary:hover i{background:var(--line-2)}
+.qa details p{margin:0;padding:0 48px 24px 2px;color:var(--ink-2);font-size:16px}
 </style>
 </head>
 <body>
@@ -371,12 +380,12 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   <section class="section" id="faq">
     <div class="wrap">
       <h2 class="rv">Questions.</h2>
-      <div class="faq__grid">
-        <div class="rv"><h3>Does the Pad need Agent Bar?</h3><p>The Pad is a USB keyboard, so it plugs into any computer. What each key does (talk, continue, test, fix, undo, stop) comes from Agent Bar, which is free for Mac.</p></div>
-        <div class="rv"><h3>Does the Pad work on Windows or Linux?</h3><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></div>
-        <div class="rv"><h3>Only with Claude Code?</h3><p>No. The keys answer in whatever app has the text box: Claude, ChatGPT, Cursor, Codex, Terminal. Alerts when an agent is done are for Claude Code.</p></div>
-        <div class="rv"><h3>Can I change what the keys say?</h3><p>Yes. Each key is one of your Agent Bar keys, so you change its words in Agent Bar and the Pad follows.</p></div>
-        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment, and it ships in 3–7 days. The USB-C cable is included, and you have 14 days to return it.</p></div>
+      <div class="qa rv">
+        <details><summary>Does the Pad need Agent Bar?<i class="ph-bold ph-plus"></i></summary><p>The Pad is a USB keyboard, so it plugs into any computer. What each key does (talk, continue, test, fix, undo, stop) comes from Agent Bar, which is free for Mac.</p></details>
+        <details><summary>Does the Pad work on Windows or Linux?<i class="ph-bold ph-plus"></i></summary><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></details>
+        <details><summary>Only with Claude Code?<i class="ph-bold ph-plus"></i></summary><p>No. The keys answer in whatever app has the text box: Claude, ChatGPT, Cursor, Codex, Terminal. Alerts when an agent is done are for Claude Code.</p></details>
+        <details><summary>Can I change what the keys say?<i class="ph-bold ph-plus"></i></summary><p>Yes. Each key is one of your Agent Bar keys, so you change its words in Agent Bar and the Pad follows.</p></details>
+        <details><summary>How do I order a Pad?<i class="ph-bold ph-plus"></i></summary><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment, and it ships in 3–7 days. The USB-C cable is included, and you have 14 days to return it.</p></details>
       </div>
     </div>
   </section>
