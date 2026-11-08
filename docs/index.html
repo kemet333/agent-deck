@@ -308,10 +308,10 @@ p{margin:0;text-wrap:pretty}
 .pad__promo-sub{color:rgba(244,244,242,.78);font-size:17px}
 .pad__promo .btn{margin-top:8px}
 @media (max-width:900px){
-  .pad__promo{aspect-ratio:auto;margin-top:64px}
-  .pad__promo video{position:relative;display:block;aspect-ratio:4/3;height:auto}
-  .pad__promo::after{display:none}
-  .pad__promo-in{position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none;max-width:none;padding:22px 22px 24px}
+  .pad__promo{aspect-ratio:4/5;margin-top:64px;background:#111}
+  .pad__promo video{inset:0 0 auto 0;height:auto;aspect-ratio:4/3}
+  .pad__promo::after{background:linear-gradient(180deg,transparent 40%,rgba(17,17,17,.55) 52%,#111 62%)}
+  .pad__promo-in{left:22px;right:22px;top:auto;bottom:24px;transform:none}
   .pad__promo .btn{align-self:stretch;justify-content:space-between}
 }
 .pad__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
