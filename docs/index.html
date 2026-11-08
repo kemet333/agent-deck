@@ -301,6 +301,7 @@ p{margin:0;text-wrap:pretty}
 .pad__promo{position:relative;display:block;margin-top:96px;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:21/9;background:#111;color:#f4f4f2;box-shadow:var(--shadow);isolation:isolate}
 .pad__promo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.4s var(--ease)}
 .pad__promo:hover video{transform:scale(1.03)}
+.pad__promo .pad__promo-m{display:none}
 .pad__promo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,12,12,.55),rgba(12,12,12,.12) 38%,transparent 55%);z-index:0}
 .pad__promo-in{position:absolute;left:56px;top:auto;bottom:48px;transform:none;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:420px}
 .pad__promo-eyebrow{font:500 13px var(--mono);color:#ff8a5c}
@@ -309,6 +310,8 @@ p{margin:0;text-wrap:pretty}
 .pad__promo .btn{margin-top:8px}
 @media (max-width:900px){
   .pad__promo{aspect-ratio:4/5;margin-top:64px}
+  .pad__promo .pad__promo-d{display:none}
+  .pad__promo .pad__promo-m{display:block}
   .pad__promo::after{background:linear-gradient(0deg,rgba(12,12,12,.6),rgba(12,12,12,.15) 30%,transparent 45%)}
   .pad__promo-in{left:22px;right:22px;top:auto;bottom:24px;transform:none}
   .pad__promo .btn{align-self:stretch;justify-content:space-between}
@@ -319,7 +322,7 @@ p{margin:0;text-wrap:pretty}
 .sku__shot{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg-2)}
 .sku__shot img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
 .sku:hover .sku__shot img{transform:scale(1.03)}
-.sku__tag{position:absolute;top:14px;left:14px;font:500 12px var(--mono);padding:6px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
+.sku__tag{align-self:flex-start;margin-bottom:-6px;font:500 12px var(--mono);padding:6px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
 .sku__body{padding:24px 24px 26px;display:flex;flex-direction:column;gap:16px;flex:1}
 .sku__top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .sku__name{font-weight:600;font-size:26px;letter-spacing:-.03em}
@@ -652,8 +655,9 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
           </div>
         </article>
         <article class="sku sku--pro rv">
-          <div class="sku__shot"><span class="sku__tag">Most popular</span><img src="pad/img/pro.jpg" alt="Agent Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
+          <div class="sku__shot"><img src="pad/img/pro.jpg" alt="Agent Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
           <div class="sku__body">
+            <span class="sku__tag">Most popular</span>
             <div class="sku__top"><div class="sku__name">Agent Pad Pro<span>6 keys + dial · backlit</span></div><div class="sku__price">€49</div></div>
             <div class="swatches" data-model="pro"><button class="swatch swatch--white" type="button" data-color="white" aria-label="White" aria-pressed="true"></button><button class="swatch swatch--black" type="button" data-color="black" aria-label="Black" aria-pressed="false"></button><span>White</span></div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
@@ -686,7 +690,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       </div>
 
       <a class="pad__promo rv" href="pad/">
-        <video data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <video class="pad__promo-d" data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <video class="pad__promo-m" data-lazy src="pad/video/press-v.mp4" poster="pad/img/press-v-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
         <span class="pad__promo-in">
           <strong>See it up close.</strong>
           <span class="btn btn--accent">Everything about the Pad<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></span>
