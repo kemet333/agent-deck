@@ -217,6 +217,7 @@ p{margin:0;text-wrap:pretty}
 .pad__head .link{margin-top:18px}
 .pad__film{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:3/2;background:var(--bg-2);box-shadow:var(--shadow);margin-bottom:14px}
 .pad__film video{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:900px){.pad__film{display:none}}
 .pad__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .sku{display:flex;flex-direction:column;border-radius:var(--r-lg);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
 .sku--pro{box-shadow:inset 0 0 0 1.5px rgba(255,91,31,.55)}
@@ -610,7 +611,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 
   // Videos load and play only while on screen
   var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } } else v.pause(); }); }, { rootMargin: '200px 0px' });
-  document.querySelectorAll('video[data-lazy]').forEach(function (v) { vio.observe(v); });
+  document.querySelectorAll('video[data-lazy]').forEach(function (v) { if (v.offsetParent || getComputedStyle(v.parentElement).display !== 'none') vio.observe(v); });
 
   // Pad colours: white or black for Original and Pro
   document.querySelectorAll('.swatches[data-model]').forEach(function (g) {
