@@ -204,65 +204,42 @@ p{margin:0;text-wrap:pretty}
 .desk__copy{position:absolute;left:56px;bottom:48px;z-index:1;color:#f4f4f2;max-width:16ch}
 .desk__copy h2{font-size:clamp(30px,3.6vw,52px);line-height:1}
 
-/* Pad: Prompted Pad Basic & Pro */
+/* Pad: the physical keys (Original, Pro, Max) */
 .pad{padding:140px 0 120px}
 .pad__head{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;align-items:end;margin-bottom:48px}
 .pad__eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--mono);color:var(--ink-2);margin-bottom:18px}
 .pad__eyebrow i{width:8px;height:8px;border-radius:50%;background:#2fbf71;box-shadow:0 0 0 4px rgba(47,191,113,.18)}
 .pad h2{font-size:clamp(36px,4.6vw,68px);line-height:.98}
 .pad__head p{color:var(--ink-2);max-width:40ch}
-.pad__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.sku{border-radius:var(--r-lg);padding:8px;background:var(--bg-2);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column}
-.sku--pro{background:var(--accent-soft);box-shadow:inset 0 0 0 1px rgba(255,91,31,.4)}
-.sku__shot{position:relative;border-radius:calc(var(--r-lg) - 8px);aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;
-  background:radial-gradient(120% 90% at 50% 30%,#f4f3ef,#dedcd6 70%,#d3d1ca);perspective:1400px}
-@media (prefers-color-scheme: dark){.sku__shot{background:radial-gradient(120% 90% at 50% 30%,#2a2a2d,#18181a 70%,#121213)}}
-.sku__tag{position:absolute;top:16px;left:16px;font:500 12px var(--mono);padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.7);color:#121213;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.sku--pro .sku__tag{background:var(--accent);color:var(--accent-ink)}
-.sku__body{padding:26px 24px 24px;display:flex;flex-direction:column;flex:1}
-.sku__top{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
-.sku__name{font-weight:600;font-size:22px;letter-spacing:-.02em}
+.pad__head .link{margin-top:18px}
+.pad__film{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:3/2;background:var(--bg-2);box-shadow:var(--shadow);margin-bottom:14px}
+.pad__film video{width:100%;height:100%;object-fit:cover;display:block}
+.pad__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sku{display:flex;flex-direction:column;border-radius:var(--r-lg);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.sku--pro{box-shadow:inset 0 0 0 1.5px rgba(255,91,31,.55)}
+.sku__shot{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg-2)}
+.sku__shot img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.sku:hover .sku__shot img{transform:scale(1.03)}
+.sku__tag{position:absolute;top:14px;left:14px;font:500 12px var(--mono);padding:6px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
+.sku__body{padding:24px 24px 26px;display:flex;flex-direction:column;gap:16px;flex:1}
+.sku__top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sku__name{font-weight:600;font-size:26px;letter-spacing:-.03em}
 .sku__name span{display:block;font:500 13px var(--mono);color:var(--mute);letter-spacing:0;margin-top:4px}
-.sku__price{font:600 48px/1 var(--sans);letter-spacing:-.04em}
-.sku ul{list-style:none;margin:22px 0 26px;padding:0;display:grid;gap:10px;flex:1}
-.sku li{display:flex;gap:10px;color:var(--ink-2)}
-.sku li i{color:var(--accent);font-size:18px;margin-top:3px}
-.sku .btn{align-self:stretch;justify-content:space-between}
+.sku__price{font:600 34px/1 var(--sans);letter-spacing:-.04em}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:9px;font-size:13px;color:var(--ink-2);background:var(--bg);box-shadow:inset 0 -2px 0 var(--line-2),inset 0 0 0 1px var(--line)}
+.keys span.go{background:var(--accent);color:var(--accent-ink);box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.sku .btn{margin-top:auto;align-self:stretch;justify-content:space-between}
 .btn--accent{background:var(--accent);color:var(--accent-ink)}.btn--accent .ic{background:var(--accent-ink);color:var(--accent)}
+.pad__box{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px;align-items:center;margin-top:96px}
+.pad__box .shot{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/3;background:var(--bg-2)}
+.pad__box .shot img{width:100%;height:100%;object-fit:cover}
+.pad__box h3{font-size:clamp(28px,3vw,42px);line-height:1}
+.pad__box ul{list-style:none;margin:24px 0 0;padding:0;display:grid}
+.pad__box li{display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--line);color:var(--ink-2)}
+.pad__box li i{font-size:20px;color:var(--ink)}
 .pad__note{display:flex;flex-wrap:wrap;gap:8px 22px;font:500 13px var(--mono);color:var(--mute);margin-top:22px}
 .pad__note span{display:inline-flex;align-items:center;gap:6px}
-
-/* The device, drawn in CSS */
-.dev{--w:360px;position:relative;width:var(--w);transform:rotateX(48deg) rotateZ(-22deg) scale(1.3);transform-style:preserve-3d;transition:transform .9s var(--spring)}
-.sku:hover .dev{transform:rotateX(42deg) rotateZ(-16deg) scale(1.34)}
-.dev--pro{--w:300px}
-.dev__plate{position:relative;border-radius:22px;padding:22px 22px 30px;background:linear-gradient(160deg,#f3f1ec,#dcd9d2);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -2px 0 rgba(0,0,0,.06),0 2px 0 #c9c6be,0 4px 0 #bebab1,0 6px 0 #b3afa6,0 8px 0 #a8a49b,0 10px 0 #9d998f,0 40px 50px -14px rgba(40,36,28,.45)}
-.dev__keys{display:grid;gap:12px;align-items:center}
-.dev--basic .dev__keys{grid-template-columns:repeat(3,64px) 78px}
-.dev--pro .dev__keys{grid-template-columns:repeat(3,64px) 1fr;grid-template-rows:repeat(2,64px)}
-.dev--pro .knob{grid-column:4;grid-row:1 / span 2;align-self:start;justify-self:center}
-.key{position:relative;width:64px;height:64px;border-radius:12px;background:linear-gradient(180deg,#dad8d2,#c9c6bf);
-  box-shadow:0 1px 0 #b8b5ad,0 3px 0 #aeaba3,0 5px 0 #a4a199,0 10px 14px -4px rgba(0,0,0,.35)}
-.key::before{content:"";position:absolute;inset:7px 8px 10px;border-radius:9px;background:linear-gradient(170deg,#f6f5f2,#e4e2dc);box-shadow:inset 0 1px 0 #fff}
-.key i{position:absolute;inset:7px 8px 10px;display:grid;place-items:center;font-size:20px;color:#8a877f;transform:rotateZ(24deg)}
-.key--go{background:linear-gradient(180deg,#f06a2c,#d94e14);box-shadow:0 1px 0 #c4430f,0 3px 0 #b63d0c,0 5px 0 #a8370a,0 10px 14px -4px rgba(150,50,0,.45)}
-.key--go::before{background:linear-gradient(170deg,#ff8a4f,#ff5b1f);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
-.key--go i{color:rgba(26,10,3,.7)}
-.knob{position:relative;width:70px;height:70px;border-radius:50%;justify-self:center;
-  background:repeating-conic-gradient(#b9b6ae 0 4deg,#e7e5df 4deg 8deg);
-  box-shadow:0 2px 0 #9f9b92,0 5px 0 #8f8b82,0 8px 0 #85817a,0 14px 18px -4px rgba(0,0,0,.4)}
-.knob::before{content:"";position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffffff,#e9e7e2 45%,#cfccc5)}
-.knob::after{content:"";position:absolute;top:12px;left:50%;width:3px;height:12px;margin-left:-1.5px;border-radius:2px;background:var(--accent)}
-.dev--pro .key::after{content:"";position:absolute;left:6px;right:6px;bottom:-9px;height:10px;border-radius:50%;filter:blur(7px);opacity:.75;background:var(--glow,#7aa7ff);transform:translateZ(-1px)}
-.dev--pro .key:nth-child(1){--glow:#4ad7ff}.dev--pro .key:nth-child(2){--glow:#9a7bff}.dev--pro .key:nth-child(3){--glow:#ff5b1f}
-.dev--pro .key:nth-child(5){--glow:#5cf08f}.dev--pro .key:nth-child(6){--glow:#ffd24a}.dev--pro .key:nth-child(7){--glow:#ff6fae}
-.dev__brand{position:absolute;left:24px;bottom:9px;font:600 11px/1 var(--sans);letter-spacing:.02em;color:#a29e95;text-shadow:0 1px 0 rgba(255,255,255,.8)}
-.dev__brand b{color:var(--accent);font-weight:700}
-.dev__port{position:absolute;right:-3px;top:50%;width:6px;height:18px;margin-top:-9px;border-radius:3px;background:#3a3936}
-.dev__screw{position:absolute;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#b3afa6)}
-.dev__screw:nth-of-type(1){top:8px;left:8px}.dev__screw:nth-of-type(2){top:8px;right:8px}
-@media (max-width:640px){.dev,.sku:hover .dev{transform:rotateX(48deg) rotateZ(-22deg) scale(.8)}.dev--pro,.sku:hover .dev--pro{transform:rotateX(48deg) rotateZ(-22deg) scale(.82)}}
 
 /* Pricing */
 .plans{padding:40px 0 120px}
@@ -306,7 +283,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .nav__links{display:none}
   .nav{gap:14px}
   .hero{padding-top:96px}
-  .hero__grid,.hero__top,.pad__head,.pad__grid,.privacy__in{grid-template-columns:1fr;gap:28px}
+  .hero__grid,.hero__top,.pad__head,.pad__grid,.pad__box,.privacy__in{grid-template-columns:1fr;gap:28px}
   .hero__media{transform:none}
   .bento__grid{grid-template-columns:1fr}
   .cell--tap,.cell--talk,.cell--prompt,.cell--alert,.cell--repeat,.cell--style{grid-column:auto;grid-row:auto;min-height:260px}
@@ -444,75 +421,57 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     <div class="wrap">
       <div class="pad__head">
         <div class="rv">
-          <div class="pad__eyebrow"><i></i>Prompted Pad · available now</div>
+          <div class="pad__eyebrow"><i></i>Agent Bar Pad · available now</div>
           <h2>Or press a real one.<br>A button for your agents.</h2>
         </div>
-        <p class="rv">Your Agent Bar keys under your fingers. Plug it in over USB, press, and your agent keeps going. The orange one is continue.</p>
+        <div class="rv">
+          <p>Your Agent Bar keys under your fingers. Mechanical keys and a dial on your desk: plug it in over USB, press the orange one, and your agent keeps going.</p>
+          <a class="link" href="pad/">Everything about the Pad<i class="ph ph-arrow-right"></i></a>
+        </div>
       </div>
+
+      <div class="pad__film rv"><video src="pad/video/unboxing.mp4" poster="pad/img/unboxing-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Unboxing the Agent Bar Pad"></video></div>
 
       <div class="pad__grid">
         <article class="sku rv">
-          <div class="sku__shot" aria-hidden="true">
-            <span class="sku__tag">Basic</span>
-            <div class="dev dev--basic"><div class="dev__plate">
-              <span class="dev__screw"></span><span class="dev__screw"></span>
-              <div class="dev__keys">
-                <span class="key"><i class="ph ph-microphone"></i></span>
-                <span class="key key--go"><i class="ph-bold ph-arrow-right"></i></span>
-                <span class="key"><i class="ph-fill ph-stop"></i></span>
-                <span class="knob"></span>
-              </div>
-              <span class="dev__brand"><b>●</b> prompted</span><span class="dev__port"></span>
-            </div></div>
-          </div>
+          <div class="sku__shot"><img src="pad/img/original.jpg" alt="Agent Bar Pad Original: three keys in a row and an aluminium dial" width="1600" height="1200" loading="lazy"></div>
           <div class="sku__body">
-            <div class="sku__top">
-              <div class="sku__name">Pad Basic<span>3 keys + dial</span></div>
-              <div class="sku__price">€29</div>
-            </div>
-            <ul>
-              <li><i class="ph ph-check"></i>Talk, continue and stop, one press each</li>
-              <li><i class="ph ph-check"></i>Mechanical keys and an aluminium dial</li>
-              <li><i class="ph ph-check"></i>USB, no driver: it works like a keyboard</li>
-              <li><i class="ph ph-check"></i>Works with Agent Bar Free</li>
-            </ul>
-            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Prompted%20Pad%20Basic%20%C2%B7%20%E2%82%AC29&body=Hi%21%20I%27d%20like%20to%20order%20the%20Prompted%20Pad%20Basic%20%28%E2%82%AC29%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Pad Basic · €29<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+            <div class="sku__top"><div class="sku__name">Original<span>3 keys + dial</span></div><div class="sku__price">€29</div></div>
+            <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
+            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Bar%20Pad%20Original%20%C2%B7%20%E2%82%AC29&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Bar%20Pad%20Original%20%28%E2%82%AC29%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Original · €29<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
           </div>
         </article>
-
         <article class="sku sku--pro rv">
-          <div class="sku__shot" aria-hidden="true">
-            <span class="sku__tag">Pro · all six keys</span>
-            <div class="dev dev--pro"><div class="dev__plate">
-              <span class="dev__screw"></span><span class="dev__screw"></span>
-              <div class="dev__keys">
-                <span class="key"><i class="ph ph-microphone"></i></span>
-                <span class="key"><i class="ph ph-flask"></i></span>
-                <span class="key key--go"><i class="ph-bold ph-arrow-right"></i></span>
-                <span class="knob"></span>
-                <span class="key"><i class="ph ph-wrench"></i></span>
-                <span class="key"><i class="ph ph-arrow-counter-clockwise"></i></span>
-                <span class="key"><i class="ph-fill ph-stop"></i></span>
-              </div>
-              <span class="dev__brand"><b>●</b> prompted</span><span class="dev__port"></span>
-            </div></div>
-          </div>
+          <div class="sku__shot"><span class="sku__tag">Most popular</span><img src="pad/img/pro.jpg" alt="Agent Bar Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
           <div class="sku__body">
-            <div class="sku__top">
-              <div class="sku__name">Pad Pro<span>6 keys + dial · RGB</span></div>
-              <div class="sku__price">€49</div>
-            </div>
-            <ul>
-              <li><i class="ph ph-check"></i>Talk, continue, test, fix, undo and stop</li>
-              <li><i class="ph ph-check"></i>RGB backlight under every key</li>
-              <li><i class="ph ph-check"></i>Mechanical keys and an aluminium dial</li>
-              <li><i class="ph ph-check"></i>USB, no driver: it works like a keyboard</li>
-            </ul>
-            <a class="btn btn--accent" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Prompted%20Pad%20Pro%20%C2%B7%20%E2%82%AC49&body=Hi%21%20I%27d%20like%20to%20order%20the%20Prompted%20Pad%20Pro%20%28%E2%82%AC49%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Pad Pro · €49<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+            <div class="sku__top"><div class="sku__name">Pro<span>6 keys + dial · backlit</span></div><div class="sku__price">€49</div></div>
+            <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
+            <a class="btn btn--accent" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Bar%20Pad%20Pro%20%C2%B7%20%E2%82%AC49&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Bar%20Pad%20Pro%20%28%E2%82%AC49%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Pro · €49<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+          </div>
+        </article>
+        <article class="sku rv">
+          <div class="sku__shot"><img src="pad/img/max.jpg" alt="Agent Bar Pad Max: eight keys and a black dial in a black case" width="1600" height="1200" loading="lazy"></div>
+          <div class="sku__body">
+            <div class="sku__top"><div class="sku__name">Max<span>8 keys + dial</span></div><div class="sku__price">€99</div></div>
+            <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span><i class="ph ph-repeat"></i>Repeat</span><span><i class="ph ph-skip-forward"></i>Skip</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
+            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Bar%20Pad%20Max%20%C2%B7%20%E2%82%AC99&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Bar%20Pad%20Max%20%28%E2%82%AC99%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Max · €99<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
           </div>
         </article>
       </div>
-      <div class="pad__note rv"><span><i class="ph ph-envelope-simple"></i>Order by email, we reply within 24 h with payment and shipping</span><span><i class="ph ph-plugs"></i>USB cable included</span><span><i class="ph ph-arrow-u-up-left"></i>14-day returns</span></div>
+      <div class="pad__note rv"><span><i class="ph ph-envelope-simple"></i>Order by email, we reply within 24 h with payment and shipping</span><span><i class="ph ph-plugs"></i>USB cable included</span><span><i class="ph ph-arrow-u-up-left"></i>14-day returns</span><span><i class="ph ph-keyboard"></i>No driver: it works like a keyboard</span></div>
+
+      <div class="pad__box">
+        <div class="shot rv"><img src="pad/img/box-open.jpg" alt="The Pad box opened: the Pad under its protective film in a moulded tray, with the braided USB-C cable and a quick-start card" width="1800" height="1350" loading="lazy"></div>
+        <div class="rv">
+          <h3>What’s in the box.</h3>
+          <ul>
+            <li><i class="ph ph-keyboard"></i>Agent Bar Pad</li>
+            <li><i class="ph ph-plugs"></i>Braided USB-C cable</li>
+            <li><i class="ph ph-cards"></i>Quick-start card</li>
+            <li><i class="ph ph-app-window"></i>Agent Bar for Mac, free</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -541,7 +500,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <li><i class="ph ph-check"></i>Voice included, no API key needed</li>
             <li><i class="ph ph-check"></i>Autopilot: keeps going while you're away, stops when it needs you</li>
             <li><i class="ph ph-check"></i>Approve and continue from your iPhone</li>
-            <li><i class="ph ph-check"></i>Works with Prompted Pad</li>
+            <li><i class="ph ph-check"></i>Works with the Agent Bar Pad</li>
           </ul>
           <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the Pro waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
         </div></article>
