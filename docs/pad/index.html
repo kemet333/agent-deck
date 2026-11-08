@@ -87,7 +87,7 @@ button{font:inherit;color:inherit}
 .hero__cta{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:34px}
 .hero__from{font:500 14px var(--mono);color:var(--mute)}
 .film{margin:64px auto 0;max-width:1400px;padding:0 24px}
-.film .photo{aspect-ratio:16/9}
+.film .photo{aspect-ratio:3/2}
 .film video{width:100%;height:100%;object-fit:cover}
 
 /* Lineup */
@@ -129,7 +129,7 @@ button{font:inherit;color:inherit}
 
 /* Box */
 .box{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:56px;align-items:center}
-.box .photo{aspect-ratio:16/9}
+.box .photo{aspect-ratio:4/3}
 .box .photo img{width:100%;height:100%;object-fit:cover}
 .box h2{font-size:clamp(32px,3.6vw,48px);line-height:1.04}
 .inbox{list-style:none;margin:28px 0 0;padding:0}
@@ -189,7 +189,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .nav{gap:14px}
   .hero{padding-top:118px}
   .film{margin-top:44px}
-  .film .photo{aspect-ratio:4/5}
+  .film .photo{aspect-ratio:1/1}
   .model__body{padding:22px}
   .compare{min-width:560px}
 }
@@ -282,12 +282,13 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 
   <section class="section" id="box">
     <div class="wrap box">
-      <div class="photo rv"><img src="img/box-open.jpg" alt="The Pad box opened: the Pad in its moulded tray next to a braided USB-C cable" width="1800" height="1013" loading="lazy"></div>
+      <div class="photo rv"><img src="img/box-open.jpg" alt="The Pad box opened: the Pad under its protective film in a moulded tray, with the braided USB-C cable and a quick-start card" width="1800" height="1350" loading="lazy"></div>
       <div>
         <h2 class="rv">What’s in the box.</h2>
         <ul class="inbox rv">
           <li><i class="ph ph-keyboard"></i>Agent Bar Pad</li>
           <li><i class="ph ph-plugs"></i>Braided USB-C cable</li>
+          <li><i class="ph ph-cards"></i>Quick-start card</li>
         </ul>
       </div>
     </div>
