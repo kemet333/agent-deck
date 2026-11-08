@@ -23,7 +23,7 @@ struct DashboardActions {
 }
 
 enum DashPane: String, CaseIterable, Identifiable {
-    case general, keys, voice, alerts, packs, appearance, about
+    case general, keys, voice, alerts, packs, appearance, pro, about
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -33,6 +33,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Alerts & Autopilot", "Avisos y piloto")
         case .packs: return T.s("Key packs", "Packs de teclas")
         case .appearance: return T.s("Appearance", "Aspecto")
+        case .pro: return "Agent Bar Pro"
         case .about: return T.s("About", "Acerca de")
         }
     }
@@ -44,6 +45,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Know when your agent is done, and let it keep going.", "Entérate cuando tu agente termine y deja que siga solo.")
         case .packs: return T.s("Ready-made keys for the tools you use.", "Teclas listas para las herramientas que usas.")
         case .appearance: return T.s("How the bar looks and where it lives.", "Cómo se ve la barra y dónde vive.")
+        case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Piloto automático, voz incluida y avisos en el móvil.")
         case .about: return T.s("Agent Bar, made by PROMPTED.", "Agent Bar, hecho por PROMPTED.")
         }
     }
@@ -55,6 +57,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return "bell.badge.fill"
         case .packs: return "square.stack.3d.up.fill"
         case .appearance: return "paintbrush.fill"
+        case .pro: return "seal.fill"
         case .about: return "info.circle.fill"
         }
     }
@@ -66,6 +69,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return Color(hex: 0xff9f0a)
         case .packs: return Color(hex: 0x5e5ce6)
         case .appearance: return Color(hex: 0x0a84ff)
+        case .pro: return Dash.accent
         case .about: return Color(hex: 0x30b0c7)
         }
     }
@@ -257,6 +261,7 @@ struct DashboardView: View {
                     case .alerts: alertsPane
                     case .packs: packsPane
                     case .appearance: appearancePane
+                    case .pro: ProView(license: License.shared, embedded: true)
                     case .about: aboutPane
                     }
                 }.transition(.opacity.combined(with: .offset(y: 6)))
@@ -585,23 +590,51 @@ struct DashboardView: View {
     }
 }
 
-/// Las teclas de un pack como fichas que saltan de línea.
+/// Las teclas de un pack como fichas que saltan de línea según el ancho: el nombre entero, nunca con «…».
 struct FlowChips: View {
     let keys: [KeyPack.Key]
     var body: some View {
-        let rows = stride(from: 0, to: keys.count, by: 3).map { Array(keys[$0..<min($0 + 3, keys.count)]) }
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(rows.indices, id: \.self) { r in
-                HStack(spacing: 6) {
-                    ForEach(rows[r], id: \.label) { k in
-                        HStack(spacing: 5) { Image(systemName: k.icon).font(.system(size: 10)); Text(k.label).font(.system(size: 11, weight: .medium)).lineLimit(1) }
-                            .padding(.horizontal, 8).padding(.vertical, 5)
-                            .background(Capsule().fill(Color.primary.opacity(0.06)))
-                            .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
-                    }
-                }
+        WrapLayout(spacing: 6) {
+            ForEach(keys, id: \.label) { k in
+                HStack(spacing: 5) { Image(systemName: k.icon).font(.system(size: 10)); Text(k.label).font(.system(size: 11, weight: .medium)).fixedSize() }
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .background(Capsule().fill(Color.primary.opacity(0.06)))
+                    .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
             }
         }
+    }
+}
+
+/// Coloca las vistas en filas y salta de línea cuando no caben.
+struct WrapLayout: Layout {
+    var spacing: CGFloat = 6
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let r = rows(proposal.width ?? .infinity, subviews)
+        let w = r.map { $0.width }.max() ?? 0
+        return CGSize(width: proposal.width ?? w, height: r.map { $0.height }.reduce(0, +) + spacing * CGFloat(max(r.count - 1, 0)))
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in rows(bounds.width, subviews) {
+            var x = bounds.minX
+            for i in row.items {
+                let sz = subviews[i].sizeThatFits(.unspecified)
+                subviews[i].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz))
+                x += sz.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+    private func rows(_ maxW: CGFloat, _ subviews: Subviews) -> [(items: [Int], width: CGFloat, height: CGFloat)] {
+        var out: [(items: [Int], width: CGFloat, height: CGFloat)] = []
+        var cur: [Int] = [], w: CGFloat = 0, h: CGFloat = 0
+        for i in subviews.indices {
+            let sz = subviews[i].sizeThatFits(.unspecified)
+            if !cur.isEmpty && w + spacing + sz.width > maxW { out.append((cur, w, h)); cur = []; w = 0; h = 0 }
+            w += (cur.isEmpty ? 0 : spacing) + sz.width; h = max(h, sz.height); cur.append(i)
+        }
+        if !cur.isEmpty { out.append((cur, w, h)) }
+        return out
     }
 }
 
