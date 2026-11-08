@@ -156,6 +156,71 @@ p{margin:0;text-wrap:pretty}
 
 
 
+/* Hero demo: scenes, voice, prompt, alerts, autopilot */
+.stage{padding-top:84px}
+.hud .k{position:relative}
+.stage .k.hit::after{content:"";position:absolute;inset:0;border-radius:10px;animation:ripple .75s var(--ease) forwards;pointer-events:none}
+@keyframes ripple{0%{box-shadow:0 0 0 0 rgba(255,91,31,.75)}100%{box-shadow:0 0 0 16px rgba(255,91,31,0)}}
+.stage .k.on{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.wave{display:none;align-items:center;gap:2px;height:16px;margin-right:4px;flex:0 0 auto}
+.chatbox.rec .wave{display:inline-flex}
+.chatbox.rec{box-shadow:inset 0 0 0 1px rgba(255,91,31,.65),0 0 0 4px rgba(255,91,31,.12),0 14px 40px -18px rgba(0,0,0,.6)}
+.wave i{width:3px;height:30%;border-radius:2px;background:var(--accent);animation:wv .8s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.25s}.wave i:nth-child(4){animation-delay:.05s}.wave i:nth-child(5){animation-delay:.3s}.wave i:nth-child(6){animation-delay:.15s}.wave i:nth-child(7){animation-delay:.2s}
+@keyframes wv{50%{height:100%}}
+.ask__msg.mine{margin-left:auto;border-radius:15px 15px 5px 15px;background:rgba(255,91,31,.16);box-shadow:inset 0 0 0 1px rgba(255,91,31,.45);color:#fff;line-height:1.5}
+.pp-tag{display:block;font:500 10.5px var(--mono);color:#ff9a6b;margin-bottom:4px}
+.ask__msg .bad{color:#ff8a7a}.ask__msg .good{color:#6ff0a0}
+.toast{position:absolute;top:14px;right:14px;z-index:3;display:flex;align-items:center;gap:12px;padding:10px 10px 10px 14px;border-radius:16px;background:rgba(30,30,34,.78);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 20px 50px -20px rgba(0,0,0,.8);color:#f5f5f7;font:500 12.5px/1.3 var(--sans);max-width:calc(100% - 28px);opacity:0;transform:translateY(-16px) scale(.97);transition:opacity .4s var(--ease),transform .6s var(--spring);pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.toast__dot{width:8px;height:8px;border-radius:50%;background:#5cf08f;box-shadow:0 0 10px #5cf08f;flex:0 0 auto}
+.toast__body{display:grid;gap:2px;min-width:0}
+.toast__body em{font-style:normal;color:#a1a1a6;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast__btns{display:flex;gap:6px;flex:0 0 auto}
+.tb{padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.1);font-size:11.5px}
+.tb--go{background:var(--accent);color:var(--accent-ink)}
+.tb.hit{animation:tbhit .5s var(--spring)}
+@keyframes tbhit{40%{transform:scale(.86)}}
+.pilot{position:absolute;top:14px;left:14px;z-index:3;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:#f5f5f7;font:500 11.5px var(--mono);opacity:0;transform:translateY(-10px);transition:opacity .4s var(--ease),transform .6s var(--spring)}
+.pilot.show{opacity:1;transform:none}
+.pilot>i{color:#5cf08f;font-size:14px}
+.pilot__bar{width:54px;height:4px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}
+.pilot__bar i{display:block;height:100%;width:0;background:#5cf08f;transition:width .5s var(--ease)}
+.pilot.stop>i{color:#ffbf47}.pilot.stop .pilot__bar i{background:#ffbf47}
+.scenes{display:flex;justify-content:center;gap:6px;margin-top:16px;flex-wrap:wrap}
+.scene{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border:0;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--mute);font:500 13px var(--sans);cursor:pointer;transition:color .3s var(--ease),box-shadow .3s var(--ease)}
+.scene i{font-size:15px}
+.scene:hover{color:var(--ink)}
+.scene.on{color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-2)}
+.scene.on i{color:var(--accent)}
+.scene__fill{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--accent)}
+
+/* Explain anything: second animated demo */
+.cell.cell--explain{grid-column:span 12;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:44px;align-items:center;min-height:380px}
+.xk{display:flex;gap:8px;margin-top:22px}
+.xk .cap{transition:background .25s var(--ease),color .25s var(--ease),transform .35s var(--spring)}
+.xk.hit .cap{background:var(--accent);color:var(--accent-ink);transform:translateY(2px)}
+.xwin{position:relative;border-radius:18px;background:#141417;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 30px 60px -30px rgba(0,0,0,.6);overflow:hidden;min-height:300px;color:#d1d1d6;font:500 13px/1.6 var(--mono)}
+.xwin__bar{display:flex;align-items:center;gap:6px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);color:#8e8e93;font-size:11.5px}
+.xwin__bar i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)}
+.xwin__bar span{margin-left:8px}
+.xcode,.xshot{position:absolute;inset:44px 0 0;padding:20px 22px;transition:opacity .45s var(--ease)}
+.xcode .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xcode .ln b{display:inline-block;width:30px;color:#5a5a60;font-weight:500}
+.xcode .err{color:#ff8a7a}
+.xsel{background-image:linear-gradient(rgba(90,140,255,.38),rgba(90,140,255,.38));background-repeat:no-repeat;background-size:0 100%;transition:background-size .9s var(--ease)}
+.xsel.on{background-size:100% 100%}
+.xshot{display:grid;place-items:start center;padding-top:34px;opacity:0}
+.xform{width:min(280px,80%);padding:18px;border-radius:14px;background:#1f1f24;display:grid;gap:10px;font-family:var(--sans)}
+.xform span{height:30px;border-radius:8px;background:rgba(255,255,255,.07)}
+.xform .xbtn{display:block;width:46%;height:34px;margin-left:8%;border-radius:8px;background:var(--accent)}
+.xrect{position:absolute;border:1.5px dashed #fff;border-radius:8px;background:rgba(255,255,255,.06);opacity:0;transform-origin:top left;transform:scale(0);transition:transform .8s var(--ease),opacity .3s}
+.xrect.on{opacity:1;transform:scale(1)}
+.xans{position:absolute;left:18px;right:18px;bottom:16px;padding:12px 14px;border-radius:14px;background:rgba(40,40,46,.92);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font:400 14px/1.45 var(--sans);color:#e5e5ea;opacity:0;transform:translateY(12px);transition:opacity .4s var(--ease),transform .6s var(--spring)}
+.xans.on{opacity:1;transform:none}
+.xans b{color:#fff;font-weight:600}
+.xans__who{display:block;font:500 10.5px var(--mono);color:#ff9a6b;margin-bottom:3px}
+
 /* Band: the desk, leading into the Pad */
 .band{max-width:1400px;margin:0 auto;padding:0 24px}
 .band__img{position:relative;border-radius:var(--r-lg);overflow:hidden}
@@ -176,7 +241,7 @@ p{margin:0;text-wrap:pretty}
 .cell--talk{grid-column:span 5}
 .cell--prompt{grid-column:span 5;background:var(--accent);color:var(--accent-ink);box-shadow:none}
 .cell--prompt p,.cell--prompt .soon{color:rgba(26,10,3,.72)}
-.cell--alert,.cell--repeat,.cell--style{grid-column:span 4}
+.cell--alert,.cell--repeat{grid-column:span 6}
 .pp{display:grid;gap:10px;font:500 12.5px/1.45 var(--mono)}
 .pp__said{opacity:.72}
 .pp__out{padding:12px 14px;border-radius:12px;background:rgba(26,10,3,.1)}
@@ -185,11 +250,6 @@ p{margin:0;text-wrap:pretty}
 .al i{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 10px rgba(255,255,255,.8);animation:pulse 2.4s var(--ease) infinite}
 .al span{display:grid;gap:1px}.al b{font:600 13px var(--sans)}.al em{font:500 10.5px var(--mono);font-style:normal;color:#8e8e93}
 @keyframes pulse{50%{opacity:.45}}
-.sws{display:flex;gap:10px}
-.sw2{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line)}
-.sw2--glass{background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.06)),#2a2a30}
-.sw2--classic{background:#0b0d10}
-.sw2--metal{background:conic-gradient(from 210deg,var(--accent) 0 25%,#dcdcd8 25% 100%)}
 .caps{display:flex;gap:10px;flex-wrap:wrap}
 .cap{min-width:72px;height:72px;padding:0 18px;border-radius:16px;display:grid;place-items:center;font:500 24px var(--mono);background:var(--bg);box-shadow:inset 0 -4px 0 var(--line-2),inset 0 0 0 1px var(--line);color:var(--ink)}
 .cap.sm{min-width:46px;height:46px;padding:0 12px;border-radius:12px;font-size:17px}
@@ -308,10 +368,18 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .hero__grid,.hero__top,.pad__head,.pad__grid,.pad__box,.privacy__in{grid-template-columns:1fr;gap:28px}
   .hero__media{transform:none}
   .bento__grid{grid-template-columns:1fr}
-  .cell--tap,.cell--talk,.cell--prompt,.cell--alert,.cell--repeat,.cell--style{grid-column:auto;grid-row:auto;min-height:260px}
+  .cell--tap,.cell--talk,.cell--prompt,.cell--alert,.cell--repeat,.cell--explain{grid-column:auto;grid-row:auto;min-height:260px}
+  .cell.cell--explain{grid-template-columns:1fr;gap:24px}
+  .stage{padding-top:92px}
+  .toast{left:12px;right:12px;top:12px;max-width:none}
+  .toast__btns .tb:not(.tb--go){display:none}
+  .pilot{left:12px;top:12px}
+  .scenes{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none;margin:14px -24px 0;padding:0 24px}
+  .scenes::-webkit-scrollbar{display:none}
+  .scene{flex:0 0 auto}
   .band__img img{aspect-ratio:4/3}
   .band__img h2{left:24px;bottom:22px}
-  .stage{aspect-ratio:auto;padding:28px 14px}
+  .stage{aspect-ratio:auto;padding:92px 14px 28px}
   .demo{min-width:100%}
   .hud .k--wide{display:none}
   .hud .g,.hud .g+.sep,.hud .sep:has(+.g){display:none}
@@ -359,23 +427,32 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       </div>
       <div class="hero__media rv">
         <div class="stage" id="stage">
-          
+          <div class="toast" id="toast" aria-hidden="true"><span class="toast__dot"></span><span class="toast__body"><b id="toastT">Claude Code is done</b><em id="toastS">my-app · Stripe checkout added. Deploy to staging?</em></span><span class="toast__btns"><span class="tb tb--go" id="toastGo">Continue</span><span class="tb">Reply</span></span></div>
+          <div class="pilot" id="pilot" aria-hidden="true"><i class="ph-bold ph-airplane-tilt"></i><span id="pilotT">Autopilot</span><span class="pilot__bar"><i id="pilotF"></i></span></div>
           <div class="demo">
           <div class="ask" aria-live="polite"><span class="ask__msg" id="ask">Step 2 of 5 done: the login page works. <b>Shall I keep going?</b></span></div>
-          <div class="chatbox"><span class="chatbox__app" id="app">Claude</span><span class="chatbox__text"><span id="typed"></span><span class="caret" aria-hidden="true"></span><span class="chatbox__ph" id="ph">Message…</span></span><span class="chatbox__sent" id="sent"><i class="ph ph-arrow-elbow-down-left"></i></span></div>
+          <div class="chatbox" id="chat"><span class="chatbox__app" id="app">Claude</span><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="chatbox__text"><span id="typed"></span><span class="caret" aria-hidden="true"></span><span class="chatbox__ph" id="ph">Message…</span></span><span class="chatbox__sent" id="sent"><i class="ph ph-arrow-elbow-down-left"></i></span></div>
           <div class="hud" id="bar" role="group" aria-label="Agent Bar keys">
             <span class="g"><i class="ph ph-x"></i></span><span class="sep"></span>
-            <button class="k" data-say="make the header sticky and the logo a bit bigger" data-voice="1" data-reply="Done: <b>sticky header, bigger logo.</b>"><i class="ph ph-microphone"></i><b>Talk</b></button>
-            <button class="k main" data-say="continue" data-reply="On it. The dashboard is built. <b>What next?</b>"><i class="ph ph-arrow-circle-right"></i><b>Continue</b></button>
-            <button class="k" data-say="run the tests and tell me what fails" data-reply="Ran the tests: <b>41 passed, 2 failed.</b>"><i class="ph ph-flask"></i><b>Test it</b></button>
-            <button class="k" data-say="fix those errors, then continue" data-reply="Fixed both. <b>All 43 tests pass</b> now."><i class="ph ph-wrench"></i><b>Fix it</b></button>
+            <button class="k" data-k="talk" data-say="make the header sticky and the logo a bit bigger" data-voice="1" data-reply="Done: <b>sticky header, bigger logo.</b>"><i class="ph ph-microphone"></i><b>Talk</b></button>
+            <button class="k main" data-k="continue" data-say="continue" data-reply="On it. The dashboard is built. <b>What next?</b>"><i class="ph ph-arrow-circle-right"></i><b>Continue</b></button>
+            <button class="k" data-k="test" data-say="run the tests and tell me what fails" data-reply="Ran the tests: <b>41 passed, 2 failed.</b>"><i class="ph ph-flask"></i><b>Test it</b></button>
+            <button class="k" data-k="fix" data-say="fix those errors, then continue" data-reply="Fixed both. <b>All 43 tests pass</b> now."><i class="ph ph-wrench"></i><b>Fix it</b></button>
             <span class="sep sep2"></span>
-            <button class="k k--wide" data-say="show me a preview before you go on" data-reply="Preview is ready. <b>Does it look right?</b>"><i class="ph ph-eye"></i><b>Preview</b></button>
-            <button class="k k--wide" data-say="undo that last change" data-reply="Undone. <b>Back to how it was.</b>"><i class="ph ph-arrow-counter-clockwise"></i><b>Undo</b></button>
-            <button class="k" data-say="stop, don't go on with that" data-reply="Stopped. <b>I won't touch anything else.</b>"><i class="ph ph-stop-circle"></i><b>Stop</b></button>
+            <button class="k k--wide" data-k="preview" data-say="show me a preview before you go on" data-reply="Preview is ready. <b>Does it look right?</b>"><i class="ph ph-eye"></i><b>Preview</b></button>
+            <button class="k k--wide" data-k="undo" data-say="undo that last change" data-reply="Undone. <b>Back to how it was.</b>"><i class="ph ph-arrow-counter-clockwise"></i><b>Undo</b></button>
+            <button class="k" data-k="stop" data-say="stop, don't go on with that" data-reply="Stopped. <b>I won't touch anything else.</b>"><i class="ph ph-stop-circle"></i><b>Stop</b></button>
             <span class="sep"></span><span class="g"><i class="ph ph-sliders-horizontal"></i></span><span class="g"><i class="ph ph-gear-six"></i></span>
           </div>
           </div>
+        </div>
+        <div class="scenes" id="scenes" role="tablist" aria-label="What Agent Bar does">
+          <button class="scene" type="button" data-s="0"><i class="ph ph-arrow-circle-right"></i>Continue<span class="scene__fill"></span></button>
+          <button class="scene" type="button" data-s="1"><i class="ph ph-microphone"></i>Talk<span class="scene__fill"></span></button>
+          <button class="scene" type="button" data-s="2"><i class="ph ph-sparkle"></i>Talk → prompt<span class="scene__fill"></span></button>
+          <button class="scene" type="button" data-s="3"><i class="ph ph-flask"></i>Test &amp; fix<span class="scene__fill"></span></button>
+          <button class="scene" type="button" data-s="4"><i class="ph ph-bell-simple"></i>Alerts<span class="scene__fill"></span></button>
+          <button class="scene" type="button" data-s="5"><i class="ph ph-airplane-tilt"></i>Autopilot<span class="scene__fill"></span></button>
         </div>
       </div>
     </div>
@@ -434,12 +511,25 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <p>Claude Code keeps going on its own, up to 5 times, and stops at a real question or a permission. On Codex, queue the next steps.</p>
           </div>
         </article>
-        <article class="cell cell--style rv">
-          <div class="sws" aria-hidden="true"><span class="sw2 sw2--glass"></span><span class="sw2 sw2--classic"></span><span class="sw2 sw2--metal"></span></div>
+        <article class="cell cell--explain rv">
           <div>
-            <span class="soon">Free · new</span>
-            <h3 style="margin-top:10px">Make it yours</h3>
-            <p>Glass, Classic or Metal. Drag the orb anywhere, or fling it to the edge to tuck it away.</p>
+            <span class="soon">Free</span>
+            <h3 style="margin-top:10px">Explain anything</h3>
+            <p>Select an error anywhere and ask what it means. Or snap part of the screen and ask what’s wrong.</p>
+            <div class="xk" id="xk" aria-hidden="true"><span class="cap sm">⌃</span><span class="cap sm">⌥</span><span class="cap sm" id="xkL">E</span></div>
+          </div>
+          <div class="xwin" id="xwin" aria-hidden="true">
+            <div class="xwin__bar"><i></i><i></i><i></i><span id="xfile">auth.ts</span></div>
+            <div class="xcode" id="xcode">
+              <div class="ln"><b>11</b>export async function me() {</div>
+              <div class="ln"><b>12</b>&nbsp;&nbsp;const user = session.user</div>
+              <div class="ln err"><b>13</b><span class="xsel" id="xsel">TypeError: Cannot read properties of undefined</span></div>
+              <div class="ln"><b>14</b>&nbsp;&nbsp;return user.id</div>
+              <div class="ln"><b>15</b>}</div>
+            </div>
+            <div class="xshot" id="xshot"><div class="xform"><span></span><span></span><i class="xbtn" id="xbtn"></i></div></div>
+            <div class="xrect" id="xrect"></div>
+            <div class="xans" id="xans"><span class="xans__who">Agent Bar</span><span id="xansT"></span></div>
           </div>
         </article>
       </div>
@@ -597,43 +687,130 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -10% 0px' });
   document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionDelay = (i % 3) * 70 + 'ms'; io.observe(el); });
 
-  // The agent stops and asks; a key types the answer into the chat and sends it; the agent replies and goes on.
+  // Hero demo: six scenes that play on their own (Continue, Talk, Talk → prompt, Test & fix, Alerts, Autopilot)
   var typed = document.getElementById('typed'), ph = document.getElementById('ph'), sent = document.getElementById('sent'),
-      appEl = document.getElementById('app'), who = document.getElementById('who'), ask = document.getElementById('ask'), bar = document.getElementById('bar');
-  var apps = ['Claude', 'Cursor', 'ChatGPT', 'Codex'], a = 0, busy = false, auto = !reduce, timer, step = 0;
-  var story = ['continue', 'run the tests and tell me what fails', 'fix those errors, then continue', 'show me a preview before you go on', 'make the header sticky and the logo a bit bigger', 'continue', 'undo that last change'];
-  function say(html) { ask.classList.add('out'); setTimeout(function () { ask.innerHTML = html; ask.classList.remove('out'); }, 220); }
-  function press(key) {
-    if (busy) return; busy = true; clearTimeout(timer);
-    var text = key.dataset.say;
-    key.classList.add('on'); setTimeout(function () { key.classList.remove('on'); }, 220);
-    ph.style.display = 'none'; typed.textContent = '';
-    var i = 0;
-    (function type() {
-      if (reduce) { typed.textContent = text; return done(); }
-      if (i <= text.length) { typed.textContent = text.slice(0, i); i += key.dataset.voice ? 3 : 1; setTimeout(type, 28); } else { typed.textContent = text; done(); }
-    })();
-    function done() {
-      sent.classList.add('on');
-      setTimeout(function () {
-        sent.classList.remove('on'); typed.textContent = ''; ph.style.display = '';
-        say('<span class="dots"><i></i><i></i><i></i></span>');
-        setTimeout(function () {
-          say(key.dataset.reply);
-          busy = false; if (auto) timer = setTimeout(loop, 2600);
-        }, reduce ? 0 : 1100);
-      }, 500);
+      appEl = document.getElementById('app'), ask = document.getElementById('ask'), bar = document.getElementById('bar'),
+      chat = document.getElementById('chat'), toast = document.getElementById('toast'), toastT = document.getElementById('toastT'),
+      toastS = document.getElementById('toastS'), toastGo = document.getElementById('toastGo'), pilot = document.getElementById('pilot'),
+      pilotT = document.getElementById('pilotT'), pilotF = document.getElementById('pilotF'), scenesEl = document.getElementById('scenes');
+  var run = 0, cur = 0, resumeT;
+  function wait(ms) { var t = run; return new Promise(function (ok, no) { setTimeout(function () { t === run ? ok() : no('stop'); }, ms); }); }
+  function after(ms) { return function () { return wait(ms); }; }
+  function say(html, mine) { ask.classList.add('out'); return wait(200).then(function () { ask.innerHTML = html; ask.classList.toggle('mine', !!mine); ask.classList.remove('out'); }); }
+  function sayer(html, mine) { return function () { return say(html, mine); }; }
+  function key(name) { var k = bar.querySelector('[data-k="' + name + '"]'); if (!k) return; k.classList.add('on', 'hit'); setTimeout(function () { k.classList.remove('on'); }, 260); setTimeout(function () { k.classList.remove('hit'); }, 760); }
+  function typeText(text, ms) {
+    ph.style.display = 'none'; typed.textContent = ''; var i = 0, t = run;
+    return new Promise(function (ok, no) { (function step() { if (t !== run) return no('stop'); i++; typed.textContent = text.slice(0, i); if (i < text.length) setTimeout(step, ms); else ok(); })(); });
+  }
+  function speak(text) {
+    var w = text.split(' '), i = 0, t = run; ph.style.display = 'none'; typed.textContent = ''; chat.classList.add('rec');
+    return new Promise(function (ok, no) { (function step() { if (t !== run) return no('stop'); i++; typed.textContent = w.slice(0, i).join(' '); if (i < w.length) setTimeout(step, 150); else ok(); })(); })
+      .then(after(350)).then(function () { chat.classList.remove('rec'); });
+  }
+  function send() { sent.classList.add('on'); return wait(420).then(function () { sent.classList.remove('on'); typed.textContent = ''; ph.style.display = ''; }); }
+  function thinking(ms) { return function () { return say('<span class="dots"><i></i><i></i><i></i></span>').then(after(ms || 900)); }; }
+  function reset(app) { toast.classList.remove('show'); pilot.classList.remove('show', 'stop'); chat.classList.remove('rec'); appEl.textContent = app; typed.textContent = ''; ph.style.display = ''; }
+  var SCENES = [
+    function () { reset('Claude');
+      return say('Step 2 of 5 done: the login page works. <b>Shall I keep going?</b>').then(after(1100))
+        .then(function () { key('continue'); return typeText('continue', 45); }).then(send).then(thinking())
+        .then(sayer('On it. <b>The dashboard is built.</b>')).then(after(1500)); },
+    function () { reset('Claude');
+      return say('Anything you want to change?').then(after(800))
+        .then(function () { key('talk'); return speak('make the header sticky and the logo a bit bigger'); }).then(send).then(thinking())
+        .then(sayer('Done: <b>sticky header, bigger logo.</b>')).then(after(1500)); },
+    function () { reset('ChatGPT');
+      return say('What should I work on?').then(after(700))
+        .then(function () { key('talk'); return speak('so fix the login and don’t break the tests and check sign-up too'); })
+        .then(function () { typed.textContent = ''; ph.style.display = ''; return say('<span class="pp-tag">✦ Turned into a prompt</span><b>Fix the login.</b><br>· Don’t break the tests<br>· Check the sign-up form<br>Done when: tests pass', true); })
+        .then(after(2000)).then(thinking())
+        .then(sayer('Login fixed, sign-up checked. <b>Tests pass.</b>')).then(after(1400)); },
+    function () { reset('Cursor');
+      return say('Checkout is built. <b>Anything else?</b>').then(after(800))
+        .then(function () { key('test'); return typeText('run the tests and tell me what fails', 18); }).then(send).then(thinking(800))
+        .then(sayer('Ran the tests: <b class="bad">41 passed, 2 failed.</b>')).then(after(1100))
+        .then(function () { key('fix'); return typeText('fix those errors, then continue', 18); }).then(send).then(thinking(800))
+        .then(sayer('Fixed both. <b class="good">All 43 tests pass.</b>')).then(after(1500)); },
+    function () { reset('Claude Code'); toastT.textContent = 'Claude Code is done'; toastS.textContent = 'my-app · Stripe checkout added. Deploy to staging?';
+      return say('Working on <b>my-app</b> while you do something else <span class="dots"><i></i><i></i><i></i></span>').then(after(1300))
+        .then(function () { toast.classList.add('show'); return wait(1600); })
+        .then(function () { toastGo.classList.add('hit'); return wait(450); })
+        .then(function () { toastGo.classList.remove('hit'); toastT.textContent = 'Sent to my-app ✓'; toastS.textContent = 'continue'; return wait(1100); })
+        .then(function () { toast.classList.remove('show'); return say('Deploying to staging… <b>done.</b>'); }).then(after(1500)); },
+    function () { reset('Claude Code'); pilotT.textContent = 'Autopilot · 0/5'; pilotF.style.width = '0'; pilot.classList.add('show');
+      var p = say('Step 1 of 5 done. <b>Shall I keep going?</b>');
+      [1, 2, 3].forEach(function (n) {
+        p = p.then(after(700)).then(function () { return typeText('continue', 30); }).then(send)
+          .then(function () { pilotT.textContent = 'Autopilot · ' + n + '/5'; pilotF.style.width = (n * 20) + '%'; return say('Step ' + (n + 1) + ' of 5 done. <b>Shall I keep going?</b>'); });
+      });
+      return p.then(after(700)).then(sayer('I need to delete 12 old files. <b>Allow?</b>'))
+        .then(function () { pilot.classList.add('stop'); pilotT.textContent = 'Stopped · needs you'; return wait(2300); }); }
+  ];
+  var chips = [].slice.call(scenesEl.querySelectorAll('.scene'));
+  var LEN = [5600, 6800, 8200, 8200, 6400, 9400];
+  function play(n) {
+    run++; cur = n % SCENES.length; clearTimeout(resumeT);
+    chips.forEach(function (c, i) {
+      var f = c.querySelector('.scene__fill'); c.classList.toggle('on', i === cur); c.setAttribute('aria-selected', i === cur ? 'true' : 'false');
+      f.style.transition = 'none'; f.style.width = '0';
+      if (i === cur) { void f.offsetWidth; f.style.transition = 'width ' + LEN[cur] + 'ms linear'; f.style.width = '100%'; }
+    });
+    var t = run;
+    SCENES[cur]().then(function () { if (t === run) return wait(500).then(function () { play(cur + 1); }); }).catch(function () {});
+  }
+  if (reduce) {
+    ask.innerHTML = 'Step 2 of 5 done: the login page works. <b>Shall I keep going?</b>';
+    scenesEl.style.display = 'none';
+  } else {
+    scenesEl.addEventListener('click', function (e) { var c = e.target.closest('.scene'); if (c) play(+c.dataset.s); });
+    bar.addEventListener('click', function (e) {
+      var k = e.target.closest('.k'); if (!k) return; run++; clearTimeout(resumeT); var t = run;
+      chips.forEach(function (c) { c.classList.remove('on'); var f = c.querySelector('.scene__fill'); f.style.transition = 'none'; f.style.width = '0'; });
+      reset(appEl.textContent); key(k.dataset.k);
+      typeText(k.dataset.say, k.dataset.voice ? 12 : 22).then(send).then(thinking(800)).then(sayer(k.dataset.reply)).catch(function () {});
+      resumeT = setTimeout(function () { if (t === run) play(cur + 1); }, 9000);
+    });
+    setTimeout(function () { play(0); }, 1200);
+  }
+
+  // Explain anything: select an error, or snap part of the screen, and Agent Bar explains it
+  (function () {
+    var xk = document.getElementById('xk'), xkL = document.getElementById('xkL'), xfile = document.getElementById('xfile'), xcode = document.getElementById('xcode'),
+        xsel = document.getElementById('xsel'), xshot = document.getElementById('xshot'), xrect = document.getElementById('xrect'), xbtn = document.getElementById('xbtn'),
+        xwin = document.getElementById('xwin'), xans = document.getElementById('xans'), xansT = document.getElementById('xansT'), on = false, timers = [];
+    var A1 = '<b>session</b> is still undefined: this runs before the session loads. Await <b>getSession()</b> first.';
+    var A2 = 'The button sits off-centre: its form has no <b>justify-items</b>. Add <b>justify-items: center</b>.';
+    function at(ms, f) { timers.push(setTimeout(f, ms)); }
+    function hit() { xk.classList.add('hit'); setTimeout(function () { xk.classList.remove('hit'); }, 380); }
+    function placeRect() {
+      var w = xwin.getBoundingClientRect(), b = xbtn.getBoundingClientRect();
+      xrect.style.left = (b.left - w.left - 14) + 'px'; xrect.style.top = (b.top - w.top - 12) + 'px';
+      xrect.style.width = (b.width + 28) + 'px'; xrect.style.height = (b.height + 24) + 'px';
     }
-  }
-  function loop() {
-    step = (step + 1) % story.length;
-    if (step === 0) { a = (a + 1) % apps.length; appEl.textContent = apps[a]; }
-    var k = [].filter.call(bar.querySelectorAll('.k'), function (x) { return x.dataset.say === story[step] && x.offsetParent; })[0];
-    if (!k) return loop();
-    press(k);
-  }
-  bar.addEventListener('click', function (e) { var k = e.target.closest('.k'); if (!k) return; auto = false; press(k); clearTimeout(timer); timer = setTimeout(function () { auto = !reduce; if (auto) loop(); }, 9000); });
-  if (auto) timer = setTimeout(function () { press(bar.querySelector('.k.main')); }, 2000);
+    function cycle() {
+      timers.forEach(clearTimeout); timers = [];
+      xfile.textContent = 'auth.ts'; xkL.textContent = 'E'; xcode.style.opacity = 1; xshot.style.opacity = 0;
+      xrect.classList.remove('on'); xsel.classList.remove('on'); xans.classList.remove('on');
+      at(700, function () { xsel.classList.add('on'); });
+      at(1900, hit);
+      at(2400, function () { xansT.innerHTML = A1; xans.classList.add('on'); });
+      at(5600, function () { xans.classList.remove('on'); xsel.classList.remove('on'); });
+      at(6100, function () { xfile.textContent = 'localhost:3000/signup'; xkL.textContent = 'S'; xcode.style.opacity = 0; xshot.style.opacity = 1; });
+      at(6900, hit);
+      at(7300, function () { placeRect(); xrect.classList.add('on'); });
+      at(8400, function () { xansT.innerHTML = A2; xans.classList.add('on'); });
+      at(11800, function () { xans.classList.remove('on'); xrect.classList.remove('on'); });
+      at(12400, cycle);
+    }
+    if (reduce) { xsel.classList.add('on'); xansT.innerHTML = A1; xans.classList.add('on'); return; }
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting && !on) { on = true; cycle(); }
+        else if (!e.isIntersecting && on) { on = false; timers.forEach(clearTimeout); }
+      });
+    }, { threshold: .3 }).observe(xwin);
+  })();
 
   // Videos load and play only while on screen
   var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } } else v.pause(); }); }, { rootMargin: '200px 0px' });
