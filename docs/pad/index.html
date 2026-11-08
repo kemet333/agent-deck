@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Agent Bar Pad · A real button for your agents</title>
-<meta name="description" content="Agent Bar Pad: mechanical keys and a dial for your AI agents. Original, Pro and Max. The orange key keeps your agent going.">
-<meta property="og:title" content="Agent Bar Pad · A real button for your agents">
+<title>Agent Pad · A real button for your agents</title>
+<meta name="description" content="Agent Pad: mechanical keys and a dial for your AI agents. Original, Pro and Max. The orange key keeps your agent going.">
+<meta property="og:title" content="Agent Pad · A real button for your agents">
 <meta property="og:description" content="Original, Pro and Max. One orange key keeps your agent going.">
 <meta property="og:type" content="product">
 <meta property="og:url" content="https://getagentbar.com/pad/">
@@ -200,6 +200,13 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 .faq__grid h3{font-size:18px;letter-spacing:-.015em;margin-bottom:8px}
 .faq__grid p{color:var(--ink-2);font-size:16px}
 @media (max-width:900px){.faq__grid{grid-template-columns:1fr;gap:28px}}
+.swatches{display:flex;align-items:center;gap:8px;font:500 12px var(--mono);color:var(--mute)}
+.swatch{width:22px;height:22px;border-radius:50%;border:0;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px var(--line-2);transition:box-shadow .2s var(--ease)}
+.swatch--white{background:#e9e7e1}.swatch--black{background:#1c1c1e}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.swatches span{margin-left:4px}
+.colors{margin-top:18px}
+.colors[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -217,7 +224,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
 <main id="main">
   <section class="hero">
     <div class="wrap">
-      <div class="eyebrow rv"><i></i>Agent Bar Pad</div>
+      <div class="eyebrow rv"><i></i>Agent Pad</div>
       <h1 class="rv">A real button for your agents.</h1>
       <p class="hero__sub rv">Mechanical keys and a dial on your desk. Press the orange one and your agent keeps going.</p>
       <div class="hero__cta rv">
@@ -227,7 +234,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       </div>
     </div>
     <div class="film rv">
-      <div class="photo"><video src="video/unboxing.mp4" poster="img/unboxing-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Unboxing Agent Bar Pad Pro"></video></div>
+      <div class="photo"><video src="video/unboxing.mp4" poster="img/unboxing-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Unboxing Agent Pad Pro"></video></div>
     </div>
   </section>
 
@@ -239,28 +246,30 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       </div>
       <div class="lineup">
         <article class="model rv">
-          <div class="photo"><img src="img/original.jpg" alt="Agent Bar Pad Original: three keys in a row and an aluminium dial" width="1600" height="1200" loading="lazy"></div>
+          <div class="photo"><img src="img/original.jpg" alt="Agent Pad Original: three keys in a row and an aluminium dial" width="1600" height="1200" loading="lazy"></div>
           <div class="model__body">
-            <div class="model__name"><h3>Original</h3><span class="model__price">€29</span></div>
+            <div class="model__name"><h3>Agent Pad Original</h3><span class="model__price">€29</span></div>
             <div class="model__spec">3 keys + dial</div>
+            <div class="swatches" data-model="original"><button class="swatch swatch--white" type="button" data-color="white" aria-label="White" aria-pressed="true"></button><button class="swatch swatch--black" type="button" data-color="black" aria-label="Black" aria-pressed="false"></button><span>White</span></div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
             <div class="model__foot"><a class="link" href="#compare">Details</a><button class="btn" type="button" data-pick="original">Choose<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></button></div>
           </div>
         </article>
         <article class="model rv">
-          <div class="photo"><img src="img/pro.jpg" alt="Agent Bar Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
+          <div class="photo"><img src="img/pro.jpg" alt="Agent Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
           <div class="model__body">
-            <div class="model__name"><h3>Pro</h3><span class="model__price">€49</span></div>
+            <div class="model__name"><h3>Agent Pad Pro</h3><span class="model__price">€49</span></div>
             <div class="model__spec">6 keys + dial <span class="tag">Most popular</span></div>
+            <div class="swatches" data-model="pro"><button class="swatch swatch--white" type="button" data-color="white" aria-label="White" aria-pressed="true"></button><button class="swatch swatch--black" type="button" data-color="black" aria-label="Black" aria-pressed="false"></button><span>White</span></div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
             <div class="model__foot"><a class="link" href="#compare">Details</a><button class="btn btn--accent" type="button" data-pick="pro">Choose<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></button></div>
           </div>
         </article>
         <article class="model rv">
-          <div class="photo"><img src="img/max.jpg" alt="Agent Bar Pad Max: eight keys and a black dial in a black case" width="1600" height="1200" loading="lazy"></div>
+          <div class="photo"><img src="img/max.jpg" alt="Agent Pad Max: eight keys and a black dial in a black case" width="1600" height="1200" loading="lazy"></div>
           <div class="model__body">
-            <div class="model__name"><h3>Max</h3><span class="model__price">€99</span></div>
-            <div class="model__spec">8 keys + dial</div>
+            <div class="model__name"><h3>Agent Pad Max</h3><span class="model__price">€99</span></div>
+            <div class="model__spec">8 keys + dial · black</div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span><i class="ph ph-repeat"></i>Repeat</span><span><i class="ph ph-skip-forward"></i>Skip</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
             <div class="model__foot"><a class="link" href="#compare">Details</a><button class="btn" type="button" data-pick="max">Choose<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></button></div>
           </div>
@@ -272,7 +281,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   <section class="section" id="desk">
     <div class="wrap desk">
       <div class="phone rv">
-        <div class="photo"><video id="deskVideo" data-lazy src="video/desk.mp4" poster="img/desk-poster.jpg" muted loop playsinline preload="none" aria-label="Unboxing Agent Bar Pad Pro"></video></div>
+        <div class="photo"><video id="deskVideo" data-lazy src="video/desk.mp4" poster="img/desk-poster.jpg" muted loop playsinline preload="none" aria-label="Unboxing Agent Pad Pro"></video></div>
         <button class="sound" id="sound" type="button" aria-label="Turn sound on"><i class="ph ph-speaker-slash"></i></button>
       </div>
       <div>
@@ -293,7 +302,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <div>
         <h2 class="rv">What’s in the box.</h2>
         <ul class="inbox rv">
-          <li><i class="ph ph-keyboard"></i>Agent Bar Pad</li>
+          <li><i class="ph ph-keyboard"></i>Agent Pad</li>
           <li><i class="ph ph-plugs"></i>Braided USB-C cable</li>
           <li><i class="ph ph-cards"></i>Quick-start card</li>
         </ul>
@@ -305,13 +314,15 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     <div class="wrap buy">
       <div class="buy__stage rv">
         <div class="photo">
-          <img src="img/original.jpg" alt="Agent Bar Pad Original" data-shot="original" width="1600" height="1200">
-          <img src="img/pro.jpg" alt="Agent Bar Pad Pro" data-shot="pro" class="on" width="1600" height="1200">
-          <img src="img/max.jpg" alt="Agent Bar Pad Max" data-shot="max" width="1600" height="1200">
+          <img src="img/original.jpg" alt="Agent Pad Original" data-shot="original" width="1600" height="1200">
+          <img src="img/pro.jpg" alt="Agent Pad Pro" data-shot="pro" class="on" width="1600" height="1200">
+          <img src="img/original-black.jpg" alt="Agent Pad Original in black" data-shot="original-black" width="1600" height="1200">
+          <img src="img/pro-black.jpg" alt="Agent Pad Pro in black" data-shot="pro-black" width="1600" height="1200">
+          <img src="img/max.jpg" alt="Agent Pad Max" data-shot="max" width="1600" height="1200">
         </div>
       </div>
       <div>
-        <h2 class="rv">Buy Agent Bar Pad.</h2>
+        <h2 class="rv">Buy Agent Pad.</h2>
         <p class="buy__lead rv">Choose your model.</p>
         <fieldset class="pick rv">
           <legend>Model</legend>
@@ -319,11 +330,17 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
           <label class="opt"><input type="radio" name="model" value="pro" checked><strong>Pro</strong><em>€49</em><small>6 keys + dial · adds Test, Fix and Undo</small></label>
           <label class="opt"><input type="radio" name="model" value="max"><strong>Max</strong><em>€99</em><small>8 keys + dial · adds Repeat and Skip</small></label>
         </fieldset>
+        <fieldset class="pick colors rv" id="colors">
+          <legend>Colour</legend>
+          <label class="opt"><input type="radio" name="color" value="white" checked><strong>White</strong><small>White keys, silver dial</small></label>
+          <label class="opt"><input type="radio" name="color" value="black"><strong>Black</strong><small>Black keys, black dial</small></label>
+        </fieldset>
         <div class="sum rv">
-          <div class="sum__row"><span id="sumName">Agent Bar Pad Pro</span><span class="sum__total" id="sumPrice">€49</span></div>
+          <div class="sum__row"><span id="sumName">Agent Pad Pro</span><span class="sum__total" id="sumPrice">€49</span></div>
           <a class="btn btn--accent" id="order" href="#">Order<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></a>
           <ul class="perks">
-            <li><i class="ph ph-envelope-simple"></i>We reply within 24 h with payment and shipping</li>
+            <li><i class="ph ph-envelope-simple"></i>We reply within 24 h with payment</li>
+            <li><i class="ph ph-package"></i>Ships in 3–7 days</li>
             <li><i class="ph ph-plugs"></i>USB cable included</li>
             <li><i class="ph ph-arrow-u-up-left"></i>14-day returns</li>
           </ul>
@@ -359,7 +376,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
         <div class="rv"><h3>Does the Pad work on Windows or Linux?</h3><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></div>
         <div class="rv"><h3>Only with Claude Code?</h3><p>No. The keys answer in whatever app has the text box: Claude, ChatGPT, Cursor, Codex, Terminal. Alerts when an agent is done are for Claude Code.</p></div>
         <div class="rv"><h3>Can I change what the keys say?</h3><p>Yes. Each key is one of your Agent Bar keys, so you change its words in Agent Bar and the Pad follows.</p></div>
-        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment and shipping. The USB-C cable is included, and you have 14 days to return it.</p></div>
+        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment, and it ships in 3–7 days. The USB-C cable is included, and you have 14 days to return it.</p></div>
       </div>
     </div>
   </section>
@@ -378,21 +395,46 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { rootMargin: '0px 0px -10% 0px' });
   document.querySelectorAll('.rv').forEach(function (el, i) { el.style.transitionDelay = (i % 3) * 70 + 'ms'; io.observe(el); });
 
-  var MODELS = { original: { name: 'Original', price: 29 }, pro: { name: 'Pro', price: 49 }, max: { name: 'Max', price: 99 } };
-  var order = document.getElementById('order');
-  function pick(id) {
-    var m = MODELS[id]; if (!m) return;
-    var input = document.querySelector('input[name="model"][value="' + id + '"]'); if (input) input.checked = true;
-    document.querySelectorAll('[data-shot]').forEach(function (img) { img.classList.toggle('on', img.getAttribute('data-shot') === id); });
-    document.getElementById('sumName').textContent = 'Agent Bar Pad ' + m.name;
+  var MODELS = { original: { name: 'Original', price: 29, colors: true }, pro: { name: 'Pro', price: 49, colors: true }, max: { name: 'Max', price: 99, colors: false } };
+  var order = document.getElementById('order'), colorsBox = document.getElementById('colors'), cur = 'pro', color = 'white';
+  function render() {
+    var m = MODELS[cur], c = m.colors ? color : 'black', C = c === 'black' ? 'Black' : 'White';
+    colorsBox.hidden = !m.colors;
+    var shot = cur + (m.colors && c === 'black' ? '-black' : '');
+    document.querySelectorAll('[data-shot]').forEach(function (img) { img.classList.toggle('on', img.getAttribute('data-shot') === shot); });
+    var name = 'Agent Pad ' + m.name + (m.colors ? ' · ' + C : '');
+    document.getElementById('sumName').textContent = name;
     document.getElementById('sumPrice').textContent = '€' + m.price;
-    var subject = 'Order · Agent Bar Pad ' + m.name + ' · €' + m.price;
-    var body = "Hi! I'd like to order the Agent Bar Pad " + m.name + ' (€' + m.price + ').\n\nName:\nShipping address:\n';
+    var subject = 'Order · ' + name + ' · €' + m.price;
+    var body = "Hi! I'd like to order the " + name + ' (€' + m.price + ').\n\nName:\nShipping address:\n';
     order.href = 'mailto:hello@workwithprompted.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   }
+  function pick(id, c) {
+    if (!MODELS[id]) return; cur = id; if (c) color = c;
+    var input = document.querySelector('input[name="model"][value="' + id + '"]'); if (input) input.checked = true;
+    var ci = document.querySelector('input[name="color"][value="' + color + '"]'); if (ci) ci.checked = true;
+    render();
+  }
   document.querySelectorAll('input[name="model"]').forEach(function (r) { r.addEventListener('change', function () { pick(r.value); }); });
+  document.querySelectorAll('input[name="color"]').forEach(function (r) { r.addEventListener('change', function () { color = r.value; render(); }); });
+  // Colour dots on the model cards
+  document.querySelectorAll('.swatches[data-model]').forEach(function (g) {
+    var m = g.getAttribute('data-model'), img = g.closest('.model').querySelector('.photo img'), label = g.querySelector('span');
+    g.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-color]'); if (!b) return;
+      var c = b.getAttribute('data-color');
+      g.querySelectorAll('[data-color]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      label.textContent = c === 'black' ? 'Black' : 'White';
+      img.src = 'img/' + m + (c === 'black' ? '-black' : '') + '.jpg';
+      g.setAttribute('data-chosen', c);
+    });
+  });
   document.querySelectorAll('[data-pick]').forEach(function (b) {
-    b.addEventListener('click', function () { pick(b.getAttribute('data-pick')); document.getElementById('buy').scrollIntoView({ behavior: 'smooth' }); });
+    b.addEventListener('click', function () {
+      var id = b.getAttribute('data-pick'), g = document.querySelector('.swatches[data-model="' + id + '"]');
+      pick(id, g ? (g.getAttribute('data-chosen') || 'white') : null);
+      document.getElementById('buy').scrollIntoView({ behavior: 'smooth' });
+    });
   });
   pick('pro');
 

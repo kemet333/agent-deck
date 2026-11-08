@@ -244,6 +244,12 @@ p{margin:0;text-wrap:pretty}
 .pad__note{display:flex;flex-wrap:wrap;gap:8px 22px;font:500 13px var(--mono);color:var(--mute);margin-top:22px}
 .pad__note span{display:inline-flex;align-items:center;gap:6px}
 
+.swatches{display:flex;align-items:center;gap:8px;font:500 12px var(--mono);color:var(--mute)}
+.swatch{width:22px;height:22px;border-radius:50%;border:0;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px var(--line-2);transition:box-shadow .2s var(--ease)}
+.swatch--white{background:#e9e7e1}.swatch--black{background:#1c1c1e}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.swatches span{margin-left:4px}
+
 /* Pricing */
 .plans{padding:40px 0 120px}
 .plans h2{font-size:clamp(32px,3.6vw,50px);margin-bottom:40px}
@@ -326,7 +332,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
           <p class="hero__sub">Answer with one key, in any chat, and your AI keeps going while you do something else.</p>
           <div class="hero__cta">
             <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest/download/AgentBar.dmg">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
-            <a class="link" href="#pricing">Join the Pro waitlist</a>
+            <a class="link" href="#pricing">Join the Agent Bar Pro waitlist</a>
           </div>
         </div>
       </div>
@@ -425,7 +431,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <h2 class="rv">Free to start.</h2>
       <div class="plans__grid">
         <article class="plan rv"><div class="plan__in">
-          <div class="plan__name">Free</div>
+          <div class="plan__name">Agent Bar</div>
           <div class="plan__price">€0</div>
           <ul>
             <li><i class="ph ph-check"></i>Six keys, plus your own words</li>
@@ -434,21 +440,21 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <li><i class="ph ph-check"></i>Alerts when Claude Code is done, with its answer</li>
             <li><i class="ph ph-check"></i>Explain a selection or a screenshot</li>
             <li><i class="ph ph-check"></i>Three styles, no account, open source</li>
-            <li><i class="ph ph-check"></i>Works with the Agent Bar Pad</li>
+            <li><i class="ph ph-check"></i>Works with the Agent Pad</li>
           </ul>
           <a class="btn" href="https://github.com/kemet333/agent-deck/releases/latest/download/AgentBar.dmg">Download for Mac<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
         </div></article>
         <article class="plan plan--pro rv"><div class="plan__in">
-          <div class="plan__name">Pro <span>coming soon</span></div>
+          <div class="plan__name">Agent Bar Pro <span>coming soon</span></div>
           <div class="plan__price">Waitlist</div>
           <ul>
-            <li><i class="ph ph-check"></i>Everything in Free</li>
+            <li><i class="ph ph-check"></i>Everything in Agent Bar</li>
             <li><i class="ph ph-check"></i>Voice included, no API key needed</li>
             <li><i class="ph ph-check"></i>Autopilot: keeps going while you're away, stops when it needs you</li>
             <li><i class="ph ph-check"></i>Approve and continue from your iPhone</li>
-            <li><i class="ph ph-check"></i>Works with the Agent Bar Pad</li>
+            <li><i class="ph ph-check"></i>Works with the Agent Pad</li>
           </ul>
-          <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the Pro waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+          <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the Agent Bar Pro waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
         </div></article>
       </div>
     </div>
@@ -458,7 +464,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     <div class="wrap">
       <div class="pad__head">
         <div class="rv">
-          <div class="pad__eyebrow"><i></i>Agent Bar Pad · available now</div>
+          <div class="pad__eyebrow"><i></i>Agent Pad · available now</div>
           <h2>Or press a real one.<br>A button for your agents.</h2>
         </div>
         <div class="rv">
@@ -467,42 +473,45 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
         </div>
       </div>
 
-      <div class="pad__film rv"><video data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-label="A finger presses the orange key on the Agent Bar Pad"></video></div>
+      <div class="pad__film rv"><video data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-label="A finger presses the orange key on the Agent Pad"></video></div>
 
       <div class="pad__grid">
         <article class="sku rv">
-          <div class="sku__shot"><img src="pad/img/original.jpg" alt="Agent Bar Pad Original: three keys in a row and an aluminium dial" width="1600" height="1200" loading="lazy"></div>
+          <div class="sku__shot"><img src="pad/img/original.jpg" alt="Agent Pad Original: three keys in a row and an aluminium dial" width="1600" height="1200" loading="lazy"></div>
           <div class="sku__body">
-            <div class="sku__top"><div class="sku__name">Original<span>3 keys + dial</span></div><div class="sku__price">€29</div></div>
+            <div class="sku__top"><div class="sku__name">Agent Pad Original<span>3 keys + dial</span></div><div class="sku__price">€29</div></div>
+            <div class="swatches" data-model="original"><button class="swatch swatch--white" type="button" data-color="white" aria-label="White" aria-pressed="true"></button><button class="swatch swatch--black" type="button" data-color="black" aria-label="Black" aria-pressed="false"></button><span>White</span></div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
-            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Bar%20Pad%20Original%20%C2%B7%20%E2%82%AC29&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Bar%20Pad%20Original%20%28%E2%82%AC29%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Original · €29<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Pad%20Original%20%C2%B7%20%E2%82%AC29&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Pad%20Original%20%28%E2%82%AC29%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Original · €29<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
           </div>
         </article>
         <article class="sku sku--pro rv">
-          <div class="sku__shot"><span class="sku__tag">Most popular</span><img src="pad/img/pro.jpg" alt="Agent Bar Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
+          <div class="sku__shot"><span class="sku__tag">Most popular</span><img src="pad/img/pro.jpg" alt="Agent Pad Pro: six keys and an aluminium dial in a clear acrylic case" width="1600" height="1200" loading="lazy"></div>
           <div class="sku__body">
-            <div class="sku__top"><div class="sku__name">Pro<span>6 keys + dial · backlit</span></div><div class="sku__price">€49</div></div>
+            <div class="sku__top"><div class="sku__name">Agent Pad Pro<span>6 keys + dial · backlit</span></div><div class="sku__price">€49</div></div>
+            <div class="swatches" data-model="pro"><button class="swatch swatch--white" type="button" data-color="white" aria-label="White" aria-pressed="true"></button><button class="swatch swatch--black" type="button" data-color="black" aria-label="Black" aria-pressed="false"></button><span>White</span></div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
-            <a class="btn btn--accent" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Bar%20Pad%20Pro%20%C2%B7%20%E2%82%AC49&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Bar%20Pad%20Pro%20%28%E2%82%AC49%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Pro · €49<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+            <a class="btn btn--accent" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Pad%20Pro%20%C2%B7%20%E2%82%AC49&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Pad%20Pro%20%28%E2%82%AC49%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Pro · €49<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
           </div>
         </article>
         <article class="sku rv">
-          <div class="sku__shot"><img src="pad/img/max.jpg" alt="Agent Bar Pad Max: eight keys and a black dial in a black case" width="1600" height="1200" loading="lazy"></div>
+          <div class="sku__shot"><img src="pad/img/max.jpg" alt="Agent Pad Max: eight keys and a black dial in a black case" width="1600" height="1200" loading="lazy"></div>
           <div class="sku__body">
-            <div class="sku__top"><div class="sku__name">Max<span>8 keys + dial</span></div><div class="sku__price">€99</div></div>
+            <div class="sku__top"><div class="sku__name">Agent Pad Max<span>8 keys + dial</span></div><div class="sku__price">€99</div></div>
+            <div class="swatches"><span style="margin:0">Black</span></div>
             <div class="keys"><span><i class="ph ph-microphone"></i>Talk</span><span><i class="ph ph-check"></i>Test</span><span><i class="ph ph-wrench"></i>Fix</span><span><i class="ph ph-arrow-counter-clockwise"></i>Undo</span><span><i class="ph-fill ph-stop"></i>Stop</span><span><i class="ph ph-repeat"></i>Repeat</span><span><i class="ph ph-skip-forward"></i>Skip</span><span class="go"><i class="ph-bold ph-arrow-right"></i>Continue</span></div>
-            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Bar%20Pad%20Max%20%C2%B7%20%E2%82%AC99&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Bar%20Pad%20Max%20%28%E2%82%AC99%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Max · €99<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+            <a class="btn" href="mailto:hello@workwithprompted.com?subject=Order%20%C2%B7%20Agent%20Pad%20Max%20%C2%B7%20%E2%82%AC99&amp;body=Hi%21%20I%27d%20like%20to%20order%20the%20Agent%20Pad%20Max%20%28%E2%82%AC99%29.%0A%0AName%3A%0AShipping%20address%3A%0ACountry%3A%0A">Order Max · €99<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
           </div>
         </article>
       </div>
-      <div class="pad__note rv"><span><i class="ph ph-envelope-simple"></i>Order by email, we reply within 24 h with payment and shipping</span><span><i class="ph ph-plugs"></i>USB cable included</span><span><i class="ph ph-arrow-u-up-left"></i>14-day returns</span><span><i class="ph ph-keyboard"></i>No driver: it works like a keyboard</span></div>
+      <div class="pad__note rv"><span><i class="ph ph-envelope-simple"></i>Order by email, we reply within 24 h · Ships in 3–7 days</span><span><i class="ph ph-plugs"></i>USB cable included</span><span><i class="ph ph-arrow-u-up-left"></i>14-day returns</span><span><i class="ph ph-keyboard"></i>No driver: it works like a keyboard</span></div>
 
       <div class="pad__box">
         <div class="shot rv"><img src="pad/img/box-open.jpg" alt="The Pad box opened: the Pad under its protective film in a moulded tray, with the braided USB-C cable and a quick-start card" width="1800" height="1350" loading="lazy"></div>
         <div class="rv">
           <h3>What’s in the box.</h3>
           <ul>
-            <li><i class="ph ph-keyboard"></i>Agent Bar Pad</li>
+            <li><i class="ph ph-keyboard"></i>Agent Pad</li>
             <li><i class="ph ph-plugs"></i>Braided USB-C cable</li>
             <li><i class="ph ph-cards"></i>Quick-start card</li>
             <li><i class="ph ph-app-window"></i>Agent Bar for Mac, free</li>
@@ -529,8 +538,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
         <div class="rv"><h3>Which apps does it work with?</h3><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></div>
         <div class="rv"><h3>Does the Pad need Agent Bar?</h3><p>The Pad is a USB keyboard, so it plugs into any computer. What each key does (talk, continue, test, fix, undo, stop) comes from Agent Bar, which is free for Mac.</p></div>
         <div class="rv"><h3>Does the Pad work on Windows or Linux?</h3><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></div>
-        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment and shipping. The USB-C cable is included, and you have 14 days to return it.</p></div>
-        <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, voice with fn, prompts and alerts are free and open source. OpenAI voice uses your own key. Pro will add voice without a key, autopilot and iPhone.</p></div>
+        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment, and it ships in 3–7 days. The USB-C cable is included, and you have 14 days to return it.</p></div>
+        <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, voice with fn, prompts and alerts are free and open source. OpenAI voice uses your own key. Agent Bar Pro will add voice without a key, autopilot and iPhone.</p></div>
         <div class="rv"><h3>Do I need an OpenAI key to talk?</h3><p>No. Without one, fn uses the Mac's dictation. With a key, the text comes out cleaner and long requests turn into a prompt.</p></div>
         <div class="rv"><h3>How do alerts know my agent is done?</h3><p>Claude Code tells it. One click adds two hooks to your Claude Code settings, with a backup first. The hook waits a few minutes for your reply and hands it to that conversation. Nothing guesses or reads your screen.</p></div>
         <div class="rv"><h3>Windows or Linux?</h3><p>Mac only for now, on Apple Silicon with macOS 14 or newer.</p></div>
@@ -602,6 +611,19 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   // Videos load and play only while on screen
   var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } } else v.pause(); }); }, { rootMargin: '200px 0px' });
   document.querySelectorAll('video[data-lazy]').forEach(function (v) { vio.observe(v); });
+
+  // Pad colours: white or black for Original and Pro
+  document.querySelectorAll('.swatches[data-model]').forEach(function (g) {
+    var m = g.getAttribute('data-model'), card = g.closest('.sku'), img = card.querySelector('.sku__shot img'), btn = card.querySelector('.btn'), label = g.querySelector('span');
+    g.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-color]'); if (!b) return;
+      var c = b.getAttribute('data-color'), C = c === 'black' ? 'Black' : 'White';
+      g.querySelectorAll('[data-color]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      label.textContent = C;
+      img.src = 'pad/img/' + m + (c === 'black' ? '-black' : '') + '.jpg';
+      btn.href = btn.href.replace(/(Agent%20Pad%20(?:Original|Pro))(%20(?:White|Black))?/g, '$1%20' + C);
+    });
+  });
 
 })();
 </script>
