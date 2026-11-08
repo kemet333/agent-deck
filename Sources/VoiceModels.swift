@@ -11,7 +11,7 @@ enum VoicePhase: String { case idle, permission, listening, transcribing, cleani
 struct VoicePreferences: Codable {
     var engine: VoiceEngine = .openAI
     var fnEnabled = true
-    var avoidVowenConflict = false // Agent Deck se queda Fn antes que Vowen (tap en cabeza que consume la tecla); Diego usa las dos (06/11)
+    var avoidVowenConflict = false // Agent Bar se queda Fn antes que Vowen (tap en cabeza que consume la tecla); Diego usa las dos (06/11)
     var autoPaste = true
     var insertion: VoiceInsertion = .paste
     var autoEnter = true // al soltar Fn se envía (petición de Diego, 06/11); los terminales siguen protegidos

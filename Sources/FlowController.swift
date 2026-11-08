@@ -85,7 +85,7 @@ final class FlowController: ObservableObject {
 
     init(storage: FlowStorage = .standard, reviewMode: Bool = false) {
         self.storage = storage; self.reviewMode = reviewMode
-        perform { db in if db.run?.active == true { db.run?.pause("Agent Deck se ha reiniciado. Revisa el flujo antes de reanudarlo.") } }
+        perform { db in if db.run?.active == true { db.run?.pause("Agent Bar se ha reiniciado. Revisa el flujo antes de reanudarlo.") } }
         if !reviewMode {
             timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in Task { @MainActor in self?.refresh() } }
         }
@@ -100,7 +100,7 @@ final class FlowController: ObservableObject {
         let now = Date().timeIntervalSince1970
         perform { db in
             if db.run?.active == true {
-                if now > db.run!.expires || now < db.run!.created || now > db.run!.leaseUntil { db.run?.pause("El flujo ha caducado o Agent Deck dejó de estar disponible. Revisa antes de reanudarlo.") }
+                if now > db.run!.expires || now < db.run!.created || now > db.run!.leaseUntil { db.run?.pause("El flujo ha caducado o Agent Bar dejó de estar disponible. Revisa antes de reanudarlo.") }
                 else { db.run?.leaseUntil = now + 15 }
             }
         }

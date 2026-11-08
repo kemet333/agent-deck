@@ -60,7 +60,7 @@ final class VoiceController: ObservableObject {
         let speech=SFSpeechRecognizer.authorizationStatus(),mic=AVCaptureDevice.authorizationStatus(for:.audio)
         let r=SFSpeechRecognizer(locale:T.speechLocale)
         if speech == .denied || speech == .restricted { appleStatus=T.s("Speech recognition is blocked. Turn it on in System Settings → Privacy & Security → Speech Recognition.","El reconocimiento de voz está bloqueado. Actívalo en Ajustes del Sistema → Privacidad y seguridad → Reconocimiento de voz.") }
-        else if mic == .denied || mic == .restricted { appleStatus=T.s("The microphone is blocked for Agent Deck in System Settings → Privacy & Security → Microphone.","El micrófono está bloqueado para Agent Deck en Ajustes del Sistema → Privacidad y seguridad → Micrófono.") }
+        else if mic == .denied || mic == .restricted { appleStatus=T.s("The microphone is blocked for Agent Bar in System Settings → Privacy & Security → Microphone.","El micrófono está bloqueado para Agent Bar en Ajustes del Sistema → Privacidad y seguridad → Micrófono.") }
         else if speech == .notDetermined || mic == .notDetermined { appleStatus=T.s("Ready once you allow it: press «Allow» (macOS asks once).","Listo en cuanto lo permitas: pulsa «Permitir» (macOS lo pregunta una vez).") }
         else if r?.isAvailable != true { appleStatus=T.s("Apple dictation isn't available right now (check the internet or the language).","El dictado de Apple no está disponible ahora (revisa internet o el idioma).") }
         else { appleStatus=(r?.supportsOnDeviceRecognition == true) ? T.s("✓ Ready, on this Mac, free and without a key.","✓ Listo, en este Mac, gratis y sin clave.") : T.s("✓ Ready, free and without a key (uses Apple's dictation).","✓ Listo, gratis y sin clave (usa el dictado de Apple).") }
@@ -193,7 +193,7 @@ final class VoiceController: ObservableObject {
             guard let self else{return}
             let granted=await self.microphonePermission()
             guard self.sessionID==id,!Task.isCancelled else{return}
-            guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Deck.","Permite el micrófono para Agent Deck en Ajustes del Sistema."));return}
+            guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Bar.","Permite el micrófono para Agent Bar en Ajustes del Sistema."));return}
             if self.snapshot.engine == .apple {self.startApple(id:id)}else{
                 if self.prewarmed { self.prewarmed=false;self.phase = .listening;return } // ya grababa desde que bajó Fn
                 do{try self.recorder.start();self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}

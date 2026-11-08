@@ -394,7 +394,7 @@ struct Orb: View {
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
-        .help(T.s("Unfold Agent Deck (⌃⌥D)", "Desplegar Agent Deck (⌃⌥D)"))
+        .help(T.s("Unfold Agent Bar (⌃⌥D)", "Desplegar Agent Bar (⌃⌥D)"))
     }
 }
 
@@ -508,7 +508,7 @@ struct Bar: View {
                 withAnimation(Motion.settle) { store.editing.toggle() }
             }
             DockGlyph(symbol: "arrow.triangle.branch", size: 12, weight: .regular, help: T.s("Message flows", "Flujos de mensajes")) { store.showFlows?() }
-            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: T.s("Agent Deck settings", "Ajustes de Agent Deck")) { store.showMenu?() }
+            DockGlyph(symbol: "gearshape", size: 12, weight: .regular, help: T.s("Agent Bar settings", "Ajustes de Agent Bar")) { store.showMenu?() }
                 .padding(.trailing, 2)
         }
         .padding(.horizontal, th.keycaps ? 8 : 6).padding(.top, th.keycaps ? 7 : 5).padding(.bottom, th.keycaps ? 9 : 5)

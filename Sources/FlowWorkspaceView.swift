@@ -14,7 +14,7 @@ struct FlowWorkspaceView: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(T.s("One task after another.", "Una tarea después de otra.")).font(.system(size: 24, weight: .semibold))
-                        Text(T.s("Choose what Agent Deck sends when Codex finishes each response.", "Elige qué envía Agent Deck cuando Codex termina cada respuesta.")).font(.system(size: 12)).foregroundStyle(Palette.mute)
+                        Text(T.s("Choose what Agent Bar sends when Codex finishes each response.", "Elige qué envía Agent Bar cuando Codex termina cada respuesta.")).font(.system(size: 12)).foregroundStyle(Palette.mute)
                     }
                     Spacer()
                     Label("CODEX", systemImage: "arrow.triangle.branch").font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundStyle(Palette.gold).padding(9).background(Palette.gold.opacity(0.08), in: Capsule())
@@ -33,11 +33,11 @@ struct FlowWorkspaceView: View {
                         .buttonStyle(.borderedProminent).tint(Palette.gold).foregroundStyle(Color.black)
                         .disabled(flow.reviewMode || flow.active || sessionID.isEmpty || (try? draft.messages()) == nil)
                 }
-                Text(T.s("This schedules additional Codex work and consumes its usual quota. It does not approve permissions, bypass questions or mark a task complete. Pausing stops future messages, not a response already running. Flows expire after 24 hours and require Agent Deck to remain open.", "Programa trabajo adicional en Codex y consume su cuota habitual. No aprueba permisos, contesta preguntas ni marca tareas como completadas. Pausar detiene los siguientes mensajes; la respuesta que ya está en curso sigue. Los flujos caducan a las 24 horas y requieren Agent Deck abierto.")).font(.system(size: 10)).foregroundStyle(Palette.faint)
+                Text(T.s("This schedules additional Codex work and consumes its usual quota. It does not approve permissions, bypass questions or mark a task complete. Pausing stops future messages, not a response already running. Flows expire after 24 hours and require Agent Bar to remain open.", "Programa trabajo adicional en Codex y consume su cuota habitual. No aprueba permisos, contesta preguntas ni marca tareas como completadas. Pausar detiene los siguientes mensajes; la respuesta que ya está en curso sigue. Los flujos caducan a las 24 horas y requieren Agent Bar abierto.")).font(.system(size: 10)).foregroundStyle(Palette.faint)
             }.padding(24)
         }.background(Palette.bg).foregroundStyle(Palette.ink).preferredColorScheme(.dark)
         .onAppear { if !loaded { draft = flow.database.definitions.first ?? MessageFlow(); loaded = true } }
-        .alert(T.s("Connect Agent Deck to Codex?", "¿Conectar Agent Deck con Codex?"), isPresented: $confirmingConnection) {
+        .alert(T.s("Connect Agent Bar to Codex?", "¿Conectar Agent Bar con Codex?"), isPresented: $confirmingConnection) {
             Button(T.s("Cancel", "Cancelar"), role: .cancel) {}
             Button(T.s("Prepare connection", "Preparar conexión")) { flow.connect() }
         } message: {
@@ -137,7 +137,7 @@ struct DeckSettingsView: View {
     @State private var section = "voice"
     var body: some View {
         VStack(spacing: 0) {
-            Picker("Agent Deck", selection: $section) { Text("Voz").tag("voice"); Text("Flujos").tag("flows") }.pickerStyle(.segmented).padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 10)
+            Picker("Agent Bar", selection: $section) { Text("Voz").tag("voice"); Text("Flujos").tag("flows") }.pickerStyle(.segmented).padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 10)
             if section == "flows" { FlowWorkspaceView(flow: store.flows) } else { VoiceWorkspaceView(voice: store.voice) }
         }.background(Palette.bg).preferredColorScheme(.dark)
     }

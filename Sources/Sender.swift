@@ -80,7 +80,7 @@ enum Sender {
         quickSend(text,enter:enter,completion:completion)
     }
     static func quickSend(_ text:String,enter:Bool,completion:((Result<Void,Error>)->Void)? = nil) {
-        guard accessibilityGranted(prompt:true) else { completion?(.failure(VoiceServiceError(message:T.s("Allow Accessibility so Agent Deck can type into the chat.","Permite Accesibilidad para que Agent Deck pueda escribir en el chat."))));return }
+        guard accessibilityGranted(prompt:true) else { completion?(.failure(VoiceServiceError(message:T.s("Allow Accessibility so Agent Bar can type into the chat.","Permite Accesibilidad para que Agent Bar pueda escribir en el chat."))));return }
         let pasteboard=NSPasteboard.general
         let previous=pasteboard.pasteboardItems?.map{item in Dictionary(uniqueKeysWithValues:item.types.compactMap{type in item.data(forType:type).map{(type,$0)}})} ?? []
         let item=NSPasteboardItem();item.setString(text,forType:.string)

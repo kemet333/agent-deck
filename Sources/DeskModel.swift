@@ -221,7 +221,7 @@ final class DeskStore: ObservableObject {
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(keys).write(to: DeskStore.file, options: .atomic)
         } catch {
-            NSLog("Agent Deck: no se pudo guardar keys.json: \(error)")
+            NSLog("Agent Bar: no se pudo guardar keys.json: \(error)")
         }
     }
 

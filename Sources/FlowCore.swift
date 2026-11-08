@@ -127,7 +127,7 @@ enum FlowEngine {
         guard var run = db.run, run.sessionID == id, run.active else { return [:] }
         defer { db.run = run }
         guard run.cwd == cwd else { run.pause("El directorio del chat ha cambiado. Revisa el destino."); return [:] }
-        guard now >= run.created, now <= run.expires, now <= run.leaseUntil else { run.pause("El flujo ha caducado o Agent Deck no está disponible. Revisa y vuelve a programarlo."); return [:] }
+        guard now >= run.created, now <= run.expires, now <= run.leaseUntil else { run.pause("El flujo ha caducado o Agent Bar no está disponible. Revisa y vuelve a programarlo."); return [:] }
         if needsInput { run.pause("Codex necesita tu aprobación o una respuesta. El flujo está pausado."); return [:] }
         if failed { run.pause("Codex ha comunicado un fallo o cancelación. Revisa el chat antes de continuar."); return [:] }
         if ["Interrupt", "SessionEnd", "SessionStart"].contains(kind) { run.pause("El chat se ha interrumpido, cerrado o reanudado. El flujo está pausado."); return [:] }

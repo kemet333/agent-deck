@@ -31,15 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         if offerMoveToApplications() { return }
+        migrateFromAgentDeck()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
-        // el estilo puede cambiar desde el panel: la marca del submenú «Estilo» lo sigue
-        styleSync = store.$style.sink { [weak self] st in
-            self?.status.menu?.items.first { $0.submenu?.items.first?.representedObject != nil }?.submenu?.items.forEach {
-                $0.state = ($0.representedObject as? String) == st.rawValue ? .on : .off
-            }
-        }
         _ = store.flows // Load saved definitions; previously active runs restart paused.
         store.showFlows = { [weak self] in self?.openFlows() }
         // el engranaje de la barra abre el panel de ajustes (antes, el menú de la barra de menús)
@@ -111,11 +106,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: barra de menús
 
+    /// La marca de Agent Bar para la barra de menús (plantilla: macOS la pinta en claro u oscuro): la barra, dos teclas y la principal.
+    static func menuBarMark() -> NSImage {
+        let img = NSImage(size: NSSize(width: 20, height: 14), flipped: false) { _ in
+            NSColor.black.set()
+            let bar = NSBezierPath(roundedRect: NSRect(x: 1, y: 2, width: 18, height: 10), xRadius: 5, yRadius: 5)
+            bar.lineWidth = 1.4; bar.stroke()
+            NSBezierPath(ovalIn: NSRect(x: 4.1, y: 5.6, width: 2.8, height: 2.8)).fill()
+            NSBezierPath(ovalIn: NSRect(x: 7.9, y: 5.6, width: 2.8, height: 2.8)).fill()
+            NSBezierPath(roundedRect: NSRect(x: 11.6, y: 4.4, width: 5.2, height: 5.2), xRadius: 2.6, yRadius: 2.6).fill()
+            return true
+        }
+        img.isTemplate = true; img.accessibilityDescription = "Agent Bar"
+        return img
+    }
+
+    /// Agent Deck pasó a llamarse Agent Bar (0.12): la app nueva es «Agent Bar.app». Al abrirla desde Aplicaciones, los ganchos
+    /// de Claude Code y de Codex que apuntaban a la copia vieja pasan a esta (con copia antes), y la copia vieja se cierra y va a la Papelera.
+    func migrateFromAgentDeck() {
+        let here = Bundle.main.bundleURL.resolvingSymlinksInPath()
+        guard here.lastPathComponent == "Agent Bar.app" else { return }
+        let fm = FileManager.default, home = fm.homeDirectoryForCurrentUser
+        let oldDir = here.deletingLastPathComponent().appendingPathComponent("Agent Deck.app")
+        let oldHelpers = oldDir.path + "/Contents/Helpers/", newHelpers = here.path + "/Contents/Helpers/"
+        for file in [home.appendingPathComponent(".claude/settings.json"), home.appendingPathComponent(".codex/hooks.json")] {
+            guard var text = try? String(contentsOf: file, encoding: .utf8) else { continue }
+            let before = text
+            text = text.replacingOccurrences(of: oldHelpers, with: newHelpers)
+            text = text.replacingOccurrences(of: oldHelpers.replacingOccurrences(of: "/", with: "\\/"), with: newHelpers.replacingOccurrences(of: "/", with: "\\/"))
+            guard text != before, (try? JSONSerialization.jsonObject(with: Data(text.utf8))) != nil else { continue }
+            let backup = file.deletingLastPathComponent().appendingPathComponent(file.lastPathComponent + ".agentdeck-backup")
+            try? fm.removeItem(at: backup); try? fm.copyItem(at: file, to: backup)
+            try? text.write(to: file, atomically: true, encoding: .utf8)
+        }
+        guard fm.fileExists(atPath: oldDir.path), Bundle(url: oldDir)?.bundleIdentifier == Bundle.main.bundleIdentifier else { return }
+        let me = ProcessInfo.processInfo.processIdentifier
+        for app in NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "") where app.processIdentifier != me { app.terminate() }
+        NSWorkspace.shared.recycle([oldDir]) { _, error in if let error { NSLog("Agent Bar: no se pudo llevar Agent Deck a la Papelera: \(error)") } }
+    }
+
     func installStatusItem() {
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = status.button {
-            button.image = NSImage(systemSymbolName: "square.grid.2x2.fill", accessibilityDescription: "Agent Deck")
-            button.image?.isTemplate = true
+            button.image = Self.menuBarMark()
         }
         // Lo justo: todo lo demás vive en Ajustes (el panel), que ya lo tiene todo con su explicación.
         let menu = NSMenu(); menu.delegate = self
@@ -189,7 +222,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if voiceHotkeys?.hasTap == false && !store.voice.active { voiceHotkeys?.install() }
         if voiceWindow == nil {
             let window = NSWindow(contentRect:NSRect(x:0,y:0,width:760,height:680),styleMask:[.titled,.closable,.miniaturizable,.resizable],backing:.buffered,defer:false)
-            window.title=T.s("Agent Deck · Voice", "Agent Deck · Voz");window.minSize=NSSize(width:680,height:540);window.isReleasedWhenClosed=false
+            window.title=T.s("Agent Bar · Voice", "Agent Bar · Voz");window.minSize=NSSize(width:680,height:540);window.isReleasedWhenClosed=false
             window.contentView=NSHostingView(rootView:VoiceWorkspaceView(voice:store.voice));window.center();voiceWindow=window
         }
         voiceWindow?.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)
@@ -197,7 +230,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func openFlows() {
         if flowWindow == nil {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 730), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            window.title = "Agent Deck · Flujos"; window.minSize = NSSize(width: 640, height: 540); window.isReleasedWhenClosed = false
+            window.title = "Agent Bar · Flujos"; window.minSize = NSSize(width: 640, height: 540); window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: FlowWorkspaceView(flow: store.flows)); window.center(); flowWindow = window
         }
         flowWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
@@ -301,13 +334,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let a = NSAlert()
         if ClaudeHooks.installed {
             a.messageText = T.s("Claude Code alerts are on", "Los avisos de Claude Code están activos")
-            a.informativeText = T.s("When Claude Code finishes or needs you, Agent Deck lights up and plays a sound. To turn them off, remove the two hooks with «agentdeck://alert» from ~/.claude/settings.json.", "Cuando Claude Code termina o te necesita, Agent Deck se enciende y suena. Para quitarlos, borra los dos ganchos con «agentdeck://alert» de ~/.claude/settings.json.")
+            a.informativeText = T.s("When Claude Code finishes or needs you, Agent Bar lights up and plays a sound. To turn them off, remove the two hooks with «agentdeck://alert» from ~/.claude/settings.json.", "Cuando Claude Code termina o te necesita, Agent Bar se enciende y suena. Para quitarlos, borra los dos ganchos con «agentdeck://alert» de ~/.claude/settings.json.")
             a.addButton(withTitle: T.s("Try an alert", "Probar un aviso")); a.addButton(withTitle: "OK")
             if a.runModal() == .alertFirstButtonReturn { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba")) }
             return
         }
         a.messageText = T.s("Get an alert when Claude Code finishes?", "¿Avisarte cuando Claude Code termine?")
-        a.informativeText = T.s("Agent Deck will add two hooks to ~/.claude/settings.json: one when Claude Code finishes (Stop) and one when it needs your permission or answer (Notification). A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Deck añadirá dos ganchos a ~/.claude/settings.json: uno cuando Claude Code termina (Stop) y otro cuando necesita tu permiso o tu respuesta (Notification). Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los lean.")
+        a.informativeText = T.s("Agent Bar will add two hooks to ~/.claude/settings.json: one when Claude Code finishes (Stop) and one when it needs your permission or answer (Notification). A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Bar añadirá dos ganchos a ~/.claude/settings.json: uno cuando Claude Code termina (Stop) y otro cuando necesita tu permiso o tu respuesta (Notification). Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los lean.")
         a.addButton(withTitle: T.s("Turn on alerts", "Activar avisos")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
         guard a.runModal() == .alertFirstButtonReturn else { return }
         switch ClaudeHooks.install() {

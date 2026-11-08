@@ -281,7 +281,7 @@ struct DashboardView: View {
             let ax = Sender.accessibilityGranted(prompt: false)
             DashSection(title: T.s("Startup", "Inicio")) {
                 DashToggle(title: T.s("Open at login", "Abrir al iniciar sesión"), detail: T.s("Agent Bar is ready as soon as you log in.", "Agent Bar está lista nada más entrar."), isOn: Binding(get: { loginOn }, set: { _ in
-                    do { if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() } } catch { NSLog("Agent Deck: inicio de sesión: \(error)") }
+                    do { if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() } } catch { NSLog("Agent Bar: inicio de sesión: \(error)") }
                     loginOn = SMAppService.mainApp.status == .enabled
                 }))
                 DashRow(title: T.s("Show or hide the bar", "Mostrar u ocultar la barra"), divider: false) {

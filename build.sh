@@ -1,10 +1,10 @@
 #!/bin/zsh
-# Compila Agent Deck sin Xcode (solo Command Line Tools): swiftc + bundle + icono + firma ad hoc.
-# Resultado: ./Agent Deck.app  (y Agent-Deck-Mac.zip para repartir)
+# Compila Agent Bar sin Xcode (solo Command Line Tools): swiftc + bundle + icono + firma ad hoc.
+# Resultado: ./Agent Bar.app  (y Agent-Bar-Mac.zip para repartir)
 set -euo pipefail
 project_dir="${0:A:h}"
 build_dir="${AGENT_DECK_BUILD_DIR:-${TMPDIR:-/private/tmp}/agent-deck-build-$UID}"
-app_dir="$build_dir/Agent Deck.app"
+app_dir="$build_dir/Agent Bar.app"
 sdk_dir="$(xcrun --show-sdk-path)"
 mkdir -p "$build_dir/modules" "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources" "$app_dir/Contents/Helpers"
 xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" \
@@ -39,7 +39,7 @@ codesign --force --sign "$sign_as" "$app_dir/Contents/Helpers/AgentBarClaudeHook
 codesign --force --sign "$sign_as" "$app_dir"
 codesign --verify --deep --strict "$app_dir"
 plutil -lint "$app_dir/Contents/Info.plist" >/dev/null
-rm -rf "$project_dir/Agent Deck.app"
-ditto --norsrc --noextattr "$app_dir" "$project_dir/Agent Deck.app"
-ditto --norsrc --noextattr -c -k --keepParent "$project_dir/Agent Deck.app" "$project_dir/Agent-Deck-Mac.zip"
-printf 'Agent Deck compilada: %s\n' "$project_dir/Agent Deck.app"
+rm -rf "$project_dir/Agent Bar.app"
+ditto --norsrc --noextattr "$app_dir" "$project_dir/Agent Bar.app"
+ditto --norsrc --noextattr -c -k --keepParent "$project_dir/Agent Bar.app" "$project_dir/Agent-Bar-Mac.zip"
+printf 'Agent Bar compilada: %s\n' "$project_dir/Agent Bar.app"

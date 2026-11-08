@@ -14,7 +14,7 @@ struct VoiceWorkspaceView: View {
     var body: some View {
         VStack(spacing:0) {
             HStack(alignment:.center) {
-                VStack(alignment:.leading,spacing:5){Text("Agent Deck").font(.system(size:24,weight:.semibold));Text(T.s("Your voice. In your workflow.","Tu voz. Dentro de tu flujo.")).font(.system(size:12)).foregroundStyle(Palette.mute)}
+                VStack(alignment:.leading,spacing:5){Text("Agent Bar").font(.system(size:24,weight:.semibold));Text(T.s("Your voice. In your workflow.","Tu voz. Dentro de tu flujo.")).font(.system(size:12)).foregroundStyle(Palette.mute)}
                 Spacer()
                 Label(voice.label,systemImage:voice.active ? "waveform":"mic").font(.system(size:11)).foregroundStyle(voice.active ? Palette.gold:Palette.mute).lineLimit(1)
             }.padding(24)
@@ -79,7 +79,7 @@ struct VoiceWorkspaceView: View {
                 Toggle(T.s("Enable Fn dictation","Activar dictado con Fn"),isOn:$voice.preferences.fnEnabled)
                 Text(voice.shortcutStatus).font(.system(size:10)).foregroundStyle(Palette.mute)
                 Toggle(T.s("Avoid Fn conflicts while Vowen is running","Evitar conflictos de Fn mientras Vowen está abierto"),isOn:$voice.preferences.avoidVowenConflict)
-                Text(T.s("If you have disabled Fn in Vowen yourself, you may disable this guard. Agent Deck does not change Vowen or macOS keyboard settings.","Si ya has desactivado Fn en Vowen, puedes desmarcar esta protección. Agent Deck no modifica Vowen ni el teclado de macOS.")).font(.system(size:10)).foregroundStyle(Palette.mute)
+                Text(T.s("If you have disabled Fn in Vowen yourself, you may disable this guard. Agent Bar does not change Vowen or macOS keyboard settings.","Si ya has desactivado Fn en Vowen, puedes desmarcar esta protección. Agent Bar no modifica Vowen ni el teclado de macOS.")).font(.system(size:10)).foregroundStyle(Palette.mute)
                 Toggle(T.s("Insert automatically in the original field","Insertar automáticamente en el campo original"),isOn:$voice.preferences.autoPaste)
                 Picker(T.s("Insertion method","Método de inserción"),selection:$voice.preferences.insertion){Text(T.s("Paste (restore clipboard)","Pegar (restaurar portapapeles)")).tag(VoiceInsertion.paste);Text(T.s("Direct (Accessibility)","Directo (Accesibilidad)")).tag(VoiceInsertion.direct)}
                 Toggle(T.s("Press Enter after inserting (send chat)","Pulsar Intro después de insertar (enviar chat)"),isOn:$voice.preferences.autoEnter).disabled(!voice.preferences.autoPaste)

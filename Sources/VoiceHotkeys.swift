@@ -53,7 +53,7 @@ final class VoiceHotkeys {
     }
     private func canUseFn()->Bool{
         if voice.preferences.avoidVowenConflict && NSWorkspace.shared.runningApplications.contains(where:{($0.bundleIdentifier ?? "").lowercased().contains("vowen")}){
-            voice.note(T.s("Quit Vowen or disable its Fn shortcut and then the conflict guard in Voice settings. Agent Deck does not change Vowen.","Cierra Vowen o desactiva su Fn y después la protección de conflictos en Voz. Agent Deck no modifica Vowen."));return false
+            voice.note(T.s("Quit Vowen or disable its Fn shortcut and then the conflict guard in Voice settings. Agent Bar does not change Vowen.","Cierra Vowen o desactiva su Fn y después la protección de conflictos en Voz. Agent Bar no modifica Vowen."));return false
         }
         return true
     }
