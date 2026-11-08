@@ -25,6 +25,8 @@ final class RealtimeTranscriber {
         var req = URLRequest(url: URL(string: "wss://api.openai.com/v1/realtime?intent=transcription")!)
         req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         req.timeoutInterval = 10
+        // un permiso temporal (ek_…, de la voz incluida de Pro) también va como subprotocolo, que es como lo documenta OpenAI
+        if key.hasPrefix("ek_") { req.setValue("realtime, openai-insecure-api-key." + key, forHTTPHeaderField: "Sec-WebSocket-Protocol") }
         let t = URLSession.shared.webSocketTask(with: req)
         task = t; ready = false; failed = false; text = ""; finalText = nil; pending = []
         t.resume()
