@@ -1,6 +1,5 @@
 import AppKit
 import Combine
-import ServiceManagement
 import SwiftUI
 
 @main
@@ -118,73 +117,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             button.image = NSImage(systemSymbolName: "square.grid.2x2.fill", accessibilityDescription: "Agent Deck")
             button.image?.isTemplate = true
         }
-        let menu = NSMenu()
-        menu.addItem(withTitle: T.s("Settings…", "Ajustes…"), action: #selector(openDashboard), keyEquivalent: "")
+        // Lo justo: todo lo demás vive en Ajustes (el panel), que ya lo tiene todo con su explicación.
+        let menu = NSMenu(); menu.delegate = self
+        menu.addItem(withTitle: T.s("Settings…", "Ajustes…"), action: #selector(openDashboard), keyEquivalent: ",")
         menu.addItem(.separator())
-        menu.addItem(withTitle: T.s("Fold or unfold the deck", "Plegar o desplegar el Deck"), action: #selector(togglePanel), keyEquivalent: "d")
+        menu.addItem(withTitle: T.s("Show or hide the bar", "Mostrar u ocultar la barra"), action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        menu.addItem(withTitle: T.s("Message flows…", "Flujos de mensajes…"), action: #selector(openFlows), keyEquivalent: "f")
-        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        menu.addItem(withTitle: T.s("Pause message flow", "Pausar flujo de mensajes"), action: #selector(pauseFlow), keyEquivalent: "p")
-        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        menu.addItem(withTitle: T.s("Dictate to the chat", "Dictar al chat"), action: #selector(dictate), keyEquivalent: "m")
-        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        menu.addItem(withTitle: T.s("Agent Bar Pro…", "Agent Bar Pro…"), action: #selector(openPro), keyEquivalent: "")
-        menu.addItem(withTitle: T.s("Tutorial…", "Tutorial…"), action: #selector(openTutorial), keyEquivalent: "")
-        menu.addItem(withTitle: T.s("Voice, drafts & history…", "Voz, borradores e historial…"), action: #selector(openVoice), keyEquivalent: ",")
-        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        menu.addItem(withTitle: T.s("Paste last transcription", "Pegar última transcripción"), action: #selector(pasteLastVoice), keyEquivalent: "l")
-        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
-        let pilotItem = NSMenuItem(title: T.s("Autopilot (Claude Code)", "Piloto automático (Claude Code)"), action: nil, keyEquivalent: "")
-        let pilot = NSMenu()
-        for n in [3, 5, 10, 20] { let it = NSMenuItem(title: T.s("Keep going \(n) times", "Seguir solo \(n) veces"), action: #selector(setPilot(_:)), keyEquivalent: ""); it.tag = n; it.target = self; pilot.addItem(it) }
-        let offIt = NSMenuItem(title: T.s("Turn off", "Apagar"), action: #selector(setPilot(_:)), keyEquivalent: ""); offIt.tag = 0; offIt.target = self
-        pilot.addItem(.separator()); pilot.addItem(offIt)
-        pilotItem.submenu = pilot
-        menu.addItem(pilotItem)
-        if FileManager.default.fileExists(atPath: WhatsAppRelay.folder.path) {
-            let wa = NSMenuItem(title: T.s("Alerts to Alfred's WhatsApp when I'm away", "Avisos al WhatsApp de Alfred si no estoy"), action: #selector(toggleWhatsApp(_:)), keyEquivalent: "")
-            wa.target = self; wa.state = (UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true) ? .on : .off
-            menu.addItem(wa)
-        }
-        let hooksItem = NSMenuItem(title: T.s("Claude Code alerts", "Avisos de Claude Code"), action: nil, keyEquivalent: "")
-        let hooksMenu = NSMenu(); hooksMenu.delegate = self
-        hooksItem.submenu = hooksMenu
-        menu.addItem(hooksItem)
-        let modeItem = NSMenuItem(title: T.s("Mode", "Modo"), action: nil, keyEquivalent: "")
-        let modes = NSMenu()
-        let dock = NSMenuItem(title: T.s("Bar (bottom of the screen)", "Barra (abajo)"), action: #selector(setDock), keyEquivalent: ""); dock.target = self
-        let card = NSMenuItem(title: T.s("Floating card", "Tarjeta flotante"), action: #selector(setCard), keyEquivalent: ""); card.target = self
-        modes.addItem(dock); modes.addItem(card)
-        modeItem.submenu = modes
-        menu.addItem(modeItem)
-        let styleItem = NSMenuItem(title: T.s("Style", "Estilo"), action: nil, keyEquivalent: "")
-        let styles = NSMenu()
-        for st in BarStyle.allCases {
-            let it = NSMenuItem(title: st.title, action: #selector(setStyle(_:)), keyEquivalent: "")
-            it.target = self; it.representedObject = st.rawValue; it.state = store.style == st ? .on : .off
-            styles.addItem(it)
-        }
-        styleItem.submenu = styles
-        menu.addItem(styleItem)
+        let alerts = NSMenuItem(title: T.s("Claude Code alerts", "Avisos de Claude Code"), action: #selector(toggleClaudeAlerts(_:)), keyEquivalent: "")
+        alerts.tag = 7001
+        menu.addItem(alerts)
         menu.addItem(.separator())
-        let login = NSMenuItem(title: T.s("Open at login", "Abrir al iniciar sesión"), action: #selector(toggleLogin), keyEquivalent: "")
-        login.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        menu.addItem(login)
-        menu.addItem(withTitle: T.s("Accessibility permission…", "Permiso de Accesibilidad…"), action: #selector(openAccessibility), keyEquivalent: "")
-        let packsItem = NSMenuItem(title: T.s("Key packs", "Packs de teclas"), action: nil, keyEquivalent: "")
-        let packs = NSMenu()
-        for (i, p) in KeyPack.builtIn.enumerated() { let it = NSMenuItem(title: p.name + "…", action: #selector(pickPack(_:)), keyEquivalent: ""); it.tag = i; it.target = self; packs.addItem(it) }
-        packs.addItem(.separator())
-        let share = NSMenuItem(title: T.s("Share my keys (copy link)", "Compartir mis teclas (copiar enlace)"), action: #selector(shareKeys), keyEquivalent: ""); share.target = self
-        packs.addItem(share)
-        let more = NSMenuItem(title: T.s("More packs on getagentbar.com…", "Más packs en getagentbar.com…"), action: #selector(morePacks), keyEquivalent: ""); more.target = self
-        packs.addItem(more)
-        packsItem.submenu = packs
-        menu.addItem(packsItem)
-        menu.addItem(withTitle: T.s("Restore default keys", "Restaurar teclas de fábrica"), action: #selector(restoreDefaults), keyEquivalent: "")
-        menu.addItem(.separator())
-        menu.addItem(withTitle: T.s("Quit Agent Deck", "Salir de Agent Deck"), action: #selector(quit), keyEquivalent: "q")
+        menu.addItem(withTitle: T.s("Quit Agent Bar", "Salir de Agent Bar"), action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
         status.menu = menu
     }
@@ -194,12 +137,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         store.toggleCollapsed()
     }
 
-    @objc func toggleLogin(_ sender: NSMenuItem) {
-        do {
-            if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() }
-        } catch { NSLog("Agent Deck: inicio de sesión: \(error)") }
-        sender.state = SMAppService.mainApp.status == .enabled ? .on : .off
-    }
 
     @objc func openAccessibility() {
         _ = Sender.accessibilityGranted(prompt: true)
@@ -208,8 +145,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc func restoreDefaults() { store.restoreDefaults() }
-    @objc func pasteLastVoice() { store.voice.pasteLast() }
     /// Un pack (de la lista o de un enlace): enseña sus teclas y pregunta si añadirlas o reemplazar las tuyas.
     func offerPack(_ p: KeyPack) {
         NSApp.activate(ignoringOtherApps: true)
@@ -225,21 +160,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         default: break
         }
     }
-    @objc func toggleWhatsApp(_ sender: NSMenuItem) {
-        let on = !(UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true)
-        UserDefaults.standard.set(on, forKey: "whatsappAlerts"); sender.state = on ? .on : .off
-    }
-    @objc func pickPack(_ sender: NSMenuItem) { if KeyPack.builtIn.indices.contains(sender.tag) { offerPack(KeyPack.builtIn[sender.tag]) } }
     @objc func shareKeys() {
         Sender.copy(store.currentPack.shareURL)
         store.flashNote(T.s("Link copied: paste it anywhere", "Enlace copiado: pégalo donde quieras"), for: 3)
     }
     @objc func morePacks() { if let u = URL(string: "https://getagentbar.com/packs/") { NSWorkspace.shared.open(u) } }
-    @objc func setPilot(_ sender: NSMenuItem) {
-        if sender.tag > 0 && !License.shared.unlocked { openPro(); return }
-        if sender.tag > 0 && !ClaudeHooks.installed { connectClaude(); if !ClaudeHooks.installed { return } }
-        store.setAutopilot(sender.tag)
-    }
     @objc func openPro() {
         if proWindow == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 520, height: 420), styleMask: [.titled, .closable], backing: .buffered, defer: false)
@@ -299,14 +224,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         dashWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
     func applicationWillTerminate(_ notification: Notification) { store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown() }
-    @objc func dictate() { DispatchQueue.main.async { self.store.toggleDictation() } }
-    @objc func setDock() { store.mode = .dock }
-    @objc func setCard() { store.mode = .card }
-    @objc func setStyle(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String, let st = BarStyle(rawValue: raw) else { return }
-        store.style = st
-        sender.menu?.items.forEach { $0.state = ($0 === sender) ? .on : .off }
-    }
     /// Abierta desde Descargas o desde el disco, macOS la ejecuta desde una carpeta temporal y no deja darle
     /// Accesibilidad ni micrófono de forma estable. Se ofrece a copiarse en Aplicaciones y abrirse desde allí.
     /// Devuelve true si va a relanzarse desde Aplicaciones.
@@ -350,23 +267,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Conectar los avisos de Claude Code: pregunta antes y explica exactamente qué cambia.
     // MARK: avisos de Claude Code: encender, apagar, quitar
 
-    /// El submenú se rehace cada vez que se abre, con el estado real.
+    /// Al abrir el menú, el interruptor de avisos enseña el estado real (o «Activar…» si aún no están puestos).
     func menuNeedsUpdate(_ menu: NSMenu) {
-        guard menu.supermenu != nil, menu.items.isEmpty || menu.items.first?.tag == 7001 else { return }
-        menu.removeAllItems()
+        guard let it = menu.items.first(where: { $0.tag == 7001 }) else { return }
         if ClaudeHooks.installed {
-            let on = NSMenuItem(title: T.s("On", "Activados"), action: #selector(toggleClaudeAlerts(_:)), keyEquivalent: "")
-            on.state = ClaudeHooks.paused ? .off : .on; on.target = self; on.tag = 7001
-            menu.addItem(on)
-            let test = NSMenuItem(title: T.s("Try an alert", "Probar un aviso"), action: #selector(tryAlert), keyEquivalent: ""); test.target = self
-            menu.addItem(test)
-            menu.addItem(.separator())
-            let rm = NSMenuItem(title: T.s("Remove from Claude Code…", "Quitar de Claude Code…"), action: #selector(removeClaudeAlerts), keyEquivalent: ""); rm.target = self
-            menu.addItem(rm)
+            it.title = T.s("Claude Code alerts", "Avisos de Claude Code")
+            it.action = #selector(toggleClaudeAlerts(_:)); it.state = ClaudeHooks.paused ? .off : .on
         } else {
-            let add = NSMenuItem(title: ClaudeHooks.oldVersion ? T.s("Update alerts…", "Actualizar avisos…") : T.s("Turn on…", "Activar…"), action: #selector(connectClaude), keyEquivalent: "")
-            add.target = self; add.tag = 7001
-            menu.addItem(add)
+            it.title = ClaudeHooks.oldVersion ? T.s("Update Claude Code alerts…", "Actualizar avisos de Claude Code…") : T.s("Turn on Claude Code alerts…", "Activar avisos de Claude Code…")
+            it.action = #selector(connectClaude); it.state = .off
         }
     }
     @objc func toggleClaudeAlerts(_ sender: NSMenuItem) {
@@ -374,7 +283,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if ClaudeHooks.paused { store.setAutopilot(0) }
         store.flashNote(ClaudeHooks.paused ? T.s("Claude Code alerts off", "Avisos de Claude Code apagados") : T.s("Claude Code alerts on", "Avisos de Claude Code activados"))
     }
-    @objc func tryAlert() { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba"), message: T.s("This is how an alert looks.", "Así se ve un aviso.")) }
     @objc func removeClaudeAlerts() {
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
