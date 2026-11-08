@@ -301,6 +301,7 @@ p{margin:0;text-wrap:pretty}
 .pad__promo{position:relative;display:block;margin-top:96px;border-radius:var(--r-lg);overflow:hidden;aspect-ratio:21/9;background:#111;color:#f4f4f2;box-shadow:var(--shadow);isolation:isolate}
 .pad__promo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.4s var(--ease)}
 .pad__promo:hover video{transform:scale(1.03)}
+.pad__promo .pad__promo-m{display:none}
 .pad__promo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,12,12,.55),rgba(12,12,12,.12) 38%,transparent 55%);z-index:0}
 .pad__promo-in{position:absolute;left:56px;top:auto;bottom:48px;transform:none;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:420px}
 .pad__promo-eyebrow{font:500 13px var(--mono);color:#ff8a5c}
@@ -308,9 +309,10 @@ p{margin:0;text-wrap:pretty}
 .pad__promo-sub{color:rgba(244,244,242,.78);font-size:17px}
 .pad__promo .btn{margin-top:8px}
 @media (max-width:900px){
-  .pad__promo{aspect-ratio:4/5;margin-top:64px;background:#111}
-  .pad__promo video{inset:0 0 auto 0;height:auto;aspect-ratio:4/3}
-  .pad__promo::after{background:linear-gradient(180deg,transparent 40%,rgba(17,17,17,.55) 52%,#111 62%)}
+  .pad__promo{aspect-ratio:4/5;margin-top:64px}
+  .pad__promo .pad__promo-d{display:none}
+  .pad__promo .pad__promo-m{display:block}
+  .pad__promo::after{background:linear-gradient(0deg,rgba(12,12,12,.6),rgba(12,12,12,.15) 30%,transparent 45%)}
   .pad__promo-in{left:22px;right:22px;top:auto;bottom:24px;transform:none}
   .pad__promo .btn{align-self:stretch;justify-content:space-between}
 }
@@ -688,7 +690,8 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       </div>
 
       <a class="pad__promo rv" href="pad/">
-        <video data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <video class="pad__promo-d" data-lazy src="pad/video/press.mp4" poster="pad/img/press-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
+        <video class="pad__promo-m" data-lazy src="pad/video/press-v.mp4" poster="pad/img/press-v-poster.jpg" muted loop playsinline preload="none" aria-hidden="true"></video>
         <span class="pad__promo-in">
           <strong>See it up close.</strong>
           <span class="btn btn--accent">Everything about the Pad<span class="ic"><i class="ph-bold ph-arrow-right"></i></span></span>
