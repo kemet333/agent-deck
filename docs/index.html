@@ -9,7 +9,10 @@
 <meta property="og:description" content="One key for what you type a hundred times a day. Free for Mac.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://getagentbar.com/">
-<meta property="og:image" content="https://getagentbar.com/img/desk.jpg">
+<meta property="og:image" content="https://getagentbar.com/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#ebebe8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111112" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='9' width='30' height='14' rx='7' fill='%23111112'/%3E%3Ccircle cx='8' cy='16' r='2' fill='%23ebebe8'/%3E%3Ccircle cx='14' cy='16' r='2' fill='%23ebebe8'/%3E%3Crect x='19' y='12' width='9' height='8' rx='4' fill='%23ff5b1f'/%3E%3C/svg%3E">
@@ -464,7 +467,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
         </div>
       </div>
 
-      <div class="pad__film rv"><video src="pad/video/unboxing.mp4" poster="pad/img/unboxing-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Unboxing the Agent Bar Pad"></video></div>
+      <div class="pad__film rv"><video data-lazy src="pad/video/unboxing.mp4" poster="pad/img/unboxing-poster.jpg" muted loop playsinline preload="none" aria-label="Unboxing the Agent Bar Pad"></video></div>
 
       <div class="pad__grid">
         <article class="sku rv">
@@ -524,6 +527,9 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       <div class="faq__grid">
         <div class="rv"><h3>How do I install it?</h3><p>Open AgentBar.dmg and drag Agent Bar into Applications, then open it. It isn't notarized by Apple yet, so the first time macOS says it can't check it: press Done, go to System Settings → Privacy &amp; Security, scroll down and press «Open Anyway». A two-minute tutorial then sets everything up.</p></div>
         <div class="rv"><h3>Which apps does it work with?</h3><p>Anything with a text box: Claude, ChatGPT, Cursor, Gemini, Codex, Claude Code, Terminal, your browser.</p></div>
+        <div class="rv"><h3>Does the Pad need Agent Bar?</h3><p>The Pad is a USB keyboard, so it plugs into any computer. What each key does (talk, continue, test, fix, undo, stop) comes from Agent Bar, which is free for Mac.</p></div>
+        <div class="rv"><h3>Does the Pad work on Windows or Linux?</h3><p>It plugs in, but Agent Bar is Mac only for now, so the keys can’t do their Agent Bar actions there yet.</p></div>
+        <div class="rv"><h3>How do I order a Pad?</h3><p>Pick a model and press Order: an email opens with it filled in. We reply within 24 h with payment and shipping. The USB-C cable is included, and you have 14 days to return it.</p></div>
         <div class="rv"><h3>Is it really free?</h3><p>Yes. Keys, voice with fn, prompts and alerts are free and open source. OpenAI voice uses your own key. Pro will add voice without a key, autopilot and iPhone.</p></div>
         <div class="rv"><h3>Do I need an OpenAI key to talk?</h3><p>No. Without one, fn uses the Mac's dictation. With a key, the text comes out cleaner and long requests turn into a prompt.</p></div>
         <div class="rv"><h3>How do alerts know my agent is done?</h3><p>Claude Code tells it. One click adds two hooks to your Claude Code settings, with a backup first. The hook waits a few minutes for your reply and hands it to that conversation. Nothing guesses or reads your screen.</p></div>
@@ -592,6 +598,10 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   }
   bar.addEventListener('click', function (e) { var k = e.target.closest('.k'); if (!k) return; auto = false; press(k); clearTimeout(timer); timer = setTimeout(function () { auto = !reduce; if (auto) loop(); }, 9000); });
   if (auto) timer = setTimeout(function () { press(bar.querySelector('.k.main')); }, 2000);
+
+  // Videos load and play only while on screen
+  var vio = new IntersectionObserver(function (es) { es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { if (!reduce) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } } else v.pause(); }); }, { rootMargin: '200px 0px' });
+  document.querySelectorAll('video[data-lazy]').forEach(function (v) { vio.observe(v); });
 
 })();
 </script>
