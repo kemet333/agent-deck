@@ -15,7 +15,7 @@ xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" 
   "$project_dir"/Sources/VoiceModels.swift "${project_dir}/Sources/VoiceAudioFile.swift" "$project_dir"/Sources/OpenAIVoiceClient.swift \
   "$project_dir"/Sources/VoiceKeychain.swift "$project_dir"/Sources/VoiceRecorder.swift \
   "$project_dir"/Sources/VoiceController.swift "$project_dir"/Sources/RealtimeTranscriber.swift "$project_dir"/Sources/VoiceHotkeys.swift "$project_dir"/Sources/VoiceWorkspaceView.swift \
-  "$project_dir"/Sources/FlowCore.swift "$project_dir"/Sources/FlowController.swift "$project_dir"/Sources/ClaudeHooks.swift "$project_dir"/Sources/Autopilot.swift "$project_dir"/Sources/KeyPacks.swift "$project_dir"/Sources/License.swift "$project_dir"/Sources/ProView.swift "$project_dir"/Sources/ProVoice.swift "$project_dir"/Sources/OnboardingView.swift "$project_dir"/Sources/FlowWorkspaceView.swift \
+  "$project_dir"/Sources/FlowCore.swift "$project_dir"/Sources/FlowController.swift "$project_dir"/Sources/ClaudeHooks.swift "$project_dir"/Sources/Autopilot.swift "$project_dir"/Sources/KeyPacks.swift "$project_dir"/Sources/OnboardingView.swift "$project_dir"/Sources/FlowWorkspaceView.swift "$project_dir"/Sources/DashboardView.swift "$project_dir"/Sources/License.swift "$project_dir"/Sources/ProView.swift "$project_dir"/Sources/ProVoice.swift \
   -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication \
   -o "$app_dir/Contents/MacOS/AgentDesk"
 xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" \

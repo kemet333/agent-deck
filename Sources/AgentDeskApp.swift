@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import ServiceManagement
 import SwiftUI
 
@@ -25,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var tutorialWindow: NSWindow?
     var proWindow: NSWindow?
     var flowWindow: NSWindow?
+    var dashWindow: NSWindow?
+    var styleSync: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -32,12 +35,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
+        // el estilo puede cambiar desde el panel: la marca del submenú «Estilo» lo sigue
+        styleSync = store.$style.sink { [weak self] st in
+            self?.status.menu?.items.first { $0.submenu?.items.first?.representedObject != nil }?.submenu?.items.forEach {
+                $0.state = ($0.representedObject as? String) == st.rawValue ? .on : .off
+            }
+        }
         _ = store.flows // Load saved definitions; previously active runs restart paused.
         store.showFlows = { [weak self] in self?.openFlows() }
-        store.showMenu = { [weak self] in
-            guard let self = self, let menu = self.status.menu else { return }
-            menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
-        }
+        // el engranaje de la barra abre el panel de ajustes (antes, el menú de la barra de menús)
+        store.showMenu = { [weak self] in self?.openDashboard() }
         store.hide = { [weak self] in self?.store.toggleCollapsed() }
         store.showPro = { [weak self] in self?.openPro() }
         // el último chat de IA que tuviste delante, para «Explica» y «Captura»
@@ -112,6 +119,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             button.image?.isTemplate = true
         }
         let menu = NSMenu()
+        menu.addItem(withTitle: T.s("Settings…", "Ajustes…"), action: #selector(openDashboard), keyEquivalent: "")
+        menu.addItem(.separator())
         menu.addItem(withTitle: T.s("Fold or unfold the deck", "Plegar o desplegar el Deck"), action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(withTitle: T.s("Message flows…", "Flujos de mensajes…"), action: #selector(openFlows), keyEquivalent: "f")
@@ -269,6 +278,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         flowWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
     @objc func pauseFlow() { store.flows.pause() }
+    /// El panel de ajustes: lo abre el engranaje de la barra y «Ajustes…» del menú.
+    @objc func openDashboard() {
+        if dashWindow == nil {
+            let actions = DashboardActions(
+                connectClaude: { [weak self] in self?.connectClaude() },
+                removeClaudeAlerts: { [weak self] in self?.removeClaudeAlerts() },
+                openVoice: { [weak self] in self?.openVoice() },
+                openFlows: { [weak self] in self?.openFlows() },
+                pauseFlow: { [weak self] in self?.pauseFlow() },
+                openTutorial: { [weak self] in self?.openTutorial() },
+                openAccessibility: { [weak self] in self?.openAccessibility() },
+                offerPack: { [weak self] p in self?.offerPack(p) },
+                shareKeys: { [weak self] in self?.shareKeys() },
+                morePacks: { [weak self] in self?.morePacks() },
+                toggleBar: { [weak self] in self?.togglePanel() },
+                quit: { [weak self] in self?.quit() })
+            dashWindow = makeDashboardWindow(root: DashboardView(store: store, voice: store.voice, actions: actions))
+        }
+        dashWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+    }
     func applicationWillTerminate(_ notification: Notification) { store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown() }
     @objc func dictate() { DispatchQueue.main.async { self.store.toggleDictation() } }
     @objc func setDock() { store.mode = .dock }
