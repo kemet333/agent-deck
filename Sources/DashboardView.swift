@@ -20,6 +20,7 @@ struct DashboardActions {
     var morePacks: () -> Void = {}
     var toggleBar: () -> Void = {}
     var quit: () -> Void = {}
+    var relaunch: () -> Void = {}
 }
 
 enum DashPane: String, CaseIterable, Identifiable {
@@ -30,7 +31,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .general: return T.s("General", "General")
         case .keys: return T.s("Keys", "Teclas")
         case .voice: return T.s("Voice", "Voz")
-        case .alerts: return T.s("Alerts & Autopilot", "Avisos y piloto")
+        case .alerts: return T.s("Alerts & Autopilot", "Avisos y Autopilot")
         case .packs: return T.s("Key packs", "Packs de teclas")
         case .appearance: return T.s("Appearance", "Aspecto")
         case .pro: return "Agent Bar Pro"
@@ -45,7 +46,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Know when your agent is done, and let it keep going.", "Entérate cuando tu agente termine y deja que siga solo.")
         case .packs: return T.s("Ready-made keys for the tools you use.", "Teclas listas para las herramientas que usas.")
         case .appearance: return T.s("How the bar looks and where it lives.", "Cómo se ve la barra y dónde vive.")
-        case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Piloto automático, voz incluida y avisos en el móvil.")
+        case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Autopilot, voz incluida y avisos en el móvil.")
         case .about: return T.s("Agent Bar, made by PROMPTED.", "Agent Bar, hecho por PROMPTED.")
         }
     }
@@ -235,7 +236,7 @@ struct DashboardView: View {
                 let _ = tick
                 DashStatus(ok: Sender.accessibilityGranted(prompt: false), text: T.s("Accessibility", "Accesibilidad"))
                 DashStatus(ok: ClaudeHooks.installed && !ClaudeHooks.paused, text: T.s("Claude Code alerts", "Avisos de Claude Code"))
-                DashStatus(ok: store.autopilotLeft > 0, text: store.autopilotLeft > 0 ? T.s("Autopilot · \(store.autopilotLeft) left", "Piloto · quedan \(store.autopilotLeft)") : T.s("Autopilot off", "Piloto apagado"))
+                DashStatus(ok: store.autopilotLeft > 0, text: store.autopilotLeft > 0 ? T.s("Autopilot · \(store.autopilotLeft) left", "Autopilot · quedan \(store.autopilotLeft)") : T.s("Autopilot off", "Autopilot apagado"))
             }.padding(16)
         }
         .background(VisualEffect(material: .sidebar).ignoresSafeArea())
@@ -284,8 +285,14 @@ struct DashboardView: View {
                     do { if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() } } catch { NSLog("Agent Bar: inicio de sesión: \(error)") }
                     loginOn = SMAppService.mainApp.status == .enabled
                 }))
-                DashRow(title: T.s("Show or hide the bar", "Mostrar u ocultar la barra"), divider: false) {
+                DashRow(title: T.s("Show or hide the bar", "Mostrar u ocultar la barra")) {
                     Shortcut(keys: "⌃⌥D"); Button(T.s("Toggle", "Alternar"), action: actions.toggleBar).controlSize(.small)
+                }
+                DashRow(title: T.s("Language", "Idioma"), detail: T.s("Agent Bar restarts to switch. Dictation follows your Mac's language.", "Agent Bar se reinicia para cambiarlo. El dictado sigue el idioma de tu Mac."), divider: false) {
+                    Picker("", selection: Binding(get: { T.es ? "es" : "en" }, set: { v in
+                        guard v != (T.es ? "es" : "en") else { return }
+                        UserDefaults.standard.set(v, forKey: T.languageKey); actions.relaunch()
+                    })) { Text("English").tag("en"); Text("Español").tag("es") }.labelsHidden().fixedSize()
                 }
             }
             DashSection(title: T.s("Permissions", "Permisos"), footer: T.s("Agent Bar types into the app in front using Accessibility. Nothing leaves your Mac unless you use OpenAI voice with your own key.", "Agent Bar escribe en la app que tienes delante con Accesibilidad. Nada sale de tu Mac salvo la voz de OpenAI con tu propia clave.")) {
@@ -316,7 +323,7 @@ struct DashboardView: View {
 
     private var keysPane: some View {
         VStack(alignment: .leading, spacing: 22) {
-            DashSection(title: T.s("Your keys", "Tus teclas"), footer: T.s("The first key is the main one: it is also what Autopilot sends. Keys 1–9 have a global shortcut ⌃⌥ + number.", "La primera tecla es la principal: también es lo que manda el piloto. Las teclas 1–9 tienen atajo global ⌃⌥ + número.")) {
+            DashSection(title: T.s("Your keys", "Tus teclas"), footer: T.s("The first key is the main one: it is also what Autopilot sends. Keys 1–9 have a global shortcut ⌃⌥ + number.", "La primera tecla es la principal: también es lo que manda Autopilot. Las teclas 1–9 tienen atajo global ⌃⌥ + número.")) {
                 if store.keys.isEmpty { DashRow(title: T.s("No keys yet", "Aún no hay teclas"), divider: false) { EmptyView() } }
                 ForEach(Array(store.keys.enumerated()), id: \.element.id) { i, k in
                     VStack(spacing: 0) {
@@ -460,7 +467,7 @@ struct DashboardView: View {
                     DashToggle(title: T.s("Alerts to Alfred's WhatsApp when I'm away", "Avisos al WhatsApp de Alfred si no estoy"), isOn: Binding(get: { UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true }, set: { UserDefaults.standard.set($0, forKey: "whatsappAlerts"); refresh() }), divider: false)
                 }
             }
-            DashSection(title: T.s("Autopilot", "Piloto automático"), footer: T.s("Claude Code keeps going on its own, sending your first key, and stops at a real question or a permission. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla y se para ante una pregunta de verdad o un permiso. Necesita los avisos de Claude Code.")) {
+            DashSection(title: "Autopilot", footer: T.s("Claude Code keeps going on its own, sending your first key, and stops at a real question or a permission. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla y se para ante una pregunta de verdad o un permiso. Necesita los avisos de Claude Code.")) {
                 DashRow(title: T.s("Keep going", "Seguir solo"), detail: store.autopilotLeft > 0 ? T.s("\(store.autopilotLeft) turns left", "Quedan \(store.autopilotLeft) vueltas") : T.s("Off", "Apagado"), divider: false) {
                     Picker("", selection: Binding(get: { [0, 3, 5, 10, 20].contains(store.autopilotLeft) ? store.autopilotLeft : -1 }, set: { n in
                         guard n >= 0 else { return }

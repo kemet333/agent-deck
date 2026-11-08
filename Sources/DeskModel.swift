@@ -265,27 +265,6 @@ final class DeskStore: ObservableObject {
     /// Same entry point for the bar, menu, URL scheme and the existing ⌃⌥M shortcut.
     @MainActor func toggleDictation() { voice.toggle() }
 
-    /// Última nota de voz transcrita por el inbox de Telegram (la escribe inbox-telegram.py).
-    static let lastVoice = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Application Support/diego-inbox/last-voice.txt")
-
-    /// Tecla Inbox: manda al chat la última transcripción y la marca como usada.
-    func sendInbox() {
-        DeskStore.haptic()
-        guard let text = try? String(contentsOf: DeskStore.lastVoice, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
-            dictationNote = T.s("Inbox empty", "Inbox vacío")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self.dictationNote = "" }
-            return
-        }
-        Sender.send(text, enter: true) { [weak self] result in
-            if case .success = result {
-                let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
-                // Do not erase a newer inbox note that arrived while inserting the previous one.
-                if (try? String(contentsOf:Self.lastVoice,encoding:.utf8).trimmingCharacters(in:.whitespacesAndNewlines)) == text { try? "".write(to:Self.lastVoice,atomically:true,encoding:.utf8) }
-            } else if case .failure(let error) = result { self?.voice.note(error.localizedDescription) }
-        }
-    }
-
     /// Lo pone el AppDelegate: abre el menú de la app desde el engranaje de la barra.
     var showMenu: (() -> Void)?
     /// Lo pone el AppDelegate: esconde la barra (⌃⌥D la devuelve).
@@ -348,7 +327,7 @@ final class DeskStore: ObservableObject {
     func setAutopilot(_ n: Int) {
         if n > 0 { Autopilot.start(n, message: keys.first?.text ?? T.s("continue", "continúa")) } else { Autopilot.save(nil) }
         autopilotLeft = n
-        flashNote(n > 0 ? T.s("Autopilot: \(n) turns", "Piloto: \(n) vueltas") : T.s("Autopilot off", "Piloto apagado"))
+        flashNote(n > 0 ? T.s("Autopilot: \(n) turns", "Autopilot: \(n) vueltas") : T.s("Autopilot off", "Autopilot apagado"))
     }
     /// Lo pone el AppDelegate: abre la ventana de Pro.
     var showPro: (() -> Void)?
@@ -360,7 +339,7 @@ final class DeskStore: ObservableObject {
     /// Lo cuenta el gancho cada vez que sigue solo.
     func autopilotTurn(left: Int, place: String) {
         autopilotLeft = left
-        flashNote(left > 0 ? T.s("Autopilot · \(left) left", "Piloto · quedan \(left)") : T.s("Autopilot done", "Piloto terminado"), for: 3)
+        flashNote(left > 0 ? T.s("Autopilot · \(left) left", "Autopilot · quedan \(left)") : T.s("Autopilot done", "Autopilot terminado"), for: 3)
     }
 
     // MARK: - Sobre lo seleccionado o en pantalla

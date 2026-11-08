@@ -475,17 +475,14 @@ struct Bar: View {
                      help: T.s("Pick an area of the screen and ask your AI chat what's wrong (⌃⌥S)", "Elige una zona de la pantalla y pregunta a tu chat de IA qué falla (⌃⌥S)"),
                      press: { store.snapScreen() }, edit: {}, remove: {})
             DockItem(id: nil, icon: store.autopilotLeft > 0 ? "airplane.circle.fill" : "airplane.circle",
-                     label: store.autopilotLeft > 0 ? T.s("Pilot · \(store.autopilotLeft)", "Piloto · \(store.autopilotLeft)") : T.s("Pilot", "Piloto"),
+                     label: store.autopilotLeft > 0 ? T.s("Autopilot · \(store.autopilotLeft)", "Autopilot · \(store.autopilotLeft)") : "Autopilot",
                      hotkey: nil, main: false, editing: false, tint: store.autopilotLeft > 0 ? th.accent : nil, store: store,
-                     help: T.s("Autopilot for Claude Code: keeps going on its own up to 5 times and stops at a real question", "Piloto automático para Claude Code: sigue solo hasta 5 veces y para ante una pregunta de verdad"),
+                     help: T.s("Autopilot for Claude Code: keeps going on its own up to 5 times and stops at a real question", "Autopilot para Claude Code: sigue solo hasta 5 veces y para ante una pregunta de verdad"),
                      press: { store.toggleAutopilot() }, edit: {}, remove: {})
-            DockItem(id: nil, icon: "tray.and.arrow.down", label: "Inbox", hotkey: nil, main: false, editing: false, tint: nil, store: store,
-                     help: T.s("Sends the last transcribed voice note from your inbox to the chat", "Manda al chat la última nota de voz del inbox, ya transcrita"),
-                     press: { store.sendInbox() }, edit: {}, remove: {})
             Divider_()
             if !accessibility {
                 DockItem(id: nil, icon: "hand.raised.fill", label: T.s("Permission", "Permiso"), hotkey: nil, main: false, editing: false, tint: th.accent, store: store,
-                         help: T.s("Allow Accessibility so the deck can type into the chat", "Permite Accesibilidad para que el Desk pueda escribir en el chat"),
+                         help: T.s("Allow Accessibility so Agent Bar can type into the chat", "Permite Accesibilidad para que Agent Bar pueda escribir en el chat"),
                          press: { _ = Sender.accessibilityGranted(prompt: true) }, edit: {}, remove: {})
                 Divider_()
             }

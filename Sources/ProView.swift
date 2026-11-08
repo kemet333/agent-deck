@@ -16,7 +16,7 @@ struct ProView: View {
                 if !embedded { Spacer() }
             }
             VStack(alignment: .leading, spacing: 9) {
-                row("airplane", T.s("Autopilot: Claude Code keeps going on its own and stops at a real question.", "Piloto automático: Claude Code sigue solo y para ante una pregunta de verdad."))
+                row("airplane", T.s("Autopilot: Claude Code keeps going on its own and stops at a real question.", "Autopilot: Claude Code sigue solo y para ante una pregunta de verdad."))
                 row("mic.fill", T.s("Voice included: talk without your own OpenAI key (monthly minutes included).", "Voz incluida: habla sin tu propia clave de OpenAI (minutos al mes incluidos)."))
                 row("iphone", T.s("Alerts on your phone, and answer from there.", "Avisos en el móvil, y contestar desde allí."))
                 row("keyboard", T.s("Works with Agent Pad when it ships.", "Funciona con Agent Pad cuando salga."))

@@ -251,7 +251,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 shareKeys: { [weak self] in self?.shareKeys() },
                 morePacks: { [weak self] in self?.morePacks() },
                 toggleBar: { [weak self] in self?.togglePanel() },
-                quit: { [weak self] in self?.quit() })
+                quit: { [weak self] in self?.quit() },
+                relaunch: {
+                    // abre otra copia de esta app cuando esta ya se ha cerrado, para cambiar de idioma
+                    let path = Bundle.main.bundleURL.path
+                    let p = Process(); p.executableURL = URL(fileURLWithPath: "/bin/sh")
+                    p.arguments = ["-c", "sleep 0.6; /usr/bin/open \"$0\"", path]
+                    try? p.run(); NSApp.terminate(nil)
+                })
             dashWindow = makeDashboardWindow(root: DashboardView(store: store, voice: store.voice, actions: actions))
         }
         dashWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)

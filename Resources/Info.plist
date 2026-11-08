@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleDevelopmentRegion</key><string>es</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>CFBundleDisplayName</key><string>Agent Bar</string>
   <key>CFBundleExecutable</key><string>AgentDesk</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
@@ -22,7 +22,7 @@
     <key>CFBundleURLName</key><string>com.kemetcapital.agentdesk</string>
     <key>CFBundleURLSchemes</key><array><string>agentdeck</string></array>
   </dict></array>
-  <key>NSMicrophoneUsageDescription</key><string>Agent Bar graba cuando activas el dictado. En modo OpenAI, envía esa grabación a OpenAI con tu clave de API y elimina el archivo temporal; puedes elegir el motor local de Apple.</string>
-  <key>NSSpeechRecognitionUsageDescription</key><string>Agent Bar transcribe lo que dictas, en este Mac siempre que macOS lo permita, y lo escribe en el chat. No se guarda el audio.</string>
+  <key>NSMicrophoneUsageDescription</key><string>Agent Bar records while you dictate. With OpenAI voice it sends that recording to OpenAI with your API key and deletes the temporary file; you can choose Apple's on-device engine instead.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Agent Bar transcribes what you dictate, on this Mac whenever macOS allows it, and types it into the chat. Audio is not kept.</string>
 </dict>
 </plist>
