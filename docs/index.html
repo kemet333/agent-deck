@@ -195,31 +195,54 @@ p{margin:0;text-wrap:pretty}
 .scene.on i{color:var(--accent)}
 .scene__fill{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--accent)}
 
-/* Explain anything: second animated demo */
-.cell.cell--explain{grid-column:span 12;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:44px;align-items:center;min-height:380px}
-.xk{display:flex;gap:8px;margin-top:22px}
-.xk .cap{transition:background .25s var(--ease),color .25s var(--ease),transform .35s var(--spring)}
-.xk.hit .cap{background:var(--accent);color:var(--accent-ink);transform:translateY(2px)}
-.xwin{position:relative;border-radius:18px;background:#141417;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 30px 60px -30px rgba(0,0,0,.6);overflow:hidden;min-height:300px;color:#d1d1d6;font:500 13px/1.6 var(--mono)}
-.xwin__bar{display:flex;align-items:center;gap:6px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);color:#8e8e93;font-size:11.5px}
-.xwin__bar i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)}
-.xwin__bar span{margin-left:8px}
-.xcode,.xshot{position:absolute;inset:44px 0 0;padding:20px 22px;transition:opacity .45s var(--ease)}
-.xcode .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.xcode .ln b{display:inline-block;width:30px;color:#5a5a60;font-weight:500}
-.xcode .err{color:#ff8a7a}
-.xsel{background-image:linear-gradient(rgba(90,140,255,.38),rgba(90,140,255,.38));background-repeat:no-repeat;background-size:0 100%;transition:background-size .9s var(--ease)}
-.xsel.on{background-size:100% 100%}
-.xshot{display:grid;place-items:start center;padding-top:34px;opacity:0}
-.xform{width:min(280px,80%);padding:18px;border-radius:14px;background:#1f1f24;display:grid;gap:10px;font-family:var(--sans)}
-.xform span{height:30px;border-radius:8px;background:rgba(255,255,255,.07)}
-.xform .xbtn{display:block;width:46%;height:34px;margin-left:8%;border-radius:8px;background:var(--accent)}
-.xrect{position:absolute;border:1.5px dashed #fff;border-radius:8px;background:rgba(255,255,255,.06);opacity:0;transform-origin:top left;transform:scale(0);transition:transform .8s var(--ease),opacity .3s}
-.xrect.on{opacity:1;transform:scale(1)}
-.xans{position:absolute;left:18px;right:18px;bottom:16px;padding:12px 14px;border-radius:14px;background:rgba(40,40,46,.92);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font:400 14px/1.45 var(--sans);color:#e5e5ea;opacity:0;transform:translateY(12px);transition:opacity .4s var(--ease),transform .6s var(--spring)}
-.xans.on{opacity:1;transform:none}
-.xans b{color:#fff;font-weight:600}
-.xans__who{display:block;font:500 10.5px var(--mono);color:#ff9a6b;margin-bottom:3px}
+/* Key packs: second animated demo */
+.cell.cell--packs{grid-column:span 12;display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:44px;align-items:center;min-height:420px}
+.cell--packs .link{display:inline-flex}
+.kp{position:relative;border-radius:22px;padding:16px;display:grid;gap:14px;overflow:hidden;isolation:isolate;
+  background:radial-gradient(60% 80% at 10% 100%,rgba(255,91,31,.45),transparent 70%),radial-gradient(80% 90% at 50% 40%,#1c1c21,#0b0b0d);box-shadow:0 30px 60px -30px rgba(0,0,0,.6)}
+.kp__tabs{display:flex;gap:6px;flex-wrap:wrap}
+.kp__tabs span{padding:6px 12px;border-radius:999px;font:500 12px var(--sans);color:rgba(255,255,255,.55);background:rgba(255,255,255,.06);transition:background .35s var(--ease),color .35s var(--ease)}
+.kp__tabs span.on{background:#fff;color:#111}
+.kp__win{position:relative;height:210px;border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.kp__pane{position:absolute;inset:0;padding:16px 18px;opacity:0;transform:scale(.98);transition:opacity .45s var(--ease),transform .6s var(--spring);font:500 13px/1.6 var(--mono)}
+.kp__pane.on{opacity:1;transform:none}
+.kp__l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp__out{opacity:0;transform:translateY(6px);transition:opacity .4s var(--ease),transform .5s var(--spring)}
+.kp__pane.done .kp__out{opacity:1;transform:none}
+.kp__pane--term{background:#0e0e10;color:#e5e5ea}
+.kp__mute{color:#6e6e73}.kp__p{color:var(--accent)}.kp__q{color:var(--accent)}
+.kp__pane--term .kp__out{margin-top:6px;white-space:normal}
+.kp__pane--code{background:#17171c;color:#d1d1d6}
+.c1{color:#5a5a60}.c2{color:#c792ea}.c3{color:#82aaff}
+.kp__del{color:#ff8a7a;transition:opacity .4s var(--ease)}
+.kp__pane--code.done .kp__del{opacity:.25;text-decoration:line-through}
+.kp__chip{position:absolute;left:18px;bottom:16px;max-width:calc(100% - 36px);padding:7px 12px;border-radius:10px;background:rgba(255,91,31,.18);box-shadow:inset 0 0 0 1px rgba(255,91,31,.5);color:#fff;font:500 12.5px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp__chip:has(.kp__typed:empty){opacity:0}
+.kp__badge{position:absolute;right:18px;top:16px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);font:500 12px var(--mono);color:#e5e5ea}
+.kp__badge .r{color:#ff8a7a}.kp__badge .g{color:#6ff0a0}
+.kp__pane--chat{background:#f4f4f2;color:#1d1d1f;display:flex;flex-direction:column;gap:10px;font-family:var(--sans)}
+.kp__bub{align-self:flex-start;max-width:90%;padding:10px 12px;border-radius:14px 14px 14px 4px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.05),inset 0 0 0 1px rgba(0,0,0,.06);font:400 13px/1.4 var(--sans)}
+.kp__bub--me{align-self:flex-end;border-radius:14px 14px 4px 14px;background:#1d1d1f;color:#fff;box-shadow:none}
+.kp__bub--me:has(.kp__typed:empty){opacity:0}
+.kp__bub table{border-collapse:collapse;font-size:12.5px}
+.kp__bub th,.kp__bub td{padding:4px 14px 4px 0;text-align:left;border-bottom:1px solid rgba(0,0,0,.08)}
+.kp__bub th{font-weight:600;color:#6e6e73}
+.kp__pane--doc{background:#fff;color:#1d1d1f;font-family:var(--sans)}
+.kp__doc{position:relative;max-width:440px;font:400 17px/1.5 var(--sans);letter-spacing:-.01em}
+.kp__en,.kp__es{display:block;transition:opacity .45s var(--ease),transform .5s var(--spring)}
+.kp__es{position:absolute;inset:0 0 auto 0;color:#1d1d1f}
+.kp__pane--doc.done .kp__en{opacity:0;transform:translateY(-6px)}
+.kp__bar{justify-self:center;display:flex;gap:2px;padding:5px 6px;border-radius:16px;max-width:100%;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03)),rgba(24,24,28,.3);-webkit-backdrop-filter:blur(28px) saturate(190%);backdrop-filter:blur(28px) saturate(190%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.38),0 24px 60px -20px rgba(20,20,30,.45)}
+.kk{position:relative;perspective:300px;border-radius:10px;transition:background .25s var(--ease),transform .35s var(--spring),width .4s var(--ease),opacity .3s}
+.kk__in{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:68px;padding:8px 5px;color:rgba(255,255,255,.8);font:500 11px/1 var(--sans);transition:transform .32s var(--ease);transform-origin:50% 50%}
+.kk__in i{font-size:18px}
+.kk__in b{font-weight:500;white-space:nowrap}
+.kk.flip .kk__in{transform:rotateX(90deg)}
+.kk.off{display:none}
+.kk.on{background:var(--accent);transform:scale(.92)}
+.kk.on .kk__in{color:var(--accent-ink)}
+.kk.hit::after{content:"";position:absolute;inset:0;border-radius:10px;animation:ripple .75s var(--ease) forwards;pointer-events:none}
 
 /* Band: the desk, leading into the Pad */
 .band{max-width:1400px;margin:0 auto;padding:0 24px}
@@ -368,8 +391,19 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
   .hero__grid,.hero__top,.pad__head,.pad__grid,.pad__box,.privacy__in{grid-template-columns:1fr;gap:28px}
   .hero__media{transform:none}
   .bento__grid{grid-template-columns:1fr}
-  .cell--tap,.cell--talk,.cell--prompt,.cell--alert,.cell--repeat,.cell--explain{grid-column:auto;grid-row:auto;min-height:260px}
-  .cell.cell--explain{grid-template-columns:1fr;gap:24px}
+  .cell--tap,.cell--talk,.cell--prompt,.cell--alert,.cell--repeat,.cell--packs{grid-column:auto;grid-row:auto;min-height:260px}
+  .cell.cell--packs{grid-column:auto;grid-template-columns:1fr;gap:24px;padding:20px}
+  .hero__grid>*,.hero__top>*,.bento__grid>*,.plans__grid>*{min-width:0}
+  .kp{padding:10px;border-radius:18px;gap:10px}
+  .kp__win{height:200px}
+  .kp__bar{width:100%;padding:4px}
+  .kk{flex:1 1 0;min-width:0}
+  .kk__in{min-width:0;padding:7px 1px;font-size:8.5px;letter-spacing:-.02em}
+  .kk__in b{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .kk__in i{font-size:16px}
+  .kp__tabs{flex-wrap:nowrap;gap:4px}
+  .kp__tabs span{padding:5px 8px;font-size:10.5px;white-space:nowrap}
+  .kp__doc{font-size:15px}
   .stage{padding-top:92px}
   .toast{left:12px;right:12px;top:12px;max-width:none}
   .toast__btns .tb:not(.tb--go){display:none}
@@ -511,25 +545,48 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <p>Claude Code keeps going on its own, up to 5 times, and stops at a real question or a permission. On Codex, queue the next steps.</p>
           </div>
         </article>
-        <article class="cell cell--explain rv">
+        <article class="cell cell--packs rv">
           <div>
-            <span class="soon">Free</span>
-            <h3 style="margin-top:10px">Explain anything</h3>
-            <p>Select an error anywhere and ask what it means. Or snap part of the screen and ask what’s wrong.</p>
-            <div class="xk" id="xk" aria-hidden="true"><span class="cap sm">⌃</span><span class="cap sm">⌥</span><span class="cap sm" id="xkL">E</span></div>
+            <span class="soon">Free · new</span>
+            <h3 style="margin-top:10px">Key packs</h3>
+            <p>Ready-made keys for Claude Code, Cursor, ChatGPT and writing. Pick a pack and your bar has the right keys for that app.</p>
+            <a class="link" href="packs/" style="margin-top:20px">See all packs<i class="ph ph-arrow-right"></i></a>
           </div>
-          <div class="xwin" id="xwin" aria-hidden="true">
-            <div class="xwin__bar"><i></i><i></i><i></i><span id="xfile">auth.ts</span></div>
-            <div class="xcode" id="xcode">
-              <div class="ln"><b>11</b>export async function me() {</div>
-              <div class="ln"><b>12</b>&nbsp;&nbsp;const user = session.user</div>
-              <div class="ln err"><b>13</b><span class="xsel" id="xsel">TypeError: Cannot read properties of undefined</span></div>
-              <div class="ln"><b>14</b>&nbsp;&nbsp;return user.id</div>
-              <div class="ln"><b>15</b>}</div>
+          <div class="kp" id="kp" aria-hidden="true">
+            <div class="kp__tabs"><span class="on">Claude Code</span><span>Cursor</span><span>ChatGPT</span><span>Writing</span></div>
+            <div class="kp__win">
+              <div class="kp__pane kp__pane--term on">
+                <div class="kp__l kp__mute">~/my-app · claude</div>
+                <div class="kp__l"><span class="kp__p">›</span> <span class="kp__typed"></span></div>
+                <div class="kp__out kp__l">⏺ <b>Plan</b><br>&nbsp;&nbsp;1. Stripe checkout<br>&nbsp;&nbsp;2. Webhooks<br>&nbsp;&nbsp;3. Tests<br><span class="kp__q">OK to start?</span></div>
+              </div>
+              <div class="kp__pane kp__pane--code">
+                <div class="kp__l"><span class="c1">12</span> <span class="c2">export function</span> <span class="c3">checkout</span>() {</div>
+                <div class="kp__l"><span class="c1">13</span> &nbsp;&nbsp;<span class="c2">const</span> cart = <span class="c3">useCart</span>()</div>
+                <div class="kp__l kp__del"><span class="c1">14</span> − &nbsp;rewriteEntireCartModule(cart)</div>
+                <div class="kp__l"><span class="c1">15</span> }</div>
+                <div class="kp__chip"><span class="kp__typed"></span></div>
+                <div class="kp__out kp__badge"><span class="r">−12</span> <span class="g">+3</span> · only what’s needed</div>
+              </div>
+              <div class="kp__pane kp__pane--chat">
+                <div class="kp__bub kp__bub--me"><span class="kp__typed"></span></div>
+                <div class="kp__out kp__bub">
+                  <table><tr><th>Plan</th><th>Price</th><th>Keys</th></tr><tr><td>Original</td><td>€29</td><td>3</td></tr><tr><td>Pro</td><td>€49</td><td>6</td></tr><tr><td>Max</td><td>€99</td><td>8</td></tr></table>
+                </div>
+              </div>
+              <div class="kp__pane kp__pane--doc">
+                <div class="kp__doc"><span class="kp__en">Thanks for your order! Your Pad ships this week, and the cable is in the box.</span><span class="kp__out kp__es">¡Gracias por tu pedido! Tu Pad sale esta semana y el cable va en la caja.</span></div>
+                <div class="kp__chip"><span class="kp__typed"></span></div>
+              </div>
             </div>
-            <div class="xshot" id="xshot"><div class="xform"><span></span><span></span><i class="xbtn" id="xbtn"></i></div></div>
-            <div class="xrect" id="xrect"></div>
-            <div class="xans" id="xans"><span class="xans__who">Agent Bar</span><span id="xansT"></span></div>
+            <div class="kp__bar">
+              <span class="kk"><span class="kk__in"><i class="ph"></i><b></b></span></span>
+              <span class="kk"><span class="kk__in"><i class="ph"></i><b></b></span></span>
+              <span class="kk"><span class="kk__in"><i class="ph"></i><b></b></span></span>
+              <span class="kk"><span class="kk__in"><i class="ph"></i><b></b></span></span>
+              <span class="kk"><span class="kk__in"><i class="ph"></i><b></b></span></span>
+              <span class="kk"><span class="kk__in"><i class="ph"></i><b></b></span></span>
+            </div>
           </div>
         </article>
       </div>
@@ -565,7 +622,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
             <li><i class="ph ph-check"></i>Approve and continue from your iPhone</li>
             <li><i class="ph ph-check"></i>Works with the Agent Pad</li>
           </ul>
-          <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the Agent Bar Pro waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
+          <a class="btn" href="mailto:hello@workwithprompted.com?subject=Agent%20Bar%20Pro%20%C2%B7%20Waitlist">Join the waitlist<span class="ic"><i class="ph ph-arrow-up-right"></i></span></a>
         </div></article>
       </div>
     </div>
@@ -756,6 +813,7 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
       f.style.transition = 'none'; f.style.width = '0';
       if (i === cur) { void f.offsetWidth; f.style.transition = 'width ' + LEN[cur] + 'ms linear'; f.style.width = '100%'; }
     });
+    var cc = chips[cur]; if (scenesEl.scrollWidth > scenesEl.clientWidth) scenesEl.scrollTo({ left: cc.offsetLeft - (scenesEl.clientWidth - cc.offsetWidth) / 2, behavior: 'smooth' });
     var t = run;
     SCENES[cur]().then(function () { if (t === run) return wait(500).then(function () { play(cur + 1); }); }).catch(function () {});
   }
@@ -774,42 +832,48 @@ footer a{border-bottom:1px solid transparent;transition:border-color .3s var(--e
     setTimeout(function () { play(0); }, 1200);
   }
 
-  // Explain anything: select an error, or snap part of the screen, and Agent Bar explains it
+  // Key packs: the bar flips to each app's keys, one key is pressed and the result shows in that app
   (function () {
-    var xk = document.getElementById('xk'), xkL = document.getElementById('xkL'), xfile = document.getElementById('xfile'), xcode = document.getElementById('xcode'),
-        xsel = document.getElementById('xsel'), xshot = document.getElementById('xshot'), xrect = document.getElementById('xrect'), xbtn = document.getElementById('xbtn'),
-        xwin = document.getElementById('xwin'), xans = document.getElementById('xans'), xansT = document.getElementById('xansT'), on = false, timers = [];
-    var A1 = '<b>session</b> is still undefined: this runs before the session loads. Await <b>getSession()</b> first.';
-    var A2 = 'The button sits off-centre: its form has no <b>justify-items</b>. Add <b>justify-items: center</b>.';
+    var kp = document.getElementById('kp'); if (!kp) return;
+    var tabs = [].slice.call(kp.querySelectorAll('.kp__tabs span')), panes = [].slice.call(kp.querySelectorAll('.kp__pane')), keys = [].slice.call(kp.querySelectorAll('.kk'));
+    var PACKS = [
+      { keys: [['ph-list-checks', 'Plan first'], ['ph-arrow-circle-right', 'Continue'], ['ph-flask', 'Test it'], ['ph-wrench', 'Fix it'], ['ph-seal-check', 'Commit'], ['ph-list-bullets', 'Recap']], press: 0, say: 'make a plan first and wait for my ok' },
+      { keys: [['ph-arrow-circle-right', 'Continue'], ['ph-scissors', 'Smaller'], ['ph-quotes', 'Explain'], ['ph-hammer', 'Fix lint'], ['ph-arrow-counter-clockwise', 'Undo']], press: 1, say: 'make a smaller change, only what’s needed' },
+      { keys: [['ph-arrow-circle-right', 'Go on'], ['ph-arrows-in-line-horizontal', 'Shorter'], ['ph-lightbulb', 'Simpler'], ['ph-table', 'Table'], ['ph-link', 'Sources']], press: 3, say: 'put that in a table' },
+      { keys: [['ph-arrows-in-line-horizontal', 'Shorter'], ['ph-smiley', 'Friendlier'], ['ph-briefcase', 'Formal'], ['ph-stack', '3 options'], ['ph-globe', 'Translate']], press: 4, say: 'translate it to Spanish' }
+    ];
+    var timers = [], on = false, cur = 0;
     function at(ms, f) { timers.push(setTimeout(f, ms)); }
-    function hit() { xk.classList.add('hit'); setTimeout(function () { xk.classList.remove('hit'); }, 380); }
-    function placeRect() {
-      var w = xwin.getBoundingClientRect(), b = xbtn.getBoundingClientRect();
-      xrect.style.left = (b.left - w.left - 14) + 'px'; xrect.style.top = (b.top - w.top - 12) + 'px';
-      xrect.style.width = (b.width + 28) + 'px'; xrect.style.height = (b.height + 24) + 'px';
+    function setKeys(p, flip) {
+      keys.forEach(function (k, i) {
+        var d = p.keys[i];
+        function apply() { if (!d) { k.classList.add('off'); return; } k.classList.remove('off'); k.querySelector('i').className = 'ph ' + d[0]; k.querySelector('b').textContent = d[1]; }
+        if (!flip) return apply();
+        at(i * 70, function () { k.classList.add('flip'); });
+        at(i * 70 + 320, function () { apply(); k.classList.remove('flip'); });
+      });
     }
-    function cycle() {
-      timers.forEach(clearTimeout); timers = [];
-      xfile.textContent = 'auth.ts'; xkL.textContent = 'E'; xcode.style.opacity = 1; xshot.style.opacity = 0;
-      xrect.classList.remove('on'); xsel.classList.remove('on'); xans.classList.remove('on');
-      at(700, function () { xsel.classList.add('on'); });
-      at(1900, hit);
-      at(2400, function () { xansT.innerHTML = A1; xans.classList.add('on'); });
-      at(5600, function () { xans.classList.remove('on'); xsel.classList.remove('on'); });
-      at(6100, function () { xfile.textContent = 'localhost:3000/signup'; xkL.textContent = 'S'; xcode.style.opacity = 0; xshot.style.opacity = 1; });
-      at(6900, hit);
-      at(7300, function () { placeRect(); xrect.classList.add('on'); });
-      at(8400, function () { xansT.innerHTML = A2; xans.classList.add('on'); });
-      at(11800, function () { xans.classList.remove('on'); xrect.classList.remove('on'); });
-      at(12400, cycle);
+    function show(n) {
+      var p = PACKS[n];
+      tabs.forEach(function (t, i) { t.classList.toggle('on', i === n); });
+      panes.forEach(function (x, i) { x.classList.toggle('on', i === n); x.classList.remove('done'); var ty = x.querySelector('.kp__typed'); if (ty) ty.textContent = ''; });
+      setKeys(p, true);
+      var pane = panes[n], ty = pane.querySelector('.kp__typed'), k = keys[p.press];
+      at(1300, function () { k.classList.add('on', 'hit'); });
+      at(1560, function () { k.classList.remove('on'); });
+      at(2060, function () { k.classList.remove('hit'); });
+      for (var i = 1; i <= p.say.length; i++) (function (j) { at(1400 + j * 24, function () { ty.textContent = p.say.slice(0, j); }); })(i);
+      at(1400 + p.say.length * 24 + 450, function () { pane.classList.add('done'); });
+      at(1400 + p.say.length * 24 + 3200, function () { cur = (n + 1) % PACKS.length; show(cur); });
     }
-    if (reduce) { xsel.classList.add('on'); xansT.innerHTML = A1; xans.classList.add('on'); return; }
+    setKeys(PACKS[0], false);
+    if (reduce) { panes[0].classList.add('done'); panes[0].querySelector('.kp__typed').textContent = PACKS[0].say; return; }
     new IntersectionObserver(function (es) {
       es.forEach(function (e) {
-        if (e.isIntersecting && !on) { on = true; cycle(); }
-        else if (!e.isIntersecting && on) { on = false; timers.forEach(clearTimeout); }
+        if (e.isIntersecting && !on) { on = true; show(cur); }
+        else if (!e.isIntersecting && on) { on = false; timers.forEach(clearTimeout); timers = []; }
       });
-    }, { threshold: .3 }).observe(xwin);
+    }, { threshold: .3 }).observe(kp);
   })();
 
   // Videos load and play only while on screen
