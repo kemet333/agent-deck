@@ -142,11 +142,15 @@ final class DeskStore: ObservableObject {
         controller.objectWillChange.sink { [weak self, weak controller] in
             DispatchQueue.main.async {
                 guard let self, let controller else { return }
-                self.listening=controller.phase == .listening
+                let now=controller.phase == .listening
+                if now != self.listening { DeskStore.voiceCue(start: now, sending: controller.working) }
+                self.listening=now
                 self.voiceWorking=controller.working
                 self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
                 self.partial=controller.phase == .listening ? controller.partial : controller.label
-                self.level=controller.level
+                // nivel suavizado: sube rápido, baja despacio; sin esto el orbe tiembla con cada muestra del micro
+                let target=now ? controller.level : 0
+                self.level = target > self.level ? self.level + (target - self.level) * 0.55 : self.level + (target - self.level) * 0.18
                 self.dictationNote=controller.phase == .idle ? "" : controller.label
             }
         }.store(in:&voiceBag)
@@ -203,6 +207,19 @@ final class DeskStore: ObservableObject {
         mode = DeskMode(rawValue: UserDefaults.standard.string(forKey: "mode") ?? "") ?? .dock
         collapsed = UserDefaults.standard.bool(forKey: "collapsed")
         style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .glass
+    }
+
+    /// Al empezar a escuchar y al soltar: un toque en el trackpad y un sonido muy bajo (Ajustes → Voz → Sonido y vibración).
+    static var voiceCues: Bool {
+        get { UserDefaults.standard.object(forKey: "voiceCues") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "voiceCues") }
+    }
+    private static let startSound: NSSound? = { let s = NSSound(named: "Tink"); s?.volume = 0.18; return s }()
+    private static let sendSound: NSSound? = { let s = NSSound(named: "Pop"); s?.volume = 0.14; return s }()
+    static func voiceCue(start: Bool, sending: Bool) {
+        guard voiceCues else { return }
+        if start { haptic(.generic); startSound?.stop(); startSound?.play() }
+        else if sending { haptic(.alignment); sendSound?.stop(); sendSound?.play() }
     }
 
     static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {

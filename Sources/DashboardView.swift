@@ -390,6 +390,7 @@ struct DashboardView: View {
             }
             DashSection(title: T.s("Keyboard & insertion", "Teclado e inserción"), footer: T.s("Hold Fn to dictate; double-tap Fn or Fn+Control for hands-free; Fn+Option edits the selection; Escape cancels. The clipboard is restored if it hasn't changed.", "Mantén Fn para dictar; doble toque o Fn+Control para manos libres; Fn+Opción edita la selección; Escape cancela. El portapapeles se restaura si no ha cambiado.")) {
                 DashToggle(title: T.s("Dictate with Fn", "Dictar con Fn"), detail: voice.shortcutStatus, isOn: $voice.preferences.fnEnabled)
+                DashToggle(title: T.s("Sound & haptics", "Sonido y vibración"), detail: T.s("A soft tap and click when it starts listening and when it sends", "Un toque y un clic suaves al empezar a escuchar y al enviar"), isOn: Binding(get: { DeskStore.voiceCues }, set: { DeskStore.voiceCues = $0; refresh() }))
                 DashToggle(title: T.s("Avoid Fn conflicts while Vowen is running", "Evitar conflictos de Fn con Vowen abierto"), isOn: $voice.preferences.avoidVowenConflict)
                 DashToggle(title: T.s("Insert automatically in the original field", "Insertar solo en el campo original"), isOn: $voice.preferences.autoPaste)
                 DashRow(title: T.s("Insertion method", "Método de inserción")) {
