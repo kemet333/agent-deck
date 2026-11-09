@@ -406,7 +406,7 @@ struct VoiceBlob: View {
     var body: some View {
         TimelineView(.animation) { ctx in
             let t = ctx.date.timeIntervalSinceReferenceDate
-            let l = CGFloat(min(level * 7, 1))
+            let l = CGFloat(min(max(level, 0), 1))
             ZStack {
                 Circle().fill(Color(hex: 0x1c0c06))
                 blob(Color(hex: 0xff5b1f), t, 1.4, 0, l)
@@ -420,9 +420,9 @@ struct VoiceBlob: View {
             .clipShape(Circle())
             .overlay(Circle().strokeBorder(.white.opacity(0.32), lineWidth: 0.8))
             .overlay(Circle().inset(by: size * 0.08).strokeBorder(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
-            .scaleEffect(1 + 0.2 * l)
-            .shadow(color: Color(hex: 0xff5b1f).opacity(0.5 + 0.35 * l), radius: size * (0.25 + 0.35 * l))
-            .animation(.easeOut(duration: 0.12), value: l)
+            .scaleEffect(1 + 0.18 * l)
+            .shadow(color: Color(hex: 0xff5b1f).opacity(0.45 + 0.4 * l), radius: size * (0.22 + 0.4 * l))
+            .animation(.interpolatingSpring(stiffness: 260, damping: 26), value: l)
         }
         .frame(width: size, height: size)
     }
@@ -442,7 +442,7 @@ struct Rings: View {
     let level: Float
     @Environment(\.barTheme) private var th
     var body: some View {
-        let l = CGFloat(min(level * 6, 1))
+        let l = CGFloat(min(max(level, 0), 1))
         ZStack {
             Circle().stroke(th.accent.opacity(0.18 + 0.25 * l), lineWidth: 1).frame(width: 26 + 26 * l, height: 26 + 26 * l)
             Circle().stroke(th.accent.opacity(0.10 + 0.15 * l), lineWidth: 1).frame(width: 36 + 40 * l, height: 36 + 40 * l)

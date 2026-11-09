@@ -148,7 +148,7 @@ final class DeskStore: ObservableObject {
                 self.voiceWorking=controller.working
                 self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
                 self.partial=controller.phase == .listening ? controller.partial : controller.label
-                self.level=controller.level
+                self.level=DeskStore.follow(self.level, DeskStore.loudness(now ? controller.level : 0))
                 self.dictationNote=controller.phase == .idle ? "" : controller.label
             }
         }.store(in:&voiceBag)
@@ -217,6 +217,20 @@ final class DeskStore: ObservableObject {
         guard voiceCues else { return }
         if start { Chime.play("start"); haptic(.generic) }
         else if sending { Chime.play("send"); haptic(.generic) }
+    }
+
+    /// Volumen del micro (amplitud lineal) → 0…1 en decibelios, como un vúmetro: -52 dB (silencio de sala) = 0, -14 dB (voz cerca) = 1.
+    /// En lineal la voz normal ya llenaba el orbe y el ruido de fondo lo hacía temblar (Diego, 09/11: «no reacciona acorde con la voz»).
+    nonisolated static func loudness(_ linear: Float) -> Float {
+        guard linear > 0 else { return 0 }
+        let db = 20 * log10(linear)
+        let x = max(0, min(1, (db + 52) / 38))
+        return x * x * (3 - 2 * x)   // curva suave en los extremos
+    }
+    /// Sube rápido cuando hablas y baja con calma: sin saltos entre muestras.
+    nonisolated static func follow(_ current: Float, _ target: Float) -> Float {
+        let next = current + (target - current) * (target > current ? 0.6 : 0.22)
+        return next < 0.01 ? 0 : next
     }
 
     static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {
@@ -462,7 +476,7 @@ final class DeskStore: ObservableObject {
             }
         } else {
             let d = Dictation(); alertApple = d
-            d.onLevel = { [weak self] l in self?.alertLevel = l }
+            d.onLevel = { [weak self] l in guard let self else { return }; self.alertLevel = DeskStore.follow(self.alertLevel, DeskStore.loudness(l)) }
             d.onEvent = { [weak self] state, text, _ in
                 guard let self else { return }
                 switch state {
