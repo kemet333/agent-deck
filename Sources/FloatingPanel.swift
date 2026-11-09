@@ -47,15 +47,15 @@ final class FloatingPanel: NSPanel {
             self?.relayout(animated: true, recenter: false)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.relayout(animated: true, recenter: false) }
         }.store(in: &bag)
-        store.$listening.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
-        store.$flash.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$listening.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$flash.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$alerts.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
             self?.relayout(animated: true, recenter: false)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { self?.relayout(animated: true, recenter: false) }
         }.store(in: &bag)
-        store.$voiceWorking.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
-        store.$voiceNeedsAttention.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
-        store.$partial.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: false, recenter: false) }.store(in: &bag)
+        store.$voiceWorking.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$voiceNeedsAttention.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$partial.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: false, recenter: false) }.store(in: &bag)
         store.$mode.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: true) }.store(in: &bag)
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.relayout(animated: false, recenter: false) }
@@ -136,9 +136,11 @@ final class FloatingPanel: NSPanel {
     }
 
     func relayout(animated: Bool, recenter: Bool, anchor dropped: NSPoint? = nil) {
-        host.rootView = DeskRoot(store: store)
+        host.rootView = DeskRoot(store: store)   // fuerza a SwiftUI a medir ya el estado nuevo
         host.layoutSubtreeIfNeeded()
         let size = host.fittingSize
+        // mismo tamaño y nada que recolocar: no se toca la ventana (una animación encima de otra la hacía temblar)
+        if dropped == nil, !recenter, isVisible, abs(size.width - frame.width) < 0.5, abs(size.height - frame.height) < 0.5, edge == nil || orbMode { return }
         var anchor: NSPoint
         // al tocar el orbe escondido en un lateral, la barra vuelve a su sitio de siempre (centrada abajo);
         // luego se puede volver a arrastrar donde se quiera

@@ -385,7 +385,7 @@ struct DashboardView: View {
                 DashRow(title: T.s("Sound", "Sonido"), detail: T.s("When it starts listening and when it sends", "Al empezar a escuchar y al enviar")) {
                     Picker("", selection: Binding(get: { Chime.current }, set: { v in Chime.current = v; Chime.play("start", set: v); DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Chime.play("send", set: v) }; refresh() })) {
                         ForEach(Chime.Set.allCases) { Text($0.title).tag($0) }
-                    }.pickerStyle(.segmented).labelsHidden().fixedSize()
+                    }.pickerStyle(.menu).labelsHidden().fixedSize()
                     Button { Chime.play("start"); DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Chime.play("send") } } label: { Image(systemName: "play.fill") }
                         .controlSize(.small).disabled(Chime.current == .none).help(T.s("Play", "Escuchar"))
                 }

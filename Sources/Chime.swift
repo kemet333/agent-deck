@@ -7,10 +7,13 @@ import Foundation
 @MainActor
 enum Chime {
     enum Set: String, CaseIterable, Identifiable {
-        case knock, marimba, bubble, none
+        case siri, messages, dictation, knock, marimba, bubble, none
         var id: String { rawValue }
         var title: String {
             switch self {
+            case .siri: return "Siri"
+            case .messages: return T.s("Messages", "Mensajes")
+            case .dictation: return T.s("Dictation", "Dictado")
             case .knock: return T.s("Knock", "Toque")
             case .marimba: return T.s("Marimba", "Marimba")
             case .bubble: return T.s("Bubble", "Burbuja")
@@ -20,13 +23,30 @@ enum Chime {
     }
     static let rate = 44_100.0
     static var current: Set {
-        get { Set(rawValue: UserDefaults.standard.string(forKey: "voiceSound") ?? "") ?? (UserDefaults.standard.object(forKey: "voiceCues") as? Bool == false ? .none : .knock) }
+        get { Set(rawValue: UserDefaults.standard.string(forKey: "voiceSound") ?? "") ?? (UserDefaults.standard.object(forKey: "voiceCues") as? Bool == false ? .none : .siri) }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: "voiceSound") }
     }
     private static var players: [String: AVAudioPlayer] = [:]
+    /// Los sonidos de Apple ya instalados en macOS: se reproducen desde el sistema, sin copiarlos a la app.
+    /// Si en alguna versión de macOS no están, suena el toque propio.
+    static let systemFolder = "/System/Library/Components/CoreAudio.component/Contents/SharedSupport/SystemSounds/"
+    static func systemFiles(_ set: Set) -> (start: String, send: String)? {
+        switch set {
+        case .siri: return ("siri/jbl_begin_short.caf", "siri/jbl_confirm.caf")
+        case .messages: return ("system/mic_unmute.caf", "system/SentMessage.caf")
+        case .dictation: return ("system/begin_record.caf", "system/end_record.caf")
+        default: return nil
+        }
+    }
 
     static func prepare() {
-        for set in Set.allCases where set != .none {
+        for set in Set.allCases {
+            guard let files = systemFiles(set) else { continue }
+            for (cue, file) in [("start", files.start), ("send", files.send)] {
+                if let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: systemFolder + file)) { p.volume = 0.6; p.prepareToPlay(); players[set.rawValue + "-" + cue] = p }
+            }
+        }
+        for set in Set.allCases where set != .none && systemFiles(set) == nil {
             for (cue, samples) in [("start", samples(set, start: true)), ("send", samples(set, start: false))] {
                 if let p = try? AVAudioPlayer(data: wav(samples)) { p.volume = 0.5; p.prepareToPlay(); players[set.rawValue + "-" + cue] = p }
             }
@@ -36,7 +56,7 @@ enum Chime {
         let set = chosen ?? current
         guard set != .none else { return }
         if players.isEmpty { prepare() }
-        guard let p = players[set.rawValue + "-" + cue] else { return }
+        guard let p = players[set.rawValue + "-" + cue] ?? players["knock-" + cue] else { return }
         p.stop(); p.currentTime = 0; p.play()
     }
 
@@ -65,7 +85,7 @@ enum Chime {
             // una burbuja que sube; al enviar, más arriba y más rápida
             if start { tone(from: 240, to: 460, at: 0, attack: 0.004, decay: 0.05, gain: 1, glide: 0.035, into: &s) }
             else { tone(from: 380, to: 820, at: 0, attack: 0.003, decay: 0.045, gain: 1, glide: 0.025, into: &s) }
-        case .none: break
+        case .siri, .messages, .dictation, .none: break
         }
         // recorta el silencio del final
         if let last = s.lastIndex(where: { abs($0) > 0.0005 }) { s = Array(s[...min(s.count - 1, last + Int(0.01 * rate))]) }

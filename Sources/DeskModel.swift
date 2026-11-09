@@ -152,14 +152,19 @@ final class DeskStore: ObservableObject {
                     DeskStore.voiceCue(start: now, sending: controller.working)
                     if now { self.startPulse += 1 } else if controller.working { self.sendPulse += 1 }
                 }
-                self.listening=now
-                self.voiceWorking=controller.working
-                self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
-                self.partial=controller.phase == .listening ? controller.partial : controller.label
+                // solo se publica lo que cambia: antes cada muestra del micro (20 por segundo) «cambiaba» todo y la ventana
+                // se recolocaba sin parar, y la cápsula entera temblaba (Diego, 09/11)
+                if self.listening != now { self.listening=now }
+                if self.voiceWorking != controller.working { self.voiceWorking=controller.working }
+                let attention=controller.phase == .draft || controller.phase == .failed
+                if self.voiceNeedsAttention != attention { self.voiceNeedsAttention=attention }
+                let shown=controller.phase == .listening ? controller.partial : controller.label
+                if self.partial != shown { self.partial=shown }
                 // el micro también oye el sonido de empezar: sin esto el orbe da un salto raro justo al pulsar Fn
                 let settled = Date().timeIntervalSince(self.listeningSince) > 0.35
                 self.level=DeskStore.follow(self.level, DeskStore.loudness(now && settled ? controller.level : 0))
-                self.dictationNote=controller.phase == .idle ? "" : controller.label
+                let note=controller.phase == .idle ? "" : controller.label
+                if self.dictationNote != note { self.dictationNote=note }
             }
         }.store(in:&voiceBag)
         return controller
