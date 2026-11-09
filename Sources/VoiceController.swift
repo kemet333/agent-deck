@@ -119,6 +119,8 @@ final class VoiceController: ObservableObject {
     private let microphonePermission: () async -> Bool
     private var apple: Dictation?
     private var target: TextTarget?
+    /// El destino es solo la app de delante (no se supo el campo): se entrega por el camino rápido.
+    private var loose=false
     private var sessionID: UUID?
     private var operation: Task<Void,Never>?
     private var audio: Data?
@@ -182,7 +184,13 @@ final class VoiceController: ObservableObject {
         // sin clave de OpenAI, Fn sigue funcionando con el dictado del Mac (en el propio equipo) y sin limpieza
         if !command && key().isEmpty && snapshot.engine == .openAI { snapshot.engine = .apple; snapshot.tone = .verbatim; snapshot.appTones = [:] }
         let app=frontApp()
-        do{target = snapshot.autoPaste || command ? try captureTarget(command):nil}catch{fail(error.localizedDescription);showWorkspace?();return}
+        loose=false
+        do{target = snapshot.autoPaste || command ? try captureTarget(command):nil}catch{
+            // Sin campo conocido (Claude, ChatGPT y otras apps Electron a veces no lo dicen): se graba igual y se pega
+            // donde esté el cursor, como las teclas de la barra. Los campos de contraseña y el modo edición siguen fuera.
+            if !command, (error as? VoiceServiceError)?.message == Sender.noFocusedField.message, let t=Sender.looseTarget() { target=t;loose=true;log("sin campo conocido en "+t.app+": se pegará donde esté el cursor") }
+            else { fail(error.localizedDescription);log("  ↳ app: "+app.name);showWorkspace?();return }
+        }
         capturedBundle=target?.bundle ?? app.bundle
         // Apple sin clave de OpenAI: se escribe tal cual (limpiar necesitaría la clave), salvo un tono puesto a propósito para esa app
         if !command && key().isEmpty && snapshot.engine == .apple && snapshot.appTones[capturedBundle ?? ""] == nil { snapshot.tone = .verbatim }
@@ -294,11 +302,12 @@ final class VoiceController: ObservableObject {
         phase = .inserting
         // Dictado a un chat que sigue delante: el mismo camino que las teclas de la barra, que sí envía en Claude,
         // ChatGPT o Cursor. Los terminales protegidos y la edición de una selección siguen por el camino con comprobaciones.
-        if usesQuickSend, purpose == .dictation, snapshot.insertion == .paste, !(snapshot.guardTerminal && Sender.isTerminal(target)),
+        let protectedTerminal = snapshot.guardTerminal && Sender.isTerminal(target)
+        if usesQuickSend || loose, purpose == .dictation, loose || (snapshot.insertion == .paste && !protectedTerminal),
            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundle {
             if let r=releasedAt { lastLatency=Date().timeIntervalSince(r)+0.17;releasedAt=nil
                 log(String(format:"listo en %.2f s (%@)",lastLatency!,usedLive ? "tiempo real" : "grabación")) }
-            Sender.quickSend(text,enter:snapshot.autoEnter){[weak self] result in
+            Sender.quickSend(text,enter:snapshot.autoEnter && !protectedTerminal){[weak self] result in
                 guard let self,self.sessionID==id else{return}
                 if case .failure(let e)=result{Sender.copy(text);self.log("envío rápido: "+e.localizedDescription)}
                 if self.draft==text{self.draft="";self.raw="";self.phase = .idle}

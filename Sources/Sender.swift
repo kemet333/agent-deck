@@ -53,9 +53,16 @@ enum Sender {
         guard let value = attribute(field,kAXSelectedTextRangeAttribute),CFGetTypeID(value)==AXValueGetTypeID() else { return nil }
         let ax = unsafeBitCast(value,to:AXValue.self);var r = CFRange();guard AXValueGetValue(ax,.cfRange,&r) else { return nil };return r
     }
+    /// Algunas apps (Electron, webs) no dicen por Accesibilidad qué campo tiene el cursor.
+    static let noFocusedField = VoiceServiceError(message:T.s("Place the cursor in the destination text field first.","Coloca primero el cursor en el campo de texto de destino."))
+    /// Destino sin campo conocido: la app de delante. Solo para pegar donde esté el cursor (el camino de las teclas de la barra).
+    static func looseTarget()->TextTarget? {
+        guard accessibilityGranted(prompt:false),let app = NSWorkspace.shared.frontmostApplication,app.bundleIdentifier != Bundle.main.bundleIdentifier else { return nil }
+        return TextTarget(pid:app.processIdentifier,app:app.localizedName ?? "App",bundle:app.bundleIdentifier ?? "",field:AXUIElementCreateApplication(app.processIdentifier),window:nil,selection:nil,selectedText:nil)
+    }
     static func capture(selection:Bool = false)throws->TextTarget {
         guard accessibilityGranted(prompt:false) else { throw VoiceServiceError(message:T.s("Allow Accessibility to insert text. Your draft is kept.","Permite Accesibilidad para insertar texto. Se conserva el borrador.")) }
-        guard let app = NSWorkspace.shared.frontmostApplication,app.bundleIdentifier != Bundle.main.bundleIdentifier,let field = focused(app.processIdentifier) else { throw VoiceServiceError(message:T.s("Place the cursor in the destination text field first.","Coloca primero el cursor en el campo de texto de destino.")) }
+        guard let app = NSWorkspace.shared.frontmostApplication,app.bundleIdentifier != Bundle.main.bundleIdentifier,let field = focused(app.processIdentifier) else { throw noFocusedField }
         let role = attribute(field,kAXRoleAttribute) as? String ?? "",subrole = attribute(field,kAXSubroleAttribute) as? String ?? ""
         var settable = DarwinBoolean(false);AXUIElementIsAttributeSettable(field,kAXSelectedTextAttribute as CFString,&settable)
         guard subrole != kAXSecureTextFieldSubrole,([kAXTextFieldRole,kAXTextAreaRole,kAXComboBoxRole].contains(role)||settable.boolValue) else { throw VoiceServiceError(message:T.s("The focused item cannot receive dictation. Password fields are excluded.","El elemento seleccionado no admite dictado. Los campos de contraseña están excluidos.")) }
