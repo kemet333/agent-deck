@@ -137,7 +137,11 @@ final class DeskStore: ObservableObject {
         let controller = VoiceController(storage: VoiceStorage(folder: Self.folder))
         controller.onDelivered = { [weak self, weak controller] text in
             let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
-            if let l=controller?.lastLatency {
+            if controller?.noisy == true {
+                let n=T.s("Voices around: press Enter to send","Hay voces alrededor: pulsa Intro para enviar")
+                self?.flash=n
+                DispatchQueue.main.asyncAfter(deadline:.now()+3.5){ if self?.flash==n { self?.flash="" } }
+            } else if let l=controller?.lastLatency {
                 let n=String(format:T.s("Done in %.1f s","Listo en %.1f s"),l).replacingOccurrences(of:".",with:T.es ? "," : ".")
                 self?.flash=n
                 DispatchQueue.main.asyncAfter(deadline:.now()+2.2){ if self?.flash==n { self?.flash="" } }

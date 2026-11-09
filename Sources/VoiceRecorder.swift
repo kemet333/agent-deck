@@ -13,8 +13,10 @@ protocol VoiceRecording: AnyObject {
     var peakDB: Float { get }
     /// No contar como voz lo que suena en los próximos segundos (el sonido de Agent Bar al empezar, que el micro también oye).
     func ignorePeaks(for seconds: TimeInterval)
+    /// El ruido de fondo de esta grabación, en dB: el nivel de las pausas (el 20 % más bajo). -160 si no se sabe.
+    var floorDB: Float { get }
 }
-extension VoiceRecording { var peakDB: Float { -160 }; func ignorePeaks(for seconds: TimeInterval) {} }
+extension VoiceRecording { var peakDB: Float { -160 }; var floorDB: Float { -160 }; func ignorePeaks(for seconds: TimeInterval) {} }
 @MainActor
 final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
     private var recorder: AVAudioRecorder?
@@ -24,6 +26,11 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
     var peakDB: Float { peak }
     private var ignoreUntil = Date.distantPast
     func ignorePeaks(for seconds: TimeInterval) { ignoreUntil = Date().addingTimeInterval(seconds) }
+    private var levels: [Float] = []
+    var floorDB: Float {
+        guard levels.count >= 8 else { return -160 }
+        let sorted = levels.sorted(); return sorted[sorted.count / 5]
+    }
     var onLevel: ((Float)->Void)?
     var onLimit: (()->Void)?
     var onFailure: (()->Void)?
@@ -38,11 +45,11 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
             r.delegate = self;r.isMeteringEnabled = true
             guard r.prepareToRecord(),r.record() else { throw VoiceServiceError(message:T.s("The microphone could not start.","No se ha podido iniciar el micrófono.")) }
             try FileManager.default.setAttributes([.posixPermissions:0o600],ofItemAtPath:path.path)
-            recorder = r;peak = -160
+            recorder = r;peak = -160;levels = []
             timer = Timer.scheduledTimer(withTimeInterval:0.05,repeats:true){[weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self,let r = self.recorder else { return };r.updateMeters()
-                    let power = r.averagePower(forChannel:0);if Date() >= self.ignoreUntil { self.peak = max(self.peak,power) }
+                    let power = r.averagePower(forChannel:0);if Date() >= self.ignoreUntil { self.peak = max(self.peak,power);self.levels.append(power) }
                     self.onLevel?(pow(10,power/20))
                     if r.currentTime >= 180 { self.onLimit?() }
                 }

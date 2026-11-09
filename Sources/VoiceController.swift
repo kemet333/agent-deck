@@ -120,6 +120,10 @@ final class VoiceController: ObservableObject {
     private var apple: Dictation?
     /// Por debajo de este pico (dB) solo se oían voces lejanas y no se envía nada.
     static let nearVoiceDB: Float = -34
+    /// Por encima de este fondo (dB) hay voces o ruido alrededor: se pega sin pulsar Intro.
+    static let noisyFloorDB: Float = -42
+    /// La última grabación tenía ruido alrededor: se pega sin enviar.
+    private(set) var noisy = false
     /// Lo que suena al empezar (el de Siri dura casi 1 s) y un poco más: el micro lo oye, no es tu voz.
     static var cueWindow: TimeInterval { usesSound ? max(0.4, Chime.startLength + 0.12) : 0.25 }
     static var usesSound: Bool { Chime.current != .none }
@@ -189,7 +193,7 @@ final class VoiceController: ObservableObject {
         // sin clave de OpenAI, Fn sigue funcionando con el dictado del Mac (en el propio equipo) y sin limpieza
         if !command && key().isEmpty && snapshot.engine == .openAI { snapshot.engine = .apple; snapshot.tone = .verbatim; snapshot.appTones = [:] }
         let app=frontApp()
-        loose=false
+        loose=false;noisy=false
         do{target = snapshot.autoPaste || command ? try captureTarget(command):nil}catch{
             // Sin campo conocido (Claude, ChatGPT y otras apps Electron a veces no lo dicen): se graba igual y se pega
             // donde esté el cursor, como las teclas de la barra. Los campos de contraseña y el modo edición siguen fuera.
@@ -238,8 +242,13 @@ final class VoiceController: ObservableObject {
         // la de otros a un metro se queda por debajo (Diego, 09/11: «se ha colado» varias veces). Cada pico queda en voice.log.
         // con el micro de verdad, -160 es que todo cupo dentro del sonido de empezar (un toque corto): silencio
         let loudest = recorder.peakDB > -160 || !(recorder is VoiceRecorder) ? recorder.peakDB : -90
+        // ¿hay voces o ruido alrededor? El nivel de las pausas entre tus palabras: en una habitación tranquila ronda -50 dB;
+        // con gente hablando cerca, sube a -40 o más, y tu voz apenas destaca. Entonces se pega sin Intro: lo envías tú.
+        let floor = recorder.floorDB
+        // muy corta (casi todo bajo el sonido de empezar): no se puede saber; por si acaso, tampoco se envía sola
+        noisy = usesQuickSend && recorder is VoiceRecorder && (floor <= -160 || floor > VoiceController.noisyFloorDB || loudest - floor < 12)
         if snapshot.engine == .openAI && loudest > -160 {
-            log(String(format:"pico %.0f dB",loudest))
+            log(String(format:"pico %.0f dB · fondo %@",loudest,floor > -160 ? String(format:"%.0f dB",floor) : "?")+(noisy ? " · ruido alrededor: sin Intro" : ""))
             // si ya ha llegado texto en tiempo real, has hablado: nunca se descarta (una palabra rápida bajo el sonido de empezar)
             if usesQuickSend && loudest < VoiceController.nearVoiceDB && live.text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty {
                 cancel();fail(loudest < -45 ? T.s("I didn't hear anything. Nothing was sent.","No te he oído. No he enviado nada.") : T.s("Only distant voices: nothing was sent.","Solo voces lejanas: no he enviado nada."));return
@@ -327,7 +336,7 @@ final class VoiceController: ObservableObject {
            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundle {
             if let r=releasedAt { lastLatency=Date().timeIntervalSince(r)+0.17;releasedAt=nil
                 log(String(format:"listo en %.2f s (%@)",lastLatency!,usedLive ? "tiempo real" : "grabación")) }
-            Sender.quickSend(text,enter:snapshot.autoEnter && !protectedTerminal){[weak self] result in
+            Sender.quickSend(text,enter:snapshot.autoEnter && !protectedTerminal && !noisy){[weak self] result in
                 guard let self,self.sessionID==id else{return}
                 if case .failure(let e)=result{Sender.copy(text);self.log("envío rápido: "+e.localizedDescription)}
                 if self.draft==text{self.draft="";self.raw="";self.phase = .idle}
