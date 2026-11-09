@@ -240,7 +240,8 @@ final class VoiceController: ObservableObject {
         let loudest = recorder.peakDB > -160 || !(recorder is VoiceRecorder) ? recorder.peakDB : -90
         if snapshot.engine == .openAI && loudest > -160 {
             log(String(format:"pico %.0f dB",loudest))
-            if usesQuickSend && loudest < VoiceController.nearVoiceDB {
+            // si ya ha llegado texto en tiempo real, has hablado: nunca se descarta (una palabra rápida bajo el sonido de empezar)
+            if usesQuickSend && loudest < VoiceController.nearVoiceDB && live.text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty {
                 cancel();fail(loudest < -45 ? T.s("I didn't hear anything. Nothing was sent.","No te he oído. No he enviado nada.") : T.s("Only distant voices: nothing was sent.","Solo voces lejanas: no he enviado nada."));return
             }
         }

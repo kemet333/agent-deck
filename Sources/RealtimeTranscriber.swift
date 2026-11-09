@@ -14,7 +14,7 @@ final class RealtimeTranscriber {
     private var pending: [Data] = []          // audio grabado antes de que la conexión esté lista
     private var ready = false
     private var failed = false
-    private var text = ""                     // lo que va llegando
+    private(set) var text = ""                // lo que va llegando
     private var finalText: String?
     private var waiters: [(String?) -> Void] = []
     private(set) var running = false
