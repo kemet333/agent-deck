@@ -360,6 +360,8 @@ struct Orb: View {
         Button(action: { store.toggleCollapsed() }) {
             HStack(spacing: 10) {
                 ZStack {
+                    Ripple(trigger: store.startPulse, color: th.accent, size: 30)
+                    Ripple(trigger: store.sendPulse, color: th.accent.opacity(0.8), size: 22, reach: 1.7)
                     if store.listening {
                         VoiceBlob(level: store.level, size: 30).transition(.scale(scale: 0.5).combined(with: .opacity))
                     } else {
@@ -433,6 +435,26 @@ struct VoiceBlob: View {
             .rotationEffect(.radians(t * speed * 0.7 + phase))
             .offset(x: CGFloat(cos(t * speed + phase)) * r, y: CGFloat(sin(t * speed * 1.27 + phase)) * r)
             .blendMode(.plusLighter)
+    }
+}
+
+/// Una onda que sale del orbe y se desvanece: al empezar a escuchar y al enviar.
+struct Ripple: View {
+    let trigger: Int
+    var color: Color
+    var size: CGFloat
+    var reach: CGFloat = 1.9
+    @State private var p: CGFloat = 1
+    var body: some View {
+        Circle().strokeBorder(color, lineWidth: 1.5)
+            .frame(width: size, height: size)
+            .scaleEffect(1 + (reach - 1) * p)
+            .opacity(Double(0.6 * (1 - p)))
+            .allowsHitTesting(false)
+            .onChange(of: trigger) { _, _ in
+                p = 0
+                withAnimation(.timingCurve(0.16, 1, 0.3, 1, duration: 0.65)) { p = 1 }
+            }
     }
 }
 
@@ -670,6 +692,8 @@ struct DictateItem: View {
         Button(action: { DeskStore.haptic(.levelChange); store.toggleDictation() }) {
             VStack(spacing: 4) {
                 ZStack {
+                    Ripple(trigger: store.startPulse, color: th.accent, size: 22)
+                    Ripple(trigger: store.sendPulse, color: th.accent.opacity(0.8), size: 18, reach: 1.7)
                     if store.listening {
                         VoiceBlob(level: store.level, size: 22).transition(.scale(scale: 0.5).combined(with: .opacity))
                     } else {

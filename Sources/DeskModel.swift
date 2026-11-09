@@ -120,6 +120,9 @@ final class DeskStore: ObservableObject {
     @Published var listening: Bool = false
     @Published var partial: String = ""
     @Published var level: Float = 0
+    /// Cuentan los inicios y envíos de la voz: el orbe suelta una onda en cada uno.
+    @Published var startPulse = 0
+    @Published var sendPulse = 0
     @Published var dictationNote: String = ""
     @Published var voiceWorking = false
     @Published var voiceNeedsAttention = false
@@ -143,7 +146,10 @@ final class DeskStore: ObservableObject {
             DispatchQueue.main.async {
                 guard let self, let controller else { return }
                 let now=controller.phase == .listening
-                if now != self.listening { DeskStore.voiceCue(start: now, sending: controller.working) }
+                if now != self.listening {
+                    DeskStore.voiceCue(start: now, sending: controller.working)
+                    if now { self.startPulse += 1 } else if controller.working { self.sendPulse += 1 }
+                }
                 self.listening=now
                 self.voiceWorking=controller.working
                 self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
@@ -207,14 +213,9 @@ final class DeskStore: ObservableObject {
         style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .glass
     }
 
-    /// Al empezar a escuchar y al enviar: un toque grave y corto que se siente como vibración (Chime), y el del trackpad si
-    /// tienes el dedo encima (Ajustes → Voz → Toque). Diego, 09/11: sin melodías, como Vowen.
-    static var voiceCues: Bool {
-        get { UserDefaults.standard.object(forKey: "voiceCues") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "voiceCues") }
-    }
+    /// Al empezar a escuchar y al enviar: el sonido elegido (Chime, Ajustes → Voz → Sonido) y el toque del trackpad si tienes
+    /// el dedo encima. El orbe, además, suelta una onda (startPulse / sendPulse).
     static func voiceCue(start: Bool, sending: Bool) {
-        guard voiceCues else { return }
         if start { Chime.play("start"); haptic(.generic) }
         else if sending { Chime.play("send"); haptic(.generic) }
     }

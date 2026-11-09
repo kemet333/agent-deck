@@ -382,6 +382,13 @@ struct DashboardView: View {
                 if !voice.keyTest.isEmpty { Text(voice.keyTest).font(.system(size: 11)).foregroundStyle(.secondary).padding(.horizontal, 14).padding(.bottom, 10).frame(maxWidth: .infinity, alignment: .leading) }
             }
             DashSection(title: T.s("While you talk", "Mientras hablas")) {
+                DashRow(title: T.s("Sound", "Sonido"), detail: T.s("When it starts listening and when it sends", "Al empezar a escuchar y al enviar")) {
+                    Picker("", selection: Binding(get: { Chime.current }, set: { v in Chime.current = v; Chime.play("start", set: v); DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Chime.play("send", set: v) }; refresh() })) {
+                        ForEach(Chime.Set.allCases) { Text($0.title).tag($0) }
+                    }.pickerStyle(.segmented).labelsHidden().fixedSize()
+                    Button { Chime.play("start"); DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Chime.play("send") } } label: { Image(systemName: "play.fill") }
+                        .controlSize(.small).disabled(Chime.current == .none).help(T.s("Play", "Escuchar"))
+                }
                 DashToggle(title: T.s("Transcribe while I talk", "Transcribir mientras hablo"), detail: T.s("Faster; uses gpt-live-transcribe", "Más rápido; usa gpt-live-transcribe"), isOn: $voice.preferences.streaming)
                 DashToggle(title: T.s("Show my words while I talk", "Ver mis palabras mientras hablo"), isOn: $voice.preferences.showLiveText).disabled(!voice.preferences.streaming)
                 DashRow(title: T.s("Language", "Idioma"), detail: T.s("es, en… Blank for automatic", "es, en… Vacío para automático"), divider: false) {
@@ -390,10 +397,6 @@ struct DashboardView: View {
             }
             DashSection(title: T.s("Keyboard & insertion", "Teclado e inserción"), footer: T.s("Hold Fn to dictate; double-tap Fn or Fn+Control for hands-free; Fn+Option edits the selection; Escape cancels. The clipboard is restored if it hasn't changed.", "Mantén Fn para dictar; doble toque o Fn+Control para manos libres; Fn+Opción edita la selección; Escape cancela. El portapapeles se restaura si no ha cambiado.")) {
                 DashToggle(title: T.s("Dictate with Fn", "Dictar con Fn"), detail: voice.shortcutStatus, isOn: $voice.preferences.fnEnabled)
-                DashRow(title: T.s("Tap feedback", "Toque"), detail: T.s("A short, low knock when it starts listening and when it sends", "Un golpe corto y grave al empezar a escuchar y al enviar")) {
-                    Button(T.s("Play", "Escuchar")) { Chime.play("start"); DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { Chime.play("send") } }.controlSize(.small)
-                    Toggle("", isOn: Binding(get: { DeskStore.voiceCues }, set: { DeskStore.voiceCues = $0; refresh() })).labelsHidden().toggleStyle(.switch).controlSize(.small)
-                }
                 DashToggle(title: T.s("Avoid Fn conflicts while Vowen is running", "Evitar conflictos de Fn con Vowen abierto"), isOn: $voice.preferences.avoidVowenConflict)
                 DashToggle(title: T.s("Insert automatically in the original field", "Insertar solo en el campo original"), isOn: $voice.preferences.autoPaste)
                 DashRow(title: T.s("Insertion method", "Método de inserción")) {
