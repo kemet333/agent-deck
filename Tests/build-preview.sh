@@ -8,7 +8,7 @@ xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_previ
  "$project_dir/Tests/VoicePreviewApp.swift" "$project_dir/Sources/DeskModel.swift" "$project_dir/Sources/DeskView.swift" \
  "$project_dir/Sources/Sender.swift" "$project_dir/Sources/Dictation.swift" "$project_dir/Sources/Strings.swift" \
  "$project_dir/Sources/VoiceModels.swift" "${project_dir}/Sources/VoiceAudioFile.swift" "$project_dir/Sources/OpenAIVoiceClient.swift" "$project_dir/Sources/VoiceKeychain.swift" \
- "$project_dir/Sources/VoiceRecorder.swift" "$project_dir/Sources/VoiceController.swift" "$project_dir/Sources/VoiceWorkspaceView.swift" \
+ "$project_dir/Sources/VoiceRecorder.swift" "$project_dir/Sources/VoiceController.swift" "$project_dir/Sources/Chime.swift" "$project_dir/Sources/VoiceWorkspaceView.swift" \
  "$project_dir/Sources/FlowCore.swift" "$project_dir/Sources/FlowController.swift" "$project_dir/Sources/FlowWorkspaceView.swift" \
  -framework SwiftUI -framework AppKit -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication -o "$app_dir/Contents/MacOS/VoicePreview"
 cat > "$app_dir/Contents/Info.plist" <<'PLIST'

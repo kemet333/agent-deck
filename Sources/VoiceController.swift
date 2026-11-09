@@ -236,11 +236,12 @@ final class VoiceController: ObservableObject {
         guard phase == .listening,let id=sessionID else{return}
         // Solo voces lejanas (la mesa de al lado, una tele): no se envía nada. Tu voz cerca del micro pasa de ~-28 dB;
         // la de otros a un metro se queda por debajo (Diego, 09/11: «se ha colado» varias veces). Cada pico queda en voice.log.
-        let loudest=recorder.peakDB
+        // con el micro de verdad, -160 es que todo cupo dentro del sonido de empezar (un toque corto): silencio
+        let loudest = recorder.peakDB > -160 || !(recorder is VoiceRecorder) ? recorder.peakDB : -90
         if snapshot.engine == .openAI && loudest > -160 {
             log(String(format:"pico %.0f dB",loudest))
             if usesQuickSend && loudest < VoiceController.nearVoiceDB {
-                cancel();fail(T.s("Only distant voices: nothing was sent.","Solo voces lejanas: no he enviado nada."));return
+                cancel();fail(loudest < -45 ? T.s("I didn't hear anything. Nothing was sent.","No te he oído. No he enviado nada.") : T.s("Only distant voices: nothing was sent.","Solo voces lejanas: no he enviado nada."));return
             }
         }
         phase = .transcribing;level=0;releasedAt=Date();usedLive=false;lastLatency=nil
@@ -252,10 +253,10 @@ final class VoiceController: ObservableObject {
             let batch = { do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)} }
             guard self.live.running else { batch(); return }
             // el texto en tiempo real ya está casi listo; si no llega en 3 s, la grabación normal
-            self.live.finish(timeout: loudest < -30 ? 1.2 : 3) { [weak self] text in
+            self.live.finish(timeout: loudest > -160 && loudest < -30 ? 1.2 : 3) { [weak self] text in
                 guard let self, self.sessionID==id, self.phase == .transcribing else { return }
                 if let text, !text.isEmpty { self.recorder.cancel(); self.audio=nil; self.usedLive=true; self.process(text,id:id) }
-                else if loudest < -30 {
+                else if loudest > -160 && loudest < -30 {
                     // sin texto y casi sin sonido: no hace falta mandar la grabación; se libera ya para volver a pulsar
                     self.recorder.cancel(); self.audio=nil; self.fail(T.s("I didn't hear anything. Nothing was sent.","No te he oído. No he enviado nada."))
                 }
