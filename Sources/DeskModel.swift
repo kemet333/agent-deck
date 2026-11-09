@@ -148,9 +148,7 @@ final class DeskStore: ObservableObject {
                 self.voiceWorking=controller.working
                 self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
                 self.partial=controller.phase == .listening ? controller.partial : controller.label
-                // nivel suavizado: sube rápido, baja despacio; sin esto el orbe tiembla con cada muestra del micro
-                let target=now ? controller.level : 0
-                self.level = target > self.level ? self.level + (target - self.level) * 0.55 : self.level + (target - self.level) * 0.18
+                self.level=controller.level
                 self.dictationNote=controller.phase == .idle ? "" : controller.label
             }
         }.store(in:&voiceBag)
@@ -209,17 +207,13 @@ final class DeskStore: ObservableObject {
         style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .glass
     }
 
-    /// Al empezar a escuchar y al soltar: un toque en el trackpad y un sonido muy bajo (Ajustes → Voz → Sonido y vibración).
+    /// Al empezar a escuchar: una vibración sutil en el trackpad (Ajustes → Voz → Vibración). Sin sonidos (Diego, 09/11).
     static var voiceCues: Bool {
         get { UserDefaults.standard.object(forKey: "voiceCues") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "voiceCues") }
     }
-    private static let startSound: NSSound? = { let s = NSSound(named: "Tink"); s?.volume = 0.18; return s }()
-    private static let sendSound: NSSound? = { let s = NSSound(named: "Pop"); s?.volume = 0.14; return s }()
     static func voiceCue(start: Bool, sending: Bool) {
-        guard voiceCues else { return }
-        if start { haptic(.generic); startSound?.stop(); startSound?.play() }
-        else if sending { haptic(.alignment); sendSound?.stop(); sendSound?.play() }
+        if start && voiceCues { haptic(.generic) }
     }
 
     static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {
@@ -460,7 +454,7 @@ final class DeskStore: ObservableObject {
         if voice.preferences.engine == .openAI, let k = VoiceKeychain.read(), !k.isEmpty {
             let live = RealtimeTranscriber(); alertLive = live
             live.onPartial = { [weak self] t in self?.alertHeard = t }
-            if !live.start(key: k, model: voice.preferences.liveModel, language: voice.preferences.language, keywords: voice.preferences.keywords) {
+            if !live.start(key: k, model: voice.preferences.liveModel, languages: voice.preferences.spokenLanguages, keywords: voice.preferences.keywords) {
                 alertListening = nil; flashNote(T.s("The microphone couldn't start", "No se ha podido abrir el micrófono"))
             }
         } else {

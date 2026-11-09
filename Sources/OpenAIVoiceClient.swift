@@ -61,7 +61,7 @@ final class OpenAIVoiceClient: NSObject, URLSessionTaskDelegate, @unchecked Send
         func append(_ s: String) { body.append(Data(s.utf8)) }
         func field(_ name: String, _ value: String) { append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n") }
         field("model", preferences.transcriptionModel)
-        if !preferences.language.isEmpty { field("languages[]", preferences.language) }
+        for lang in preferences.spokenLanguages { field("languages[]", lang) }
         for word in preferences.keywords { field("keywords[]", word) }
         let ext = URL(fileURLWithPath: filename).pathExtension.lowercased()
         let allowed = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"]

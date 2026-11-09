@@ -96,7 +96,7 @@ final class VoiceController: ObservableObject {
         guard usesQuickSend, preferences.streaming, preferences.engine == .openAI, !live.running else { return }
         let k = key(); guard !k.isEmpty else { return }
         live.onPartial = { [weak self] t in guard let self, self.preferences.showLiveText, self.phase == .listening || self.prewarmed else { return }; self.partial = t }
-        _ = live.start(key: k, model: preferences.liveModel, language: preferences.language, keywords: preferences.keywords)
+        _ = live.start(key: k, model: preferences.liveModel, languages: preferences.spokenLanguages, keywords: preferences.keywords)
     }
     /// Fn subió sin llegar a dictar (un toque, o un atajo con Fn): se tira lo grabado.
     func dropPrewarm() {

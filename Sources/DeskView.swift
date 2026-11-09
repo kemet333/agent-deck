@@ -19,8 +19,6 @@ enum Motion {
     static let tap = Animation.spring(response: 0.26, dampingFraction: 0.55)
     static let settle = Animation.spring(response: 0.42, dampingFraction: 0.78)
     static let fold = Animation.spring(response: 0.46, dampingFraction: 0.82)
-    /// El orbe de voz al aparecer: un rebote corto y blando.
-    static let pop = Animation.spring(response: 0.34, dampingFraction: 0.62)
 }
 
 @MainActor
@@ -363,7 +361,7 @@ struct Orb: View {
             HStack(spacing: 10) {
                 ZStack {
                     if store.listening {
-                        VoiceBlob(level: store.level, size: 30).transition(.scale(scale: 0.6).combined(with: .opacity).animation(Motion.pop))
+                        VoiceBlob(level: store.level, size: 30).transition(.scale(scale: 0.5).combined(with: .opacity))
                     } else {
                     TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                         let t = ctx.date.timeIntervalSinceReferenceDate
@@ -422,14 +420,14 @@ struct VoiceBlob: View {
             .clipShape(Circle())
             .overlay(Circle().strokeBorder(.white.opacity(0.32), lineWidth: 0.8))
             .overlay(Circle().inset(by: size * 0.08).strokeBorder(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
-            .scaleEffect(1 + 0.1 * l)
-            .shadow(color: Color(hex: 0xff5b1f).opacity(0.5 + 0.3 * l), radius: size * (0.28 + 0.25 * l))
-            .animation(.spring(response: 0.28, dampingFraction: 0.86), value: l)
+            .scaleEffect(1 + 0.2 * l)
+            .shadow(color: Color(hex: 0xff5b1f).opacity(0.5 + 0.35 * l), radius: size * (0.25 + 0.35 * l))
+            .animation(.easeOut(duration: 0.12), value: l)
         }
         .frame(width: size, height: size)
     }
     private func blob(_ c: Color, _ t: Double, _ speed: Double, _ phase: Double, _ l: CGFloat) -> some View {
-        let r = size * (0.17 + 0.08 * l)
+        let r = size * (0.16 + 0.14 * l)
         return Ellipse().fill(c.opacity(0.62))
             .frame(width: size * 0.7, height: size * 0.54)
             .rotationEffect(.radians(t * speed * 0.7 + phase))
@@ -673,7 +671,7 @@ struct DictateItem: View {
             VStack(spacing: 4) {
                 ZStack {
                     if store.listening {
-                        VoiceBlob(level: store.level, size: 22).transition(.scale(scale: 0.6).combined(with: .opacity).animation(Motion.pop))
+                        VoiceBlob(level: store.level, size: 22).transition(.scale(scale: 0.5).combined(with: .opacity))
                     } else {
                         Image(systemName: store.voiceWorking ? "hourglass" : "mic")
                             .font(.system(size: 15, weight: .regular))

@@ -20,7 +20,7 @@ final class RealtimeTranscriber {
     private(set) var running = false
 
     /// Empieza a escuchar y a mandar. Devuelve false si no se pudo abrir el micro.
-    func start(key: String, model: String = "gpt-live-transcribe", language: String = "", keywords: [String] = []) -> Bool {
+    func start(key: String, model: String = "gpt-live-transcribe", languages: [String] = [], keywords: [String] = []) -> Bool {
         guard !running else { return true }
         var req = URLRequest(url: URL(string: "wss://api.openai.com/v1/realtime?intent=transcription")!)
         req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
@@ -31,8 +31,8 @@ final class RealtimeTranscriber {
         task = t; ready = false; failed = false; text = ""; finalText = nil; pending = []
         t.resume()
         var transcription: [String: Any] = ["model": model]
-        let lang = language.trimmingCharacters(in: .whitespaces).lowercased()
-        if lang.count == 2 { transcription["languages"] = [lang] }
+        let langs = languages.map { $0.lowercased() }.filter { $0.count == 2 }
+        if !langs.isEmpty { transcription["languages"] = langs }
         let kw = keywords.filter { !$0.contains("<") && !$0.contains(">") && !$0.contains("\n") && !$0.contains("\r") }.prefix(50)
         if !kw.isEmpty { transcription["keywords"] = Array(kw) }
         let update: [String: Any] = ["type": "session.update", "session": ["type": "transcription", "audio": ["input": [

@@ -19,6 +19,13 @@ struct VoicePreferences: Codable {
     var transcriptionModel = "gpt-transcribe"
     var textModel = "gpt-5.5"
     var language = ""
+    /// Idiomas que se le dicen a OpenAI. Sin uno elegido: el del Mac y el inglés (así una frase corta no sale en hindi o en ruso).
+    var spokenLanguages: [String] {
+        let chosen = language.trimmingCharacters(in: .whitespaces).lowercased()
+        if !chosen.isEmpty { return [String(chosen.prefix(2))] }
+        let mac = String((Locale.preferredLanguages.first ?? "en").prefix(2)).lowercased()
+        return mac == "en" ? ["en"] : [mac, "en"]
+    }
     var tone: VoiceTone = .clean
     var dictionary = ""
     var instructions = ""
