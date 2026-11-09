@@ -390,7 +390,7 @@ struct DashboardView: View {
             }
             DashSection(title: T.s("Keyboard & insertion", "Teclado e inserción"), footer: T.s("Hold Fn to dictate; double-tap Fn or Fn+Control for hands-free; Fn+Option edits the selection; Escape cancels. The clipboard is restored if it hasn't changed.", "Mantén Fn para dictar; doble toque o Fn+Control para manos libres; Fn+Opción edita la selección; Escape cancela. El portapapeles se restaura si no ha cambiado.")) {
                 DashToggle(title: T.s("Dictate with Fn", "Dictar con Fn"), detail: voice.shortcutStatus, isOn: $voice.preferences.fnEnabled)
-                DashRow(title: T.s("Sound", "Sonido"), detail: T.s("A soft chime when it starts listening and when it sends", "Un sonido suave al empezar a escuchar y al enviar")) {
+                DashRow(title: T.s("Tap feedback", "Toque"), detail: T.s("A short, low knock when it starts listening and when it sends", "Un golpe corto y grave al empezar a escuchar y al enviar")) {
                     Button(T.s("Play", "Escuchar")) { Chime.play("start"); DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { Chime.play("send") } }.controlSize(.small)
                     Toggle("", isOn: Binding(get: { DeskStore.voiceCues }, set: { DeskStore.voiceCues = $0; refresh() })).labelsHidden().toggleStyle(.switch).controlSize(.small)
                 }

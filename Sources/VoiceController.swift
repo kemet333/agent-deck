@@ -347,7 +347,7 @@ final class VoiceController: ObservableObject {
 
     func removeHistory(_ id:UUID){history.removeAll{$0.id==id};persistHistory()}
     /// Solo motivos, nunca lo dictado: en Application Support/Agent Deck/voice.log.
-    private func log(_ text:String){
+    func log(_ text:String){
         let detail=VoiceServiceError.lastDetail;VoiceServiceError.lastDetail=""
         let line="\(ISO8601DateFormatter().string(from:Date())) \(snapshot.engine.rawValue) \(snapshot.transcriptionModel)/\(snapshot.textModel) \(text)\(detail.isEmpty ? "" : " · "+detail)\n"
         let file=storage.folder.appendingPathComponent("voice.log")

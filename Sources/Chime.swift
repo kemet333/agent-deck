@@ -1,10 +1,11 @@
 import AVFoundation
 import Foundation
 
-/// Los sonidos de la voz de Agent Bar, sintetizados aquí (sin archivos ni sonidos del sistema):
-/// - start: dos notas cálidas que suben (re → la), cortas y suaves, cuando el orbe empieza a escuchar.
-/// - send: un «blup» que sube y se apaga, cuando suelta y envía.
-/// Se preparan al arrancar para que suenen en el mismo instante, y van bajitos.
+/// Los «toques» de la voz de Agent Bar, sintetizados aquí (sin archivos): no son melodías sino un golpe corto y grave
+/// que se siente como una vibración (Diego, 09/11: «más importancia a la vibración, fíjate en la de Vowen»; Vowen no
+/// vibra, usa un golpe de ~0,2 s alrededor de 300 Hz al empezar y 225 Hz al parar).
+/// - start: un toque seco que baja de 340 a 290 Hz, al empezar a escuchar.
+/// - send: un toque más grave (250 → 200 Hz) con un eco mínimo, al soltar y enviar.
 @MainActor
 enum Chime {
     static let rate = 44_100.0
@@ -12,7 +13,7 @@ enum Chime {
 
     static func prepare() {
         for (name, samples) in [("start", start()), ("send", send())] {
-            if let p = try? AVAudioPlayer(data: wav(samples)) { p.volume = 0.32; p.prepareToPlay(); players[name] = p }
+            if let p = try? AVAudioPlayer(data: wav(samples)) { p.volume = 0.45; p.prepareToPlay(); players[name] = p }
         }
     }
     static func play(_ name: String) {
@@ -33,27 +34,29 @@ enum Chime {
             s[start + i] += v * env * gain
         }
     }
+    /// Un golpe: seno con caída de tono, ataque de 1,5 ms, caída rápida y un clic de 3 ms al principio (la «sensación» de tecla).
+    static func knock(from f0: Double, to f1: Double, at t0: Double, decay: Double, gain: Double, into s: inout [Double]) {
+        let start = Int(t0 * rate), n = Int((decay * 6) * rate)
+        var phase = 0.0, seed: UInt32 = 12345
+        for i in 0..<n where start + i < s.count {
+            let t = Double(i) / rate
+            let f = f1 + (f0 - f1) * exp(-t / 0.03)
+            phase += 2 * .pi * f / rate
+            let env = min(1, t / 0.0015) * exp(-t / decay)
+            seed = seed &* 1_103_515_245 &+ 12345
+            let noise = (Double(seed >> 16 & 0x7fff) / 16_384 - 1) * exp(-t / 0.0015) * 0.25
+            s[start + i] += (sin(phase) + 0.25 * sin(2 * phase) + noise) * env * gain
+        }
+    }
     static func start() -> [Double] {
-        var s = [Double](repeating: 0, count: Int(0.42 * rate))
-        note(587.33, at: 0, length: 0.40, decay: 0.07, gain: 0.55, into: &s)      // re
-        note(880.00, at: 0.065, length: 0.36, decay: 0.09, gain: 0.5, into: &s)   // la
-        // un eco muy bajo: espacio, no ruido
-        note(880.00, at: 0.15, length: 0.27, decay: 0.08, gain: 0.08, into: &s)
+        var s = [Double](repeating: 0, count: Int(0.2 * rate))
+        knock(from: 340, to: 290, at: 0, decay: 0.032, gain: 1, into: &s)
         return s
     }
     static func send() -> [Double] {
-        let n = Int(0.26 * rate)
-        var s = [Double](repeating: 0, count: n)
-        var phase = 0.0
-        for i in 0..<n {
-            let t = Double(i) / rate
-            // barrido 520 → 1180 Hz en 70 ms: la burbuja que sube
-            let f = 520 + 660 * (1 - exp(-t / 0.028))
-            phase += 2 * .pi * f / rate
-            let env = min(1, t / 0.003) * exp(-t / 0.055)
-            s[i] = (sin(phase) + 0.12 * sin(2 * phase)) * env * 0.6
-        }
-        note(1567.98, at: 0.05, length: 0.2, decay: 0.05, gain: 0.12, into: &s)   // un brillo arriba (sol)
+        var s = [Double](repeating: 0, count: Int(0.22 * rate))
+        knock(from: 250, to: 200, at: 0, decay: 0.036, gain: 1, into: &s)
+        knock(from: 250, to: 200, at: 0.07, decay: 0.025, gain: 0.22, into: &s)
         return s
     }
 
