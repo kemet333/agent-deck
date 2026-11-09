@@ -482,6 +482,9 @@ struct DashboardView: View {
                     DashToggle(title: T.s("Alerts to Alfred's WhatsApp when I'm away", "Avisos al WhatsApp de Alfred si no estoy"), isOn: Binding(get: { UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true }, set: { UserDefaults.standard.set($0, forKey: "whatsappAlerts"); refresh() }), divider: false)
                 }
             }
+            DashSection(title: T.s("Your agents", "Tus agentes"), footer: T.s("Each Claude Code session above the bar: working (with the tool it's using), needs you, or done. Click one to bring its app forward. Only folder, state and tool name are read. Needs the updated Claude Code alerts.", "Cada sesión de Claude Code encima de la barra: trabajando (con la herramienta que usa), te espera o terminada. Clic para traer su app delante. Solo se leen la carpeta, el estado y el nombre de la herramienta. Necesita los avisos de Claude Code actualizados.")) {
+                DashToggle(title: T.s("Show my agents above the bar", "Ver mis agentes encima de la barra"), isOn: Binding(get: { store.showAgents }, set: { store.showAgents = $0; refresh() }), divider: false)
+            }
             DashSection(title: "Autopilot", footer: T.s("Claude Code keeps going on its own, sending your first key, and stops at a real question or a permission. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla y se para ante una pregunta de verdad o un permiso. Necesita los avisos de Claude Code.")) {
                 DashRow(title: T.s("Keep going", "Seguir solo"), detail: store.autopilotLeft > 0 ? T.s("\(store.autopilotLeft) turns left", "Quedan \(store.autopilotLeft) vueltas") : T.s("Off", "Apagado"), divider: false) {
                     Picker("", selection: Binding(get: { [0, 3, 5, 10, 20].contains(store.autopilotLeft) ? store.autopilotLeft : -1 }, set: { n in

@@ -53,6 +53,7 @@ final class FloatingPanel: NSPanel {
             self?.relayout(animated: true, recenter: false)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { self?.relayout(animated: true, recenter: false) }
         }.store(in: &bag)
+        store.$agents.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$voiceWorking.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$voiceNeedsAttention.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$partial.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: false, recenter: false) }.store(in: &bag)

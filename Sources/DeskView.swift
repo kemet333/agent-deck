@@ -226,10 +226,18 @@ struct DockView: View {
                 Text("+\(store.alerts.count - 3)").font(.system(size: 10.5, weight: .semibold)).foregroundColor(th.mute)
                     .padding(.horizontal, 9).padding(.vertical, 3).modifier(Surface(radius: 10))
             }
+            if !store.agents.isEmpty && store.showAgents {
+                AgentStrip(agents: store.agents)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
             ForEach(store.alerts.suffix(3), id: \.id) { a in
                 AlertPill(alert: a, dismiss: { store.dismissAlert(a) }, reply: { store.reply($0, to: a) },
                           autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.keys.first?.text ?? T.s("continue", "continúa"), to: a) } : nil,
-                          talk: { store.talkToAlert(a) }, listening: store.alertListening == a.id, level: store.alertLevel)
+                          talk: { store.talkToAlert(a) },
+                          allow: a.permission ? { store.answerPermission(a, allow: true) } : nil,
+                          deny: a.permission ? { store.answerPermission(a, allow: false) } : nil,
+                          inApp: a.permission ? { store.permissionInApp(a) } : nil,
+                          listening: store.alertListening == a.id, level: store.alertLevel)
                     .transition(.move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8, anchor: .bottom)))
             }
         ZStack(alignment: .bottom) {
@@ -246,6 +254,7 @@ struct DockView: View {
         .animation(Motion.fold, value: store.collapsed)
         }
         .animation(Motion.settle, value: store.alerts)
+        .animation(Motion.settle, value: store.agents)
         .padding(.horizontal, 30).padding(.top, 36).padding(.bottom, 26) // sitio para que la sombra se apague entera, sin cortes
         .focusEffectDisabled()
     }
@@ -259,6 +268,9 @@ struct AlertPill: View {
     var reply: ((String) -> Void)? = nil
     var autopilot: (() -> Void)? = nil
     var talk: (() -> Void)? = nil
+    var allow: (() -> Void)? = nil
+    var deny: (() -> Void)? = nil
+    var inApp: (() -> Void)? = nil
     var listening = false
     var level: Float = 0
     @Environment(\.barTheme) private var th
@@ -268,7 +280,7 @@ struct AlertPill: View {
     @FocusState private var focused: Bool
 
     private var dotColor: Color { alert.ask ? Color(hex: 0xff5b1f) : th.accent }
-    private var open: Bool { hover || typing || listening }
+    private var open: Bool { hover || typing || listening || alert.permission }
     private var summary: String { alert.summary.isEmpty ? alert.message : alert.summary }
 
     var body: some View {
@@ -282,7 +294,10 @@ struct AlertPill: View {
                 Text(alert.place.isEmpty ? alert.app : alert.place)
                     .font(.system(size: 11.5, weight: .semibold)).foregroundColor(th.ink).lineLimit(1).truncationMode(.middle)
                     .frame(maxWidth: 130, alignment: .leading).fixedSize(horizontal: true, vertical: false)
-                    .help(alert.ask ? T.s("Waiting for you", "Te espera") : T.s("Done", "Ha terminado"))
+                    .help(alert.permission ? T.s("Asks for permission", "Pide permiso") : alert.ask ? T.s("Waiting for you", "Te espera") : T.s("Done", "Ha terminado"))
+                if alert.permission {
+                    Text(T.s("asks for permission", "pide permiso")).font(.system(size: 11.5)).foregroundColor(Color(hex: 0xff9f0a)).lineLimit(1)
+                }
                 if !open && !summary.isEmpty {
                     Text(summary).font(.system(size: 11.5)).foregroundColor(th.mute).lineLimit(1).truncationMode(.tail)
                 }
@@ -296,10 +311,16 @@ struct AlertPill: View {
             }
             if open {
                 if !summary.isEmpty {
-                    Text(summary).font(.system(size: 12)).foregroundColor(th.text).lineLimit(3)
+                    Text(summary).font(.system(size: alert.permission ? 11.5 : 12, design: alert.permission ? .monospaced : .default)).foregroundColor(th.text).lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true).transition(.opacity)
                 }
-                if let reply {
+                if let allow, let deny {
+                    HStack(spacing: 6) {
+                        chip(T.s("Allow", "Permitir"), "checkmark", primary: true, action: allow)
+                        chip(T.s("Deny", "Denegar"), "xmark", primary: false, action: deny)
+                        if let inApp { chip(T.s("In Claude", "En Claude"), "arrow.up.forward.app", primary: false, action: inApp) }
+                    }
+                } else if let reply {
                     if typing {
                         HStack(spacing: 6) {
                             TextField(T.s("Reply…", "Responder…"), text: $answer)

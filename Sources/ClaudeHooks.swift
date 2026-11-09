@@ -15,7 +15,15 @@ enum ClaudeHooks {
     static let waitSeconds: Double = 600
 
     /// Ganchos de esta versión, apuntando a esta copia de la app.
-    static var installed: Bool { text.contains(helper) && text.contains("\"timeout\"") }
+    static var installed: Bool { text.contains(helper) && text.contains("\"timeout\"") && text.contains("PermissionRequest") }
+    /// Los ganchos que pone Agent Bar: los avisos (Stop, Notification), el estado de cada sesión para la franja de agentes
+    /// y los permisos (PermissionRequest), que esperan tu respuesta en la barra como mucho 60 s.
+    static let events: [(event: String, kind: String, matcher: Bool, timeout: Int?)] = [
+        ("Stop", "done", false, Int(waitSeconds) + 60), ("Notification", "ask", false, nil),
+        ("PermissionRequest", "permission", true, 90),
+        ("UserPromptSubmit", "status", false, 10), ("PreToolUse", "status", true, 10), ("PostToolUse", "status", true, 10),
+        ("SessionStart", "status", false, 10), ("SessionEnd", "status", false, 10),
+    ]
     static var oldVersion: Bool { (text.contains(marker) || text.contains(helperName)) && !installed }
     private static var text: String { (try? String(contentsOf: settings, encoding: .utf8)) ?? "" }
 
@@ -38,7 +46,7 @@ enum ClaudeHooks {
         try? fm.removeItem(at: backup)
         do { try fm.copyItem(at: settings, to: backup) } catch { return .failed(T.s("Couldn't make a backup, so nothing was changed.", "No se ha podido guardar una copia; no se ha cambiado nada.")) }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
-        for event in ["Stop", "Notification"] {
+        for event in events.map(\.event) {
             let list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
                 !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
             }
@@ -72,16 +80,18 @@ enum ClaudeHooks {
             try? fm.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
         }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
-        for (event, kind) in [("Stop", "done"), ("Notification", "ask")] {
+        for e in events {
             // los ganchos antiguos de Agent Deck se cambian por los nuevos; los demás no se tocan
-            var list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
+            var list = (hooks[e.event] as? [[String: Any]] ?? []).filter { entry in
                 !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
             }
             // Stop espera tu respuesta en la tarjeta hasta 10 min: Claude Code no debe cortarlo antes
-            var hook: [String: Any] = ["type": "command", "command": command(kind: kind)]
-            if event == "Stop" { hook["timeout"] = Int(waitSeconds) + 60 }
-            list.append(["hooks": [hook]])
-            hooks[event] = list
+            var hook: [String: Any] = ["type": "command", "command": command(kind: e.kind)]
+            if let t = e.timeout { hook["timeout"] = t }
+            var entry: [String: Any] = ["hooks": [hook]]
+            if e.matcher { entry["matcher"] = "*" }
+            list.append(entry)
+            hooks[e.event] = list
         }
         root["hooks"] = hooks
         do {

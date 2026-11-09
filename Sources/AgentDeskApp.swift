@@ -50,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         installHotkeys()
         // versiones nuevas: se mira al abrir y una vez al día; si hay, se dice en el orbe y en el menú
         Updater.shared.start()
+        store.watchAgents()
         NotificationCenter.default.addObserver(forName: Updater.foundNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let v = Updater.shared.available?.version else { return }
@@ -93,7 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case "alert": // agentdeck://alert?app=Claude%20Code&kind=done|ask&place=proyecto
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
                 let msg = v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file"))
-                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1")
+                store.raiseAlert(app: v("app"), ask: v("kind") != "done", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1", permission: v("kind") == "permission")
             case "released": // el gancho de esa conversación dejó de esperar
                 store.alertReleased(token: q.first(where: { $0.name == "file" })?.value ?? "")
             case "autopilot": // lo manda AgentBarClaudeHook cada vez que el piloto sigue solo
@@ -363,7 +364,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         a.messageText = T.s("Get an alert when Claude Code finishes?", "¿Avisarte cuando Claude Code termine?")
-        a.informativeText = T.s("Agent Bar will add two hooks to ~/.claude/settings.json: one when Claude Code finishes (Stop) and one when it needs your permission or answer (Notification). A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Bar añadirá dos ganchos a ~/.claude/settings.json: uno cuando Claude Code termina (Stop) y otro cuando necesita tu permiso o tu respuesta (Notification). Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los lean.")
+        a.informativeText = T.s("Agent Bar will add its hooks to ~/.claude/settings.json: when Claude Code finishes or needs you (alerts), when it asks for permission (answer from the bar; with no answer in 60 s Claude shows its usual dialog), and when each session works, so your agents show above the bar (only folder, state and tool name, never content). A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Bar añadirá sus ganchos a ~/.claude/settings.json: cuando Claude Code termina o te necesita (avisos), cuando pide permiso (contestas desde la barra; sin respuesta en 60 s, Claude enseña su diálogo de siempre) y mientras cada sesión trabaja, para ver tus agentes encima de la barra (solo carpeta, estado y herramienta, nunca el contenido). Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los usen.")
         a.addButton(withTitle: T.s("Turn on alerts", "Activar avisos")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
         guard a.runModal() == .alertFirstButtonReturn else { return }
         switch ClaudeHooks.install() {
