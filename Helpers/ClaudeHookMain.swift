@@ -14,6 +14,8 @@ enum ClaudeHookMain {
         let cwd = j["cwd"] as? String ?? FileManager.default.currentDirectoryPath
         let place = enc(URL(fileURLWithPath: cwd).lastPathComponent)
         let host = enc(ProcessInfo.processInfo.environment["__CFBundleIdentifier"] ?? "")
+        // ganchos de la franja de agentes (aparcada el 10/11): si alguien los tuviera puestos, no hacen nada
+        if kind == "status" || kind == "permission" { return }
 
         if kind == "done", let s = Autopilot.load() {
             let last = (j["last_assistant_message"] as? String).flatMap { $0.isEmpty ? nil : $0 }
