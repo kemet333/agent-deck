@@ -246,7 +246,10 @@ final class VoiceController: ObservableObject {
         // con gente hablando cerca, sube a -40 o más, y tu voz apenas destaca. Entonces se pega sin Intro: lo envías tú.
         let floor = recorder.floorDB
         // muy corta (casi todo bajo el sonido de empezar): no se puede saber; por si acaso, tampoco se envía sola
-        noisy = usesQuickSend && recorder is VoiceRecorder && (floor <= -160 || floor > VoiceController.noisyFloorDB || loudest - floor < 12)
+        // pero si tu voz está claramente encima (cerca del micro: -20 dB o más y 15 dB sobre el fondo), se envía igual:
+        // 09/11 en el bar tu voz llegó a -13 dB con el fondo a -34; lo que se coló de la mesa, a -24/-26
+        let clearlyYou = loudest >= -20 && floor > -160 && loudest - floor >= 15
+        noisy = usesQuickSend && recorder is VoiceRecorder && !clearlyYou && (floor <= -160 || floor > VoiceController.noisyFloorDB || loudest - floor < 12)
         if snapshot.engine == .openAI && loudest > -160 {
             log(String(format:"pico %.0f dB · fondo %@",loudest,floor > -160 ? String(format:"%.0f dB",floor) : "?")+(noisy ? " · ruido alrededor: sin Intro" : ""))
             // si ya ha llegado texto en tiempo real, has hablado: nunca se descarta (una palabra rápida bajo el sonido de empezar)
