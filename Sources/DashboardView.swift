@@ -390,7 +390,10 @@ struct DashboardView: View {
             }
             DashSection(title: T.s("Keyboard & insertion", "Teclado e inserción"), footer: T.s("Hold Fn to dictate; double-tap Fn or Fn+Control for hands-free; Fn+Option edits the selection; Escape cancels. The clipboard is restored if it hasn't changed.", "Mantén Fn para dictar; doble toque o Fn+Control para manos libres; Fn+Opción edita la selección; Escape cancela. El portapapeles se restaura si no ha cambiado.")) {
                 DashToggle(title: T.s("Dictate with Fn", "Dictar con Fn"), detail: voice.shortcutStatus, isOn: $voice.preferences.fnEnabled)
-                DashToggle(title: T.s("Haptic when listening starts", "Vibración al empezar a escuchar"), detail: T.s("A subtle tap on the trackpad", "Un toque sutil en el trackpad"), isOn: Binding(get: { DeskStore.voiceCues }, set: { DeskStore.voiceCues = $0; refresh() }))
+                DashRow(title: T.s("Sound", "Sonido"), detail: T.s("A soft chime when it starts listening and when it sends", "Un sonido suave al empezar a escuchar y al enviar")) {
+                    Button(T.s("Play", "Escuchar")) { Chime.play("start"); DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { Chime.play("send") } }.controlSize(.small)
+                    Toggle("", isOn: Binding(get: { DeskStore.voiceCues }, set: { DeskStore.voiceCues = $0; refresh() })).labelsHidden().toggleStyle(.switch).controlSize(.small)
+                }
                 DashToggle(title: T.s("Avoid Fn conflicts while Vowen is running", "Evitar conflictos de Fn con Vowen abierto"), isOn: $voice.preferences.avoidVowenConflict)
                 DashToggle(title: T.s("Insert automatically in the original field", "Insertar solo en el campo original"), isOn: $voice.preferences.autoPaste)
                 DashRow(title: T.s("Insertion method", "Método de inserción")) {

@@ -207,13 +207,16 @@ final class DeskStore: ObservableObject {
         style = BarStyle(rawValue: UserDefaults.standard.string(forKey: "style") ?? "") ?? .glass
     }
 
-    /// Al empezar a escuchar: una vibración sutil en el trackpad (Ajustes → Voz → Vibración). Sin sonidos (Diego, 09/11).
+    /// Al empezar a escuchar y al enviar: un sonido propio, corto y bajito (Chime), y un toque en el trackpad si tienes
+    /// el dedo encima (Ajustes → Voz → Sonido). Diego, 09/11: «un sonido sutil y dopamínico»; los del sistema no.
     static var voiceCues: Bool {
         get { UserDefaults.standard.object(forKey: "voiceCues") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "voiceCues") }
     }
     static func voiceCue(start: Bool, sending: Bool) {
-        if start && voiceCues { haptic(.generic) }
+        guard voiceCues else { return }
+        if start { Chime.play("start"); haptic(.generic) }
+        else if sending { Chime.play("send") }
     }
 
     static func haptic(_ kind: NSHapticFeedbackManager.FeedbackPattern = .alignment) {

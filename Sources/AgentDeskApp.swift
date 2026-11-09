@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.setActivationPolicy(.accessory)
         if offerMoveToApplications() { return }
         migrateFromAgentDeck()
+        Chime.prepare()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
