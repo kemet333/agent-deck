@@ -122,6 +122,12 @@ final class VoiceController: ObservableObject {
     static let nearVoiceDB: Float = -34
     /// Por encima de este fondo (dB) hay voces o ruido alrededor: se pega sin pulsar Intro.
     static let noisyFloorDB: Float = -42
+    /// Opcional (Ajustes → Voz): con ruido alrededor, pegar sin Intro. Apagado por defecto: el volumen no distingue bien
+    /// tu voz de la de alguien a tu lado (09/11: tú a -23 dB, una mesa vecina a -24), y Diego quiere que se envíe solo.
+    static var holdInNoise: Bool {
+        get { UserDefaults.standard.bool(forKey: "holdInNoise") }
+        set { UserDefaults.standard.set(newValue, forKey: "holdInNoise") }
+    }
     /// La última grabación tenía ruido alrededor: se pega sin enviar.
     private(set) var noisy = false
     /// Lo que suena al empezar (el de Siri dura casi 1 s) y un poco más: el micro lo oye, no es tu voz.
@@ -249,7 +255,7 @@ final class VoiceController: ObservableObject {
         // pero si tu voz está claramente encima (cerca del micro: -22 dB o más y 12 dB sobre el fondo), se envía igual:
         // 09/11, solo y con ruido constante de fondo (-34 dB), tu voz llegó a -13 y -19 dB; lo que se coló de una mesa, a -24/-26
         let clearlyYou = loudest >= -22 && floor > -160 && loudest - floor >= 12
-        noisy = usesQuickSend && recorder is VoiceRecorder && !clearlyYou && (floor <= -160 || floor > VoiceController.noisyFloorDB || loudest - floor < 12)
+        noisy = VoiceController.holdInNoise && usesQuickSend && recorder is VoiceRecorder && !clearlyYou && (floor <= -160 || floor > VoiceController.noisyFloorDB || loudest - floor < 12)
         if snapshot.engine == .openAI && loudest > -160 {
             log(String(format:"pico %.0f dB · fondo %@",loudest,floor > -160 ? String(format:"%.0f dB",floor) : "?")+(noisy ? " · ruido alrededor: sin Intro" : ""))
             // si ya ha llegado texto en tiempo real, has hablado: nunca se descarta (una palabra rápida bajo el sonido de empezar)

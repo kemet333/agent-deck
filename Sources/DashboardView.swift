@@ -391,6 +391,7 @@ struct DashboardView: View {
                 }
                 DashToggle(title: T.s("Transcribe while I talk", "Transcribir mientras hablo"), detail: T.s("Faster; uses gpt-live-transcribe", "Más rápido; usa gpt-live-transcribe"), isOn: $voice.preferences.streaming)
                 DashToggle(title: T.s("Show my words while I talk", "Ver mis palabras mientras hablo"), isOn: $voice.preferences.showLiveText).disabled(!voice.preferences.streaming)
+                DashToggle(title: T.s("Don't send on its own with voices around", "Con voces alrededor, no enviar solo"), detail: T.s("Pastes it and waits for your Enter. Useful in cafés; it can also hold back your own messages.", "Lo pega y espera a tu Intro. Útil en cafeterías; a veces también retiene los tuyos."), isOn: Binding(get: { VoiceController.holdInNoise }, set: { VoiceController.holdInNoise = $0; refresh() }))
                 DashRow(title: T.s("Language", "Idioma"), detail: T.s("es, en… Blank for automatic", "es, en… Vacío para automático"), divider: false) {
                     TextField("auto", text: $voice.preferences.language).textFieldStyle(.roundedBorder).frame(width: 90)
                 }
