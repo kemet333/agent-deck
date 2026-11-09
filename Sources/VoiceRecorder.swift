@@ -11,8 +11,10 @@ protocol VoiceRecording: AnyObject {
     func cancel()
     /// El momento más fuerte de esta grabación, en dB (-160 si no ha grabado).
     var peakDB: Float { get }
+    /// No contar como voz lo que suena en los próximos segundos (el sonido de Agent Bar al empezar, que el micro también oye).
+    func ignorePeaks(for seconds: TimeInterval)
 }
-extension VoiceRecording { var peakDB: Float { -160 } }
+extension VoiceRecording { var peakDB: Float { -160 }; func ignorePeaks(for seconds: TimeInterval) {} }
 @MainActor
 final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
     private var recorder: AVAudioRecorder?
@@ -20,6 +22,8 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
     private var folder: URL?
     private var peak: Float = -160
     var peakDB: Float { peak }
+    private var ignoreUntil = Date.distantPast
+    func ignorePeaks(for seconds: TimeInterval) { ignoreUntil = Date().addingTimeInterval(seconds) }
     var onLevel: ((Float)->Void)?
     var onLimit: (()->Void)?
     var onFailure: (()->Void)?
@@ -38,7 +42,7 @@ final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
             timer = Timer.scheduledTimer(withTimeInterval:0.05,repeats:true){[weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self,let r = self.recorder else { return };r.updateMeters()
-                    let power = r.averagePower(forChannel:0);self.peak = max(self.peak,power)
+                    let power = r.averagePower(forChannel:0);if Date() >= self.ignoreUntil { self.peak = max(self.peak,power) }
                     self.onLevel?(pow(10,power/20))
                     if r.currentTime >= 180 { self.onLimit?() }
                 }

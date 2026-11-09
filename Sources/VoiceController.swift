@@ -205,8 +205,8 @@ final class VoiceController: ObservableObject {
             guard self.sessionID==id,!Task.isCancelled else{return}
             guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Bar.","Permite el micrófono para Agent Bar en Ajustes del Sistema."));return}
             if self.snapshot.engine == .apple {self.startApple(id:id)}else{
-                if self.prewarmed { self.prewarmed=false;self.phase = .listening;return } // ya grababa desde que bajó Fn
-                do{try self.recorder.start();self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
+                if self.prewarmed { self.prewarmed=false;self.recorder.ignorePeaks(for:0.4);self.phase = .listening;return } // ya grababa desde que bajó Fn
+                do{try self.recorder.start();self.recorder.ignorePeaks(for:0.4);self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
             }
         }
     }

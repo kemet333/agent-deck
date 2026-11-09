@@ -45,7 +45,14 @@ enum Chime {
         switch set {
         case .knock:
             // un «toc» de madera, redondo; el de enviar, un poco más grave y con un eco mínimo
-            if start { tone(from: 290, to: 235, at: 0, attack: 0.002, decay: 0.026, gain: 1, into: &s) }
+            if start {
+                // tres capas, como una tecla buena: el cuerpo grave que se siente, una octava corta para que se oiga en los
+                // altavoces del Mac, y un roce de aire muy breve; con una sala mínima para que no suene a pitido de ordenador
+                tone(from: 230, to: 175, at: 0, attack: 0.0015, decay: 0.04, gain: 1, glide: 0.025, into: &s)
+                tone(from: 460, to: 360, at: 0, attack: 0.001, decay: 0.012, gain: 0.4, glide: 0.02, into: &s)
+                air(at: 0, decay: 0.004, cutoff: 1400, gain: 0.18, into: &s)
+                room(&s, taps: [(0.019, 0.16), (0.037, 0.09), (0.061, 0.04)])
+            }
             else { tone(from: 245, to: 195, at: 0, attack: 0.002, decay: 0.032, gain: 1, into: &s)
                    tone(from: 245, to: 195, at: 0.075, attack: 0.002, decay: 0.022, gain: 0.2, into: &s) }
         case .marimba:
@@ -76,6 +83,29 @@ enum Chime {
             let a = min(1, t / attack)
             let env = a * a * (3 - 2 * a) * exp(-t / decay)
             s[start + i] += sin(phase) * env * gain
+        }
+    }
+
+    /// Un roce de aire: ruido suave filtrado, de pocos milisegundos (la «textura» de una tecla, sin clic).
+    static func air(at t0: Double, decay: Double, cutoff: Double, gain: Double, into s: inout [Double]) {
+        let start = Int(t0 * rate), n = Int(decay * 8 * rate)
+        let a = 1 - exp(-2 * .pi * cutoff / rate)
+        var y1 = 0.0, y2 = 0.0, seed: UInt32 = 424_242
+        for i in 0..<n where start + i < s.count {
+            let t = Double(i) / rate
+            seed = seed &* 1_103_515_245 &+ 12345
+            let x = Double(seed >> 16 & 0x7fff) / 16_384 - 1
+            y1 += a * (x - y1); y2 += a * (y1 - y2)
+            let att = min(1, t / 0.0008)
+            s[start + i] += y2 * att * exp(-t / decay) * gain * 4
+        }
+    }
+    /// Una sala mínima: ecos cortos y flojos que dan cuerpo sin cola.
+    static func room(_ s: inout [Double], taps: [(Double, Double)]) {
+        let dry = s
+        for (delay, g) in taps {
+            let d = Int(delay * rate)
+            for i in d..<s.count { s[i] += dry[i - d] * g }
         }
     }
 
