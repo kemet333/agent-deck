@@ -118,6 +118,8 @@ final class VoiceController: ObservableObject {
     private let keyProvider: ()->String
     private let microphonePermission: () async -> Bool
     private var apple: Dictation?
+    /// Por debajo de este pico (dB) solo se oían voces lejanas y no se envía nada.
+    static let nearVoiceDB: Float = -34
     private var target: TextTarget?
     /// El destino es solo la app de delante (no se supo el campo): se entrega por el camino rápido.
     private var loose=false
@@ -229,6 +231,15 @@ final class VoiceController: ObservableObject {
     func stop() {
         if phase == .permission{cancel();return}
         guard phase == .listening,let id=sessionID else{return}
+        // Solo voces lejanas (la mesa de al lado, una tele): no se envía nada. Tu voz cerca del micro pasa de ~-28 dB;
+        // la de otros a un metro se queda por debajo (Diego, 09/11: «se ha colado» varias veces). Cada pico queda en voice.log.
+        let loudest=recorder.peakDB
+        if snapshot.engine == .openAI && loudest > -160 {
+            log(String(format:"pico %.0f dB",loudest))
+            if usesQuickSend && loudest < VoiceController.nearVoiceDB {
+                cancel();fail(T.s("Only distant voices: nothing was sent.","Solo voces lejanas: no he enviado nada."));return
+            }
+        }
         phase = .transcribing;level=0;releasedAt=Date();usedLive=false;lastLatency=nil
         if snapshot.engine == .apple{apple?.stop();return}
         // un cuarto de segundo más tras soltar, para no cortar la última palabra (solo en la app de verdad)

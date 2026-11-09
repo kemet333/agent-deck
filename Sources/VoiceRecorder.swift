@@ -9,13 +9,17 @@ protocol VoiceRecording: AnyObject {
     func start() throws
     func finish() throws -> Data
     func cancel()
+    /// El momento más fuerte de esta grabación, en dB (-160 si no ha grabado).
+    var peakDB: Float { get }
 }
+extension VoiceRecording { var peakDB: Float { -160 } }
 @MainActor
 final class VoiceRecorder: NSObject, AVAudioRecorderDelegate, VoiceRecording {
     private var recorder: AVAudioRecorder?
     private var timer: Timer?
     private var folder: URL?
     private var peak: Float = -160
+    var peakDB: Float { peak }
     var onLevel: ((Float)->Void)?
     var onLimit: (()->Void)?
     var onFailure: (()->Void)?
