@@ -52,6 +52,12 @@ enum Chime {
             }
         }
     }
+    /// Lo que dura el sonido de empezar elegido: durante ese rato el micro no cuenta como voz.
+    static var startLength: TimeInterval {
+        if players.isEmpty { prepare() }
+        guard current != .none, let p = players[current.rawValue + "-start"] ?? players["knock-start"] else { return 0 }
+        return p.duration
+    }
     static func play(_ cue: String, set chosen: Set? = nil) {
         let set = chosen ?? current
         guard set != .none else { return }

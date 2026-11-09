@@ -120,6 +120,9 @@ final class VoiceController: ObservableObject {
     private var apple: Dictation?
     /// Por debajo de este pico (dB) solo se oían voces lejanas y no se envía nada.
     static let nearVoiceDB: Float = -34
+    /// Lo que suena al empezar (el de Siri dura casi 1 s) y un poco más: el micro lo oye, no es tu voz.
+    static var cueWindow: TimeInterval { usesSound ? max(0.4, Chime.startLength + 0.12) : 0.25 }
+    static var usesSound: Bool { Chime.current != .none }
     private var target: TextTarget?
     /// El destino es solo la app de delante (no se supo el campo): se entrega por el camino rápido.
     private var loose=false
@@ -205,8 +208,8 @@ final class VoiceController: ObservableObject {
             guard self.sessionID==id,!Task.isCancelled else{return}
             guard granted else{self.fail(T.s("Allow Microphone access in System Settings for Agent Bar.","Permite el micrófono para Agent Bar en Ajustes del Sistema."));return}
             if self.snapshot.engine == .apple {self.startApple(id:id)}else{
-                if self.prewarmed { self.prewarmed=false;self.recorder.ignorePeaks(for:0.4);self.phase = .listening;return } // ya grababa desde que bajó Fn
-                do{try self.recorder.start();self.recorder.ignorePeaks(for:0.4);self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
+                if self.prewarmed { self.prewarmed=false;self.recorder.ignorePeaks(for:VoiceController.cueWindow);self.phase = .listening;return } // ya grababa desde que bajó Fn
+                do{try self.recorder.start();self.recorder.ignorePeaks(for:VoiceController.cueWindow);self.phase = .listening;self.startLive()}catch{self.fail(T.s("The microphone could not start.","No se ha podido iniciar el micrófono."))}
             }
         }
     }
@@ -249,9 +252,13 @@ final class VoiceController: ObservableObject {
             let batch = { do{self.audio=try self.recorder.finish();self.transcribe(id:id)}catch{self.fail(error.localizedDescription)} }
             guard self.live.running else { batch(); return }
             // el texto en tiempo real ya está casi listo; si no llega en 3 s, la grabación normal
-            self.live.finish(timeout: 3) { [weak self] text in
+            self.live.finish(timeout: loudest < -30 ? 1.2 : 3) { [weak self] text in
                 guard let self, self.sessionID==id, self.phase == .transcribing else { return }
                 if let text, !text.isEmpty { self.recorder.cancel(); self.audio=nil; self.usedLive=true; self.process(text,id:id) }
+                else if loudest < -30 {
+                    // sin texto y casi sin sonido: no hace falta mandar la grabación; se libera ya para volver a pulsar
+                    self.recorder.cancel(); self.audio=nil; self.fail(T.s("I didn't hear anything. Nothing was sent.","No te he oído. No he enviado nada."))
+                }
                 else { if !VoiceServiceError.lastDetail.isEmpty { self.log("tiempo real: sin texto, uso la grabación") }; batch() }
             }
         }
