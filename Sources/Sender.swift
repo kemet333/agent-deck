@@ -86,7 +86,7 @@ enum Sender {
     static func send(_ text:String,enter:Bool,completion:((Result<Void,Error>)->Void)? = nil) {
         quickSend(text,enter:enter,completion:completion)
     }
-    static func quickSend(_ text:String,enter:Bool,completion:((Result<Void,Error>)->Void)? = nil) {
+    static func quickSend(_ text:String,enter:Bool,confirmEnter:Bool = false,completion:((Result<Void,Error>)->Void)? = nil) {
         guard accessibilityGranted(prompt:true) else { completion?(.failure(VoiceServiceError(message:T.s("Allow Accessibility so Agent Bar can type into the chat.","Permite Accesibilidad para que Agent Bar pueda escribir en el chat."))));return }
         let pasteboard=NSPasteboard.general
         let previous=pasteboard.pasteboardItems?.map{item in Dictionary(uniqueKeysWithValues:item.types.compactMap{type in item.data(forType:type).map{(type,$0)}})} ?? []
@@ -100,7 +100,10 @@ enum Sender {
         DispatchQueue.main.asyncAfter(deadline:.now()+0.05){
             tap(keyV,flags:.maskCommand)
             if enter { DispatchQueue.main.asyncAfter(deadline:.now()+enterDelay){ tap(keyReturn,flags:[]) } }
-            DispatchQueue.main.asyncAfter(deadline:.now()+max(0.6,enterDelay+0.35)){
+            // en apps que no dejan ver su campo (Claude, Electron) no se puede comprobar si el Intro entró: un segundo Intro
+            // poco después; si el primero ya envió, el campo está vacío y no hace nada
+            if enter && confirmEnter { DispatchQueue.main.asyncAfter(deadline:.now()+enterDelay+0.45){ tap(keyReturn,flags:[]) } }
+            DispatchQueue.main.asyncAfter(deadline:.now()+max(0.6,enterDelay+(confirmEnter ? 0.8 : 0.35))){
                 if pasteboard.changeCount==written {
                     pasteboard.clearContents()
                     let items=previous.map{entry -> NSPasteboardItem in let i=NSPasteboardItem();for (type,data) in entry{i.setData(data,forType:type)};return i}

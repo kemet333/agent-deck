@@ -121,11 +121,11 @@ final class VoiceController: ObservableObject {
     /// Por debajo de este pico (dB) solo se oían voces lejanas y no se envía nada.
     static let nearVoiceDB: Float = -34
     /// Por encima de este fondo (dB) hay voces o ruido alrededor: se pega sin pulsar Intro.
-    static let noisyFloorDB: Float = -42
-    /// Opcional (Ajustes → Voz): con ruido alrededor, pegar sin Intro. Apagado por defecto: el volumen no distingue bien
-    /// tu voz de la de alguien a tu lado (09/11: tú a -23 dB, una mesa vecina a -24), y Diego quiere que se envíe solo.
+    static let noisyFloorDB: Float = -30
+    /// Ajustes → Voz: con mucho ruido claro alrededor, pegar sin Intro. Encendido, pero solo salta con ruido evidente
+    /// (el volumen no distingue bien tu voz de la de alguien a tu lado: 09/11, tú a -23 dB, una mesa vecina a -24).
     static var holdInNoise: Bool {
-        get { UserDefaults.standard.bool(forKey: "holdInNoise") }
+        get { UserDefaults.standard.object(forKey: "holdInNoise") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "holdInNoise") }
     }
     /// La última grabación tenía ruido alrededor: se pega sin enviar.
@@ -255,7 +255,9 @@ final class VoiceController: ObservableObject {
         // pero si tu voz está claramente encima (cerca del micro: -22 dB o más y 12 dB sobre el fondo), se envía igual:
         // 09/11, solo y con ruido constante de fondo (-34 dB), tu voz llegó a -13 y -19 dB; lo que se coló de una mesa, a -24/-26
         let clearlyYou = loudest >= -22 && floor > -160 && loudest - floor >= 12
-        noisy = VoiceController.holdInNoise && usesQuickSend && recorder is VoiceRecorder && !clearlyYou && (floor <= -160 || floor > VoiceController.noisyFloorDB || loudest - floor < 12)
+        // Diego (09/11): «que se envíen por defecto, a no ser que detecte claramente ruido de fondo». Claramente: el fondo
+        // está alto (más de -30 dB) y la voz apenas sobresale (menos de 8 dB). Sus dictados reales: fondo -31…-37, voz 9–23 dB encima.
+        noisy = VoiceController.holdInNoise && usesQuickSend && recorder is VoiceRecorder && !clearlyYou && floor > VoiceController.noisyFloorDB && loudest - floor < 8
         if snapshot.engine == .openAI && loudest > -160 {
             log(String(format:"pico %.0f dB · fondo %@",loudest,floor > -160 ? String(format:"%.0f dB",floor) : "?")+(noisy ? " · ruido alrededor: sin Intro" : ""))
             // si ya ha llegado texto en tiempo real, has hablado: nunca se descarta (una palabra rápida bajo el sonido de empezar)
@@ -345,7 +347,7 @@ final class VoiceController: ObservableObject {
            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundle {
             if let r=releasedAt { lastLatency=Date().timeIntervalSince(r)+0.17;releasedAt=nil
                 log(String(format:"listo en %.2f s (%@)",lastLatency!,usedLive ? "tiempo real" : "grabación")) }
-            Sender.quickSend(text,enter:snapshot.autoEnter && !protectedTerminal && !noisy){[weak self] result in
+            Sender.quickSend(text,enter:snapshot.autoEnter && !protectedTerminal && !noisy,confirmEnter:loose){[weak self] result in
                 guard let self,self.sessionID==id else{return}
                 if case .failure(let e)=result{Sender.copy(text);self.log("envío rápido: "+e.localizedDescription)}
                 if self.draft==text{self.draft="";self.raw="";self.phase = .idle}
