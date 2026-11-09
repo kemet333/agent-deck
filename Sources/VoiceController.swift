@@ -120,6 +120,16 @@ final class VoiceController: ObservableObject {
     private var apple: Dictation?
     /// Por debajo de este pico (dB) solo se oían voces lejanas y no se envía nada.
     static let nearVoiceDB: Float = -34
+    /// Lo que tarda en enviarse desde que sueltas Fn (las últimas 30 veces), para el objetivo de 0,6 s.
+    static func recordLatency(_ s: Double) {
+        var l = UserDefaults.standard.array(forKey: "voiceLatencies") as? [Double] ?? []
+        l.append(s); if l.count > 30 { l.removeFirst(l.count - 30) }
+        UserDefaults.standard.set(l, forKey: "voiceLatencies")
+    }
+    static var medianLatency: Double? {
+        let l = (UserDefaults.standard.array(forKey: "voiceLatencies") as? [Double] ?? []).sorted()
+        return l.isEmpty ? nil : l[l.count / 2]
+    }
     /// Por encima de este fondo (dB) hay voces o ruido alrededor: se pega sin pulsar Intro.
     static let noisyFloorDB: Float = -30
     /// Ajustes → Voz: con mucho ruido claro alrededor, pegar sin Intro. Encendido, pero solo salta con ruido evidente
@@ -130,6 +140,9 @@ final class VoiceController: ObservableObject {
     }
     /// La última grabación tenía ruido alrededor: se pega sin enviar.
     private(set) var noisy = false
+    /// Lo que se dijo al final: enviar o no (nil: lo de siempre) y cómo reescribirlo.
+    private var spokenSend: Bool?
+    private var spokenRewrite: String?
     /// Lo que suena al empezar (el de Siri dura casi 1 s) y un poco más: el micro lo oye, no es tu voz.
     static var cueWindow: TimeInterval { usesSound ? max(0.4, Chime.startLength + 0.12) : 0.25 }
     static var usesSound: Bool { Chime.current != .none }
@@ -298,20 +311,30 @@ final class VoiceController: ObservableObject {
             do{let text=try await self.client.transcribe(audio:audio,filename:self.filename,key:self.key(),preferences:self.snapshot);guard self.sessionID==id,!Task.isCancelled else{return};self.process(text,id:id)}catch is CancellationError{}catch{guard self.sessionID==id else{return};self.fail(error.localizedDescription)}
         }
     }
-    private func process(_ text:String,id:UUID) {
+    private func process(_ spoken:String,id:UUID) {
+        // órdenes dichas al final: «… y envía», «… no lo envíes», «cancela», «nueva línea», «hazlo más corto», «en inglés»
+        var text=spoken;spokenSend=nil;spokenRewrite=nil
+        if purpose == .dictation {
+            let cmd=SpokenCommands.parse(spoken)
+            if cmd.cancel { log("orden: cancela");cancel();fail(T.s("Cancelled: nothing was sent.","Cancelado: no he enviado nada."));return }
+            text=cmd.text;spokenSend=cmd.send;spokenRewrite=key().isEmpty ? nil : cmd.rewrite
+            if cmd.send != nil || cmd.rewrite != nil { log("orden: "+(cmd.send == true ? "envía " : cmd.send == false ? "no envíes " : "")+(cmd.rewrite ?? "")) }
+            guard !text.isEmpty else { cancel();fail(T.s("Nothing to send.","No hay nada que enviar."));return }
+        }
         raw=text;partial="";draft=purpose == .command ? target?.selectedText ?? "":text
         var tone=snapshot.tone(for:capturedBundle)
+        if spokenRewrite != nil && tone == .verbatim { tone = .clean }
         // Voz → prompt: en un chat de IA, lo que pasa de 12 palabras se ordena como un prompt (salvo un tono propio para esa app)
         let words=text.split(whereSeparator:{$0.isWhitespace}).count
         if purpose == .dictation, snapshot.promptInAIApps, tone != .verbatim, words > 12,
            let b=capturedBundle, VoicePreferences.aiApps.contains(b), snapshot.appTones[b] == nil { tone = .prompt }
         guard purpose == .command || purpose == .summary || tone != .verbatim else{complete(snapshot.expand(text),id:id);return}
         // una frase corta ya viene bien puntuada de la transcripción: se pega sin esperar a la limpieza
-        if purpose == .dictation && text.split(whereSeparator:{$0.isWhitespace}).count <= 6 { complete(snapshot.expand(text),id:id);return }
+        if purpose == .dictation && spokenRewrite == nil && text.split(whereSeparator:{$0.isWhitespace}).count <= 6 { complete(snapshot.expand(text),id:id);return }
         phase = .cleaning
         // tope de espera: si la limpieza tarda más de 2,5 s, se pega lo transcrito tal cual
         if purpose == .dictation {
-            DispatchQueue.main.asyncAfter(deadline:.now()+(tone == .prompt ? 7 : 2.5)){[weak self] in
+            DispatchQueue.main.asyncAfter(deadline:.now()+(tone == .prompt || spokenRewrite != nil ? 7 : 2.5)){[weak self] in
                 guard let self,self.sessionID==id,self.phase == .cleaning else{return}
                 self.operation?.cancel();self.operation=nil
                 self.complete(self.snapshot.expand(text),id:id)
@@ -319,7 +342,7 @@ final class VoiceController: ObservableObject {
         }
         operation=Task{[weak self] in
             guard let self else{return}
-            do{let transformed=try await self.client.transform(text,selection:self.purpose == .command ? self.target?.selectedText:nil,key:self.key(),preferences:self.snapshot,tone:tone,summary:self.purpose == .summary);guard self.sessionID==id,!Task.isCancelled else{return};self.complete(self.snapshot.expand(transformed),id:id)}catch is CancellationError{}catch{guard self.sessionID==id else{return}
+            do{let transformed=try await self.client.transform(text,selection:self.purpose == .command ? self.target?.selectedText:nil,key:self.key(),preferences:self.snapshot,tone:tone,summary:self.purpose == .summary,extra:self.spokenRewrite);guard self.sessionID==id,!Task.isCancelled else{return};self.complete(self.snapshot.expand(transformed),id:id)}catch is CancellationError{}catch{guard self.sessionID==id else{return}
                 // como Vowen: si la limpieza falla en una dictado, se pega lo transcrito tal cual en vez de pararse
                 if self.purpose == .dictation { self.note(error.localizedDescription);self.complete(self.snapshot.expand(text),id:id);return }
                 self.draft=self.purpose == .command ? self.target?.selectedText ?? "":text;self.fail(error.localizedDescription)}
@@ -346,8 +369,11 @@ final class VoiceController: ObservableObject {
         if usesQuickSend || loose, purpose == .dictation, loose || (snapshot.insertion == .paste && !protectedTerminal),
            NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target.bundle {
             if let r=releasedAt { lastLatency=Date().timeIntervalSince(r)+0.17;releasedAt=nil
-                log(String(format:"listo en %.2f s (%@)",lastLatency!,usedLive ? "tiempo real" : "grabación")) }
-            Sender.quickSend(text,enter:snapshot.autoEnter && !protectedTerminal && !noisy,confirmEnter:loose){[weak self] result in
+                log(String(format:"listo en %.2f s (%@)",lastLatency!,usedLive ? "tiempo real" : "grabación"))
+                VoiceController.recordLatency(lastLatency!) }
+            // «… y envía» manda aunque haya ruido; «… no lo envíes» lo deja escrito
+            let enter = spokenSend ?? (snapshot.autoEnter && !protectedTerminal && !noisy)
+            Sender.quickSend(text,enter:enter,confirmEnter:loose){[weak self] result in
                 guard let self,self.sessionID==id else{return}
                 if case .failure(let e)=result{Sender.copy(text);self.log("envío rápido: "+e.localizedDescription)}
                 if self.draft==text{self.draft="";self.raw="";self.phase = .idle}
@@ -355,7 +381,7 @@ final class VoiceController: ObservableObject {
             }
             return
         }
-        deliverText(text,target,snapshot.autoEnter && purpose != .command,snapshot.insertion,snapshot.guardTerminal,{[weak self] in self?.sessionID==id}){[weak self] result in
+        deliverText(text,target,(spokenSend ?? snapshot.autoEnter) && purpose != .command,snapshot.insertion,snapshot.guardTerminal,{[weak self] in self?.sessionID==id}){[weak self] result in
             guard let self,self.sessionID==id else{return}
             switch result{case .success:
                 if self.draft==text{self.draft="";self.raw="";self.phase = .idle}else{self.phase = .draft;self.message=T.s("The previous version was inserted. Your edited draft is kept.","Se ha insertado la versión anterior. Se conserva el borrador editado.")}

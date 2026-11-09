@@ -33,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if offerMoveToApplications() { return }
         migrateFromAgentDeck()
         Chime.prepare()
+        LearnedVocabulary.refresh()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()

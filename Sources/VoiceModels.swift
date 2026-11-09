@@ -39,8 +39,15 @@ struct VoicePreferences: Codable {
     var liveModel = "gpt-live-transcribe"
     /// Ver lo que se va oyendo mientras hablas (apagado: solo la luz; la ventaja es la rapidez al soltar).
     var showLiveText = false
+    /// Aprender los nombres de tus proyectos (carpetas con git) para escribirlos bien.
+    var learnVocabulary = true
 
-    var keywords: [String] { dictionary.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && !$0.contains("<") && !$0.contains(">") }.prefix(100).map { String($0.prefix(100)) } }
+    var keywords: [String] {
+        let mine = dictionary.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && !$0.contains("<") && !$0.contains(">") }
+        // y los nombres de tus proyectos que Agent Bar aprende solo (sin repetir los tuyos)
+        let lower = Set(mine.map { $0.lowercased() })
+        return (mine + (learnVocabulary ? LearnedVocabulary.cached.filter { !lower.contains($0.lowercased()) } : [])).prefix(100).map { String($0.prefix(100)) }
+    }
     func tone(for bundle: String?) -> VoiceTone { bundle.flatMap { appTones[$0] } ?? tone }
     func expand(_ text: String) -> String {
         var result = text
@@ -124,7 +131,7 @@ struct FnGesture {
 /// Los ajustes guardados por versiones anteriores no traen los campos nuevos: se leen uno a uno y lo que falta
 /// toma su valor por defecto, en vez de perder todos los ajustes.
 extension VoicePreferences {
-    private enum K: String, CodingKey { case engine, fnEnabled, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps, streaming, liveModel, showLiveText }
+    private enum K: String, CodingKey { case engine, fnEnabled, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps, streaming, liveModel, showLiveText, learnVocabulary }
     init(from decoder: Decoder) throws {
         self.init()
         let c = try decoder.container(keyedBy: K.self)
@@ -148,6 +155,7 @@ extension VoicePreferences {
         streaming = (try? c.decodeIfPresent(Bool.self, forKey: .streaming)) ?? streaming
         liveModel = (try? c.decodeIfPresent(String.self, forKey: .liveModel)) ?? liveModel
         showLiveText = (try? c.decodeIfPresent(Bool.self, forKey: .showLiveText)) ?? showLiveText
+        learnVocabulary = (try? c.decodeIfPresent(Bool.self, forKey: .learnVocabulary)) ?? learnVocabulary
     }
     /// Chats y editores de IA donde «Voz → prompt» tiene sentido.
     static let aiApps: Set<String> = ["com.anthropic.claudefordesktop", "com.openai.chat", "com.openai.codex", "com.todesktop.230313mzl4w4u92", "com.exafunction.windsurf", "ai.perplexity.mac"]

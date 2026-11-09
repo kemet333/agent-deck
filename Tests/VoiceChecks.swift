@@ -149,6 +149,13 @@ struct VoiceChecks {
         ready.discardDraft();ready.importFile(link);check("symlink cannot bypass limit or retain oversized audio",ready.phase == .failed && !ready.canRetry)
         let pipe=root.appendingPathComponent("pipe.wav");guard mkfifo(pipe.path,0o600)==0 else{fatalError("fixture fifo")}
         do{_=try VoiceAudioFile.read(pipe);fatalError("Expected pipe rejection")}catch{check("pipe is rejected without waiting for a writer",true)}
+        // órdenes dichas al final
+        let c1=SpokenCommands.parse("Revisa el login, y envíalo.");check("spoken «y envíalo» sends and is removed",c1.text=="Revisa el login" && c1.send==true)
+        let c2=SpokenCommands.parse("Arregla el test, no lo envíes");check("spoken «no lo envíes» holds Enter",c2.text=="Arregla el test" && c2.send==false)
+        check("spoken «cancela» cancels",SpokenCommands.parse("Esto es una prueba, cancela.").cancel)
+        check("spoken «nueva línea» becomes a line break",SpokenCommands.parse("uno nueva línea dos").text=="uno\ndos")
+        let c3=SpokenCommands.parse("Revisa la PR en inglés y envía");check("spoken rewrite + send combine",c3.text=="Revisa la PR" && c3.send==true && c3.rewrite?.contains("English")==true)
+        check("normal sentences with «envío» are untouched",SpokenCommands.parse("La hora de envío es mañana").send==nil && SpokenCommands.parse("No quiero que se envíe nada raro").text=="No quiero que se envíe nada raro")
         session.invalidateAndCancel();print("VOICE_CHECKS_OK \(passed) — synthetic only; no microphone, AX target, Keychain write, real API or external message")
     }
 }

@@ -7,7 +7,7 @@ mkdir -p "$out/modules" "$app_dir/Contents/MacOS"
 s="$project_dir/Sources"
 xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$out/modules" \
  "$project_dir/Tests/DashboardPreviewApp.swift" "$s/DashboardView.swift" "$s/DeskModel.swift" "$s/DeskView.swift" \
- "$s/Sender.swift" "$s/Dictation.swift" "$s/Strings.swift" "$s/Chime.swift" "$s/Updater.swift" "$s/VoiceModels.swift" "$s/VoiceAudioFile.swift" "$s/OpenAIVoiceClient.swift" \
+ "$s/Sender.swift" "$s/Dictation.swift" "$s/Strings.swift" "$s/Chime.swift" "$s/Updater.swift" "$s/VoiceCommands.swift" "$s/VoiceModels.swift" "$s/VoiceAudioFile.swift" "$s/OpenAIVoiceClient.swift" \
  "$s/VoiceKeychain.swift" "$s/VoiceRecorder.swift" "$s/VoiceController.swift" "$s/RealtimeTranscriber.swift" "$s/FlowCore.swift" "$s/FlowController.swift" \
  "$s/ClaudeHooks.swift" "$s/Autopilot.swift" "$s/KeyPacks.swift" "$s/License.swift" "$s/ProView.swift" "$s/ProVoice.swift" \
  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication \
