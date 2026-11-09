@@ -48,6 +48,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { self?.store.noteActivated(b) }
         }
         installHotkeys()
+        // versiones nuevas: se mira al abrir y una vez al día; si hay, se dice en el orbe y en el menú
+        Updater.shared.start()
+        NotificationCenter.default.addObserver(forName: Updater.foundNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let v = Updater.shared.available?.version else { return }
+                self?.store.flashNote(T.s("Agent Bar \(v) is available: Settings → Update", "Hay una Agent Bar nueva (\(v)): Ajustes → Actualizar"), for: 6)
+            }
+        }
         // la primera vez, el tutorial que lo explica y lo deja configurado
         if !UserDefaults.standard.bool(forKey: "tutorialDone") { DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.openTutorial() } }
         voiceHotkeys = VoiceHotkeys(voice: store.voice); voiceHotkeys?.install()
@@ -308,8 +316,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Conectar los avisos de Claude Code: pregunta antes y explica exactamente qué cambia.
     // MARK: avisos de Claude Code: encender, apagar, quitar
 
+    @objc func installUpdate() { Updater.shared.install(); openDashboard() }
+
     /// Al abrir el menú, el interruptor de avisos enseña el estado real (o «Activar…» si aún no están puestos).
     func menuNeedsUpdate(_ menu: NSMenu) {
+        if let old = menu.items.first(where: { $0.tag == 7002 }) { menu.removeItem(old) }
+        if let v = Updater.shared.available?.version {
+            let up = NSMenuItem(title: T.s("Update to \(v)…", "Actualizar a la \(v)…"), action: #selector(installUpdate), keyEquivalent: "")
+            up.target = self; up.tag = 7002; menu.insertItem(up, at: 0)
+        }
         guard let it = menu.items.first(where: { $0.tag == 7001 }) else { return }
         if ClaudeHooks.installed {
             it.title = T.s("Claude Code alerts", "Avisos de Claude Code")

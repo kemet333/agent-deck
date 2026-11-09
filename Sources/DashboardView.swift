@@ -172,6 +172,7 @@ struct Shortcut: View {
 struct DashboardView: View {
     @ObservedObject var store: DeskStore
     @ObservedObject var voice: VoiceController
+    @ObservedObject var updater = Updater.shared
     var actions = DashboardActions()
     @State var pane: DashPane = .general
     /// Se sube después de una acción del AppDelegate (diálogos), para volver a leer el estado real (ganchos, permisos).
@@ -234,6 +235,12 @@ struct DashboardView: View {
             Spacer()
             VStack(alignment: .leading, spacing: 8) {
                 let _ = tick
+                if let r = updater.available {
+                    Button { updater.install() } label: {
+                        Label(updater.working ? T.s("Updating…", "Actualizando…") : T.s("Update to \(r.version)", "Actualizar a la \(r.version)"), systemImage: "arrow.down.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }.buttonStyle(.borderedProminent).controlSize(.small).disabled(updater.working).padding(.bottom, 4)
+                }
                 DashStatus(ok: Sender.accessibilityGranted(prompt: false), text: T.s("Accessibility", "Accesibilidad"))
                 DashStatus(ok: ClaudeHooks.installed && !ClaudeHooks.paused, text: T.s("Claude Code alerts", "Avisos de Claude Code"))
                 DashStatus(ok: store.autopilotLeft > 0, text: store.autopilotLeft > 0 ? T.s("Autopilot · \(store.autopilotLeft) left", "Autopilot · quedan \(store.autopilotLeft)") : T.s("Autopilot off", "Autopilot apagado"))
@@ -590,6 +597,18 @@ struct DashboardView: View {
                     Text("Agent Bar").font(.system(size: 20, weight: .bold))
                     Text(T.s("Version", "Versión") + " " + Dash.version).font(.system(size: 12)).foregroundStyle(.secondary)
                     Text(T.s("Press one key. Your AI keeps going.", "Pulsa una tecla. Tu IA sigue.")).font(.system(size: 12)).foregroundStyle(.secondary)
+                }
+            }
+            DashSection(title: T.s("Updates", "Actualizaciones"), footer: T.s("Agent Bar checks once a day. Updating keeps your keys, key and settings, and restarts in a few seconds.", "Agent Bar lo mira una vez al día. Al actualizar se conservan tus teclas, tu clave y tus ajustes, y se reinicia en unos segundos.")) {
+                if let r = updater.available {
+                    DashRow(title: T.s("Version \(r.version) is available", "Hay una versión nueva: \(r.version)"), detail: updater.status.isEmpty ? r.notes : updater.status, symbol: "arrow.down.circle.fill", divider: false) {
+                        Button(T.s("What's new", "Novedades")) { NSWorkspace.shared.open(r.page) }.controlSize(.small)
+                        Button(updater.working ? T.s("Updating…", "Actualizando…") : T.s("Update", "Actualizar")) { updater.install() }.buttonStyle(.borderedProminent).controlSize(.small).disabled(updater.working)
+                    }
+                } else {
+                    DashRow(title: T.s("Version", "Versión") + " " + Dash.version, detail: updater.status.isEmpty ? nil : updater.status, symbol: "checkmark.seal", divider: false) {
+                        Button(T.s("Check now", "Comprobar ahora")) { updater.check() }.controlSize(.small)
+                    }
                 }
             }
             DashSection {
