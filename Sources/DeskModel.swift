@@ -122,6 +122,7 @@ final class DeskStore: ObservableObject {
     @Published var level: Float = 0
     /// Cuentan los inicios y envíos de la voz: el orbe suelta una onda en cada uno.
     @Published var startPulse = 0
+    private var listeningSince = Date.distantPast
     @Published var sendPulse = 0
     @Published var dictationNote: String = ""
     @Published var voiceWorking = false
@@ -147,6 +148,7 @@ final class DeskStore: ObservableObject {
                 guard let self, let controller else { return }
                 let now=controller.phase == .listening
                 if now != self.listening {
+                    if now { self.listeningSince = Date() }
                     DeskStore.voiceCue(start: now, sending: controller.working)
                     if now { self.startPulse += 1 } else if controller.working { self.sendPulse += 1 }
                 }
@@ -154,7 +156,9 @@ final class DeskStore: ObservableObject {
                 self.voiceWorking=controller.working
                 self.voiceNeedsAttention=controller.phase == .draft || controller.phase == .failed
                 self.partial=controller.phase == .listening ? controller.partial : controller.label
-                self.level=DeskStore.follow(self.level, DeskStore.loudness(now ? controller.level : 0))
+                // el micro también oye el sonido de empezar: sin esto el orbe da un salto raro justo al pulsar Fn
+                let settled = Date().timeIntervalSince(self.listeningSince) > 0.35
+                self.level=DeskStore.follow(self.level, DeskStore.loudness(now && settled ? controller.level : 0))
                 self.dictationNote=controller.phase == .idle ? "" : controller.label
             }
         }.store(in:&voiceBag)
