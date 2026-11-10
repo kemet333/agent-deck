@@ -21,4 +21,7 @@ xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_
 "$voice_test_dir/agent-checks"
 xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
  "$project_dir/Sources/Strings.swift" "$project_dir/Sources/Doctor.swift" "$project_dir/Tests/DoctorChecks.swift" -o "$voice_test_dir/doctor-checks"
+xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
+ "$project_dir/Sources/Strings.swift" "$project_dir/Sources/KeyPacks.swift" "$project_dir/Sources/DeskKey.swift" "$project_dir/Sources/Growth.swift" "$project_dir/Tests/GrowthChecks.swift" -o "$voice_test_dir/growth-checks"
+"$voice_test_dir/growth-checks" "$project_dir/docs/packs/packs.json"
 "$voice_test_dir/doctor-checks"

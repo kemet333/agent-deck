@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join your team on Agent Bar</title>
+<meta name="description" content="Your team shares its Agent Bar keys and voice words. Join with one click.">
+<meta property="og:title" content="Join your team on Agent Bar"><meta property="og:description" content="The same keys and voice words for everyone on your team.">
+<meta property="og:image" content="https://getagentbar.com/img/desk.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../packs/packs.css">
+</head>
+<body>
+<main class="wrap">
+  <div class="top"><a class="brand" href="../"><span class="mark"><i></i><i></i></span>Agent Bar</a><a class="btn btn--ghost" href="../packs/">Key packs</a></div>
+  <div id="out"></div>
+</main>
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var out=document.getElementById('out'), src='';
+try{src=decodeURIComponent((location.hash||'').slice(1));}catch(e){}
+if(!/^https:\/\/[^\s]+$/.test(src)){
+  out.innerHTML='<p class="empty">This team link isn\'t complete. Ask whoever runs your team for the link again.</p>';
+}else{
+  var join='agentdeck://team?url='+encodeURIComponent(src), host=src.split('/')[2]||'';
+  out.innerHTML='<h1 id="t">Join your team.</h1><p class="lead">Your team shares its Agent Bar keys and the words your voice should know (clients, products, projects). Your own keys stay, and the team\'s update by themselves.</p>'+
+    '<article class="pack" style="max-width:620px"><ul class="keys" id="keys"><li><b>From</b><span>'+esc(host)+'</span></li></ul>'+
+    '<div class="row"><a class="btn" href="'+join+'"><span class="dot"></span>Join in Agent Bar</a><a class="btn btn--ghost" href="https://github.com/kemet333/agent-deck/releases/latest/download/AgentBar.dmg">Get Agent Bar (free, Mac)</a></div>'+
+    '<p class="note">«Join in Agent Bar» opens the app, shows the team\'s keys and asks before adding anything. Don\'t have it yet? Get it first, then come back to this link.</p></article>';
+  // si el archivo deja leerse desde el navegador, se enseña el nombre y las teclas; si no, basta con el botón
+  fetch(src).then(function(r){return r.json();}).then(function(t){
+    if(!t||t.agentbar_team!==1||!t.name) return;
+    document.title='Join '+t.name+' on Agent Bar';
+    document.getElementById('t').textContent='Join '+t.name+'.';
+    document.getElementById('keys').innerHTML=(t.keys||[]).slice(0,12).map(function(k){return '<li><b>'+esc(k.label)+'</b><span>«'+esc(k.text)+'»</span></li>';}).join('')+
+      ((t.vocabulary||[]).length?'<li><b>Voice</b><span>'+esc(t.vocabulary.slice(0,12).join(', '))+(t.vocabulary.length>12?'…':'')+'</span></li>':'');
+  }).catch(function(){});
+}
+</script>
+</body>
+</html>

@@ -3,11 +3,12 @@ set -euo pipefail
 project_dir="${0:A:h:h}"
 out="${AGENT_DECK_PREVIEW_DIR:-${TMPDIR:-/private/tmp}/agent-deck-dashboard-preview-$UID}"
 app_dir="$out/Agent Bar Dashboard Review.app"
-mkdir -p "$out/modules" "$app_dir/Contents/MacOS"
+mkdir -p "$out/modules" "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
+cp "$project_dir/docs/packs/packs.json" "$app_dir/Contents/Resources/packs.json"
 s="$project_dir/Sources"
 xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$out/modules" \
  "$project_dir/Tests/DashboardPreviewApp.swift" "$s/DashboardView.swift" "$s/DeskModel.swift" "$s/DeskView.swift" \
- "$s/Sender.swift" "$s/Dictation.swift" "$s/Strings.swift" "$s/Chime.swift" "$s/Updater.swift" "$s/VoiceCommands.swift" "$s/Agents.swift" "$s/Keys.swift" "$s/Doctor.swift" "$s/DoctorLive.swift" "$s/DoctorView.swift" "$s/VoiceModels.swift" "$s/VoiceAudioFile.swift" "$s/OpenAIVoiceClient.swift" \
+ "$s/Sender.swift" "$s/Dictation.swift" "$s/Strings.swift" "$s/Chime.swift" "$s/Updater.swift" "$s/VoiceCommands.swift" "$s/Agents.swift" "$s/Keys.swift" "$s/Doctor.swift" "$s/DoctorLive.swift" "$s/DoctorView.swift" "$s/DeskKey.swift" "$s/Growth.swift" "$s/GrowthLive.swift" "$s/GrowthView.swift" "$s/VoiceModels.swift" "$s/VoiceAudioFile.swift" "$s/OpenAIVoiceClient.swift" \
  "$s/VoiceKeychain.swift" "$s/VoiceRecorder.swift" "$s/VoiceController.swift" "$s/RealtimeTranscriber.swift" "$s/FlowCore.swift" "$s/FlowController.swift" \
  "$s/ClaudeHooks.swift" "$s/Autopilot.swift" "$s/KeyPacks.swift" "$s/License.swift" "$s/ProView.swift" "$s/ProVoice.swift" \
  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication \

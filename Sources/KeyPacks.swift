@@ -14,7 +14,8 @@ struct KeyPack: Codable, Equatable {
     }
 
     var encoded: String {
-        let d = (try? JSONEncoder().encode(self)) ?? Data()
+        let e = JSONEncoder(); e.outputFormatting = .sortedKeys  // siempre el mismo enlace para el mismo pack
+        let d = (try? e.encode(self)) ?? Data()
         return d.base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
     }
 

@@ -21,3 +21,5 @@ h1{font-size:clamp(34px,5vw,60px);line-height:1;letter-spacing:-.04em;margin:48p
 .btn .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
 .note{color:var(--mute);font-size:13px}
 .empty{padding:60px 0;color:var(--ink-2)}
+.pack .by{margin:4px 0 0;color:var(--mute);font-size:12px;font-family:var(--mono)}
+.pack .about{margin:0;color:var(--ink-2);font-size:14px}

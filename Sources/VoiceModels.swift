@@ -45,8 +45,10 @@ struct VoicePreferences: Codable {
     var keywords: [String] {
         let mine = dictionary.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && !$0.contains("<") && !$0.contains(">") }
         // y los nombres de tus proyectos que Agent Bar aprende solo (sin repetir los tuyos)
-        let lower = Set(mine.map { $0.lowercased() })
-        return (mine + (learnVocabulary ? LearnedVocabulary.cached.filter { !lower.contains($0.lowercased()) } : [])).prefix(100).map { String($0.prefix(100)) }
+        // y el vocabulario de tu equipo (0.19), si sigues uno
+        var lower = Set(mine.map { $0.lowercased() })
+        let team = TeamVocabulary.cached.filter { lower.insert($0.lowercased()).inserted }
+        return (mine + team + (learnVocabulary ? LearnedVocabulary.cached.filter { !lower.contains($0.lowercased()) } : [])).prefix(100).map { String($0.prefix(100)) }
     }
     func tone(for bundle: String?) -> VoiceTone { bundle.flatMap { appTones[$0] } ?? tone }
     func expand(_ text: String) -> String {

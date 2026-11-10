@@ -25,7 +25,7 @@ struct DashboardActions {
 }
 
 enum DashPane: String, CaseIterable, Identifiable {
-    case general, keys, voice, alerts, packs, appearance, doctor, pro, about
+    case general, keys, voice, alerts, packs, team, appearance, doctor, pro, about
     var id: String { rawValue }
     static let showNotification = Notification.Name("AgentBarShowPane")
     var title: String {
@@ -35,6 +35,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .voice: return T.s("Voice", "Voz")
         case .alerts: return T.s("Alerts & Autopilot", "Avisos y Autopilot")
         case .packs: return T.s("Key packs", "Packs de teclas")
+        case .team: return T.s("Team", "Equipo")
         case .appearance: return T.s("Appearance", "Aspecto")
         case .doctor: return T.s("Diagnostics", "Diagnóstico")
         case .pro: return "Agent Bar Pro"
@@ -48,6 +49,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .voice: return T.s("Hold Fn, speak, release.", "Mantén Fn, habla y suelta.")
         case .alerts: return T.s("Know when your agent is done, and let it keep going.", "Entérate cuando tu agente termine y deja que siga solo.")
         case .packs: return T.s("Ready-made keys for the tools you use.", "Teclas listas para las herramientas que usas.")
+        case .team: return T.s("The same keys and words for everyone on your team.", "Las mismas teclas y palabras para todo tu equipo.")
         case .appearance: return T.s("How the bar looks and where it lives.", "Cómo se ve la barra y dónde vive.")
         case .doctor: return T.s("Everything Agent Bar needs, checked, with the fix.", "Todo lo que necesita Agent Bar, comprobado y con su arreglo.")
         case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Autopilot, voz incluida y avisos en el móvil.")
@@ -61,6 +63,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .voice: return "waveform"
         case .alerts: return "bell.badge.fill"
         case .packs: return "square.stack.3d.up.fill"
+        case .team: return "person.2.fill"
         case .appearance: return "paintbrush.fill"
         case .doctor: return "stethoscope"
         case .pro: return "seal.fill"
@@ -74,6 +77,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .voice: return Color(hex: 0xff375f)
         case .alerts: return Color(hex: 0xff9f0a)
         case .packs: return Color(hex: 0x5e5ce6)
+        case .team: return Color(hex: 0x64d2ff)
         case .appearance: return Color(hex: 0x0a84ff)
         case .doctor: return Color(hex: 0x30d158)
         case .pro: return Dash.accent
@@ -281,7 +285,8 @@ struct DashboardView: View {
                     case .keys: keysPane
                     case .voice: voicePane
                     case .alerts: alertsPane
-                    case .packs: packsPane
+                    case .packs: PacksPane(store: store, actions: actions)
+                    case .team: TeamPane(store: store, voice: voice)
                     case .appearance: appearancePane
                     case .doctor: DoctorPane(voice: voice, actions: actions, goTo: { p in withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) { pane = p } })
                     case .pro: ProView(license: License.shared, embedded: true)
@@ -360,7 +365,15 @@ struct DashboardView: View {
                                 .frame(width: 30, height: 30)
                                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(i == 0 ? AnyShapeStyle(Dash.accent) : AnyShapeStyle(Color.primary.opacity(0.07))))
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(k.label).font(.system(size: 13, weight: .medium))
+                                HStack(spacing: 6) {
+                                    Text(k.label).font(.system(size: 13, weight: .medium))
+                                    if !k.team.isEmpty {
+                                        Label(k.team, systemImage: "person.2.fill").labelStyle(.titleAndIcon).font(.system(size: 9.5, weight: .semibold))
+                                            .padding(.horizontal, 5).padding(.vertical, 1.5).foregroundStyle(Color(hex: 0x64d2ff))
+                                            .background(Capsule().fill(Color(hex: 0x64d2ff).opacity(0.14)))
+                                            .help(T.s("From your team: it changes when the team updates its file", "De tu equipo: cambia cuando el equipo actualiza su archivo"))
+                                    }
+                                }
                                 Text("«\(KeyText.preview(k.text))»").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                                 if !k.apps.isEmpty || !k.hold.isEmpty {
                                     Text([k.apps.isEmpty ? nil : T.s("Only in ", "Solo en ") + k.apps.map(KeyEditor.appName).joined(separator: ", "),
@@ -595,30 +608,6 @@ struct DashboardView: View {
             DashSection(title: T.s("Message flows", "Flujos de mensajes"), footer: T.s("Queue the next steps for Codex and other agents.", "Encola los siguientes pasos para Codex y otros agentes.")) {
                 DashRow(title: T.s("Flows", "Flujos"), symbol: "arrow.triangle.branch") { Shortcut(keys: "⌃⌥F"); Button(T.s("Open", "Abrir"), action: actions.openFlows).controlSize(.small) }
                 DashRow(title: T.s("Pause the running flow", "Pausar el flujo en marcha"), symbol: "pause.circle", divider: false) { Shortcut(keys: "⌃⌥P"); Button(T.s("Pause", "Pausar"), action: actions.pauseFlow).controlSize(.small) }
-            }
-        }
-    }
-
-    // MARK: Packs
-
-    private var packsPane: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
-                ForEach(Array(KeyPack.builtIn.enumerated()), id: \.offset) { _, p in
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack { Text(p.name).font(.system(size: 15, weight: .semibold)); Spacer(); Text(T.s("\(p.keys.count) keys", "\(p.keys.count) teclas")).font(.system(size: 11)).foregroundStyle(.secondary) }
-                        FlowChips(keys: p.keys)
-                        Spacer(minLength: 0)
-                        Button { actions.offerPack(p) } label: { Text(T.s("Add to Agent Bar…", "Añadir a Agent Bar…")).frame(maxWidth: .infinity) }.controlSize(.regular)
-                    }
-                    .padding(16).frame(minHeight: 170, alignment: .top)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.ultraThinMaterial))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
-                }
-            }
-            DashSection(footer: T.s("A pack link carries the whole pack. Agent Bar always asks before adding it.", "Un enlace de pack lleva el pack entero. Agent Bar siempre pregunta antes de añadirlo.")) {
-                DashRow(title: T.s("Share my keys", "Compartir mis teclas"), detail: T.s("Copies a link to your current keys", "Copia un enlace con tus teclas actuales"), symbol: "link") { Button(T.s("Copy link", "Copiar enlace"), action: actions.shareKeys).controlSize(.small) }
-                DashRow(title: T.s("More packs", "Más packs"), detail: "getagentbar.com/packs", symbol: "safari", divider: false) { Button(T.s("Open", "Abrir"), action: actions.morePacks).controlSize(.small) }
             }
         }
     }

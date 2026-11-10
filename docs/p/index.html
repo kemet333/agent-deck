@@ -29,5 +29,10 @@ if(!p||!p.name||!Array.isArray(p.keys)||!p.keys.length||p.keys.length>12){
     '<p class="note">«Add to Agent Bar» opens the app and asks before changing anything. Don\'t have it yet? Get it first, then come back to this link.</p></article>';
 }
 </script>
+<script>
+// Afiliados de Lemon Squeezy: los enlaces ?aff=CÓDIGO cuentan para quien invita. Se enciende al poner el subdominio
+// de la tienda (el mismo que Invite.storeSlug en la app); vacío, no se carga nada.
+(function(){var store="";if(!store)return;window.lemonSqueezyAffiliateConfig={store:store};var s=document.createElement('script');s.src='https://lmsqueezy.com/affiliate.js';s.defer=true;document.head.appendChild(s);})();
+</script>
 </body>
 </html>

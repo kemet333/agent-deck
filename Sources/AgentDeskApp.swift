@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if offerMoveToApplications() { return }
         migrateFromAgentDeck()
         Chime.prepare()
-        LearnedVocabulary.refresh(); Activity.prune(); DoctorLive.cleanHooks()
+        LearnedVocabulary.refresh(); Activity.prune(); DoctorLive.cleanHooks(); TeamSync.shared.start()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
@@ -116,6 +116,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case "pack": // agentdeck://pack?d=<base64url>: un pack compartido; siempre pregunta antes
                 if let d = q.first(where: { $0.name == "d" })?.value, let p = KeyPack.decode(d) { offerPack(p) }
                 else { store.flashNote(T.s("That pack link isn't valid", "Ese enlace de pack no es válido")) }
+            case "team": // agentdeck://team?url=<https…>: unirse a un equipo; baja el archivo, lo enseña y pregunta
+                if let u = q.first(where: { $0.name == "url" })?.value, let src = Team.source(u), src.scheme == "https" {
+                    Task { await TeamSync.shared.offer(src.absoluteString) }
+                } else { store.flashNote(T.s("That team link isn't valid", "Ese enlace de equipo no es válido")) }
             case "send":
                 if let t = q.first(where: { $0.name == "text" })?.value, !t.isEmpty {
                     Sender.send(t, enter: (q.first { $0.name == "enter" }?.value ?? "1") != "0")
@@ -215,7 +219,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
     @objc func shareKeys() {
-        Sender.copy(store.currentPack.shareURL)
+        Sender.copy(Invite.link(code: InviteLive.code, pack: store.currentPack))
         store.flashNote(T.s("Link copied: paste it anywhere", "Enlace copiado: pégalo donde quieras"), for: 3)
     }
     @objc func morePacks() { if let u = URL(string: "https://getagentbar.com/packs/") { NSWorkspace.shared.open(u) } }

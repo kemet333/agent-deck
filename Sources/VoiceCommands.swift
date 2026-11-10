@@ -119,6 +119,14 @@ enum LearnedVocabulary {
     }
 }
 
+/// El vocabulario del equipo que sigues (0.19): lo guarda TeamSync al actualizar el pack del equipo.
+enum TeamVocabulary {
+    static var cached: [String] {
+        get { UserDefaults.standard.stringArray(forKey: "teamVocabulary") ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: "teamVocabulary") }
+    }
+}
+
 /// Hablarle a un agente concreto (0.15): «dile al de Kemet que siga», «tell the Kemet one to run the tests».
 /// Y contestar a un permiso hablando: «sí» / «permítelo» lo permite; cualquier otra cosa es un no con tu motivo,
 /// que Claude lee y con el que se adapta («no, usa la rama equipo»).
