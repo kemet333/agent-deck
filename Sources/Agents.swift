@@ -239,7 +239,7 @@ struct ChangesView: View {
 /// Lo que han hecho tus agentes hoy, para «Hoy» en Ajustes: una línea por aviso en Application Support/Agent Deck/
 /// activity/<fecha>.jsonl (carpeta, tipo y la primera frase de lo que dijo). Se queda en el Mac; se borra a los 14 días.
 enum Activity {
-    struct Day: Equatable { var place: String; var done = 0; var asks = 0; var permissions = 0; var allowed = 0; var autopilot = 0; var last = ""; var lastAt = 0.0 }
+    struct Day: Equatable { var place: String; var done = 0; var asks = 0; var permissions = 0; var allowed = 0; var autopilot = 0; var queued = 0; var last = ""; var lastAt = 0.0 }
     static var folder: URL { Autopilot.folder.appendingPathComponent("activity") }
     static func file(_ date: Date = Date()) -> URL {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX")
@@ -266,12 +266,25 @@ enum Activity {
             case "permission": d.permissions += 1
             case "allowed": d.allowed += 1
             case "autopilot": d.autopilot += 1
+            case "queued": d.queued += 1
             default: break
             }
             if let t = o["text"] as? String, !t.isEmpty, ["done", "ask"].contains(o["kind"] as? String ?? "") { d.last = t; d.lastAt = o["t"] as? Double ?? 0 }
             days[place] = d
         }
         return days.values.sorted { ($0.done + $0.asks + $0.permissions, $0.place) > ($1.done + $1.asks + $1.permissions, $1.place) }
+    }
+    /// Las carpetas de los últimos 14 días, la más reciente primero.
+    static func recentPlaces() -> [String] {
+        let files = ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []).sorted { $0.lastPathComponent > $1.lastPathComponent }
+        var out: [String] = []
+        for f in files.prefix(14) {
+            guard let text = try? String(contentsOf: f, encoding: .utf8) else { continue }
+            for line in text.split(separator: "\n").reversed() {
+                if let o = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any], let p = o["place"] as? String, !p.isEmpty, !out.contains(p) { out.append(p) }
+            }
+        }
+        return out
     }
     /// Los días de más de dos semanas se borran.
     static func prune() {

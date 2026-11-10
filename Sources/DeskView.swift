@@ -228,7 +228,7 @@ struct DockView: View {
             }
             ForEach(store.alerts.suffix(3), id: \.id) { a in
                 AlertPill(alert: a, dismiss: { store.dismissAlert(a) }, reply: { store.reply($0, to: a) },
-                          autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.keys.first?.text ?? T.s("continue", "continúa"), to: a) } : nil,
+                          autopilot: ClaudeHooks.installed ? { store.setAutopilot(5); store.reply(store.autopilotMessage, to: a) } : nil,
                           talk: { store.talkToAlert(a) },
                           allow: a.permission ? { store.answerPermission(a, allow: true) } : nil,
                           deny: a.permission ? { store.answerPermission(a, allow: false) } : nil,
@@ -309,6 +309,9 @@ struct AlertPill: View {
                 }
             }
             if open {
+                if !alert.autopilotNote.isEmpty {
+                    Label(alert.autopilotNote, systemImage: "airplane").font(.system(size: 11, weight: .semibold)).foregroundColor(th.accent).lineLimit(1)
+                }
                 if !summary.isEmpty {
                     Text(summary).font(.system(size: alert.permission ? 11.5 : 12, design: alert.permission ? .monospaced : .default))
                         .foregroundColor(th.text).lineLimit(alert.permission ? 4 : 3)

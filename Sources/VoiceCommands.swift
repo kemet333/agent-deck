@@ -125,8 +125,15 @@ enum LearnedVocabulary {
 enum AgentCommand {
     struct Parsed: Equatable { let who: String; let say: String }
 
-    static func parse(_ raw: String) -> Parsed? {
-        let words = raw.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+    /// Con `later`, solo lo que empieza por «luego», «después», «cuando acabe» o «then»: va a la cola de ese agente.
+    static func parse(_ raw: String, later: Bool = false) -> Parsed? {
+        var words = raw.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        if later {
+            let lead = [["cuando", "acabe"], ["cuando", "termine"], ["and", "then"], ["after", "that"], ["luego"], ["despues"], ["then"], ["later"], ["next"], ["y", "luego"], ["y", "despues"]]
+            let n = words.map { SpokenCommands.norm($0) }
+            guard let l = lead.first(where: { $0.count < n.count && Array(n.prefix($0.count)) == $0 }) else { return nil }
+            words.removeFirst(l.count)
+        }
         let n = words.map { SpokenCommands.norm($0) }
         guard words.count >= 4 else { return nil }
         let spanish = ["dile", "digale", "dila"].contains(n[0]) || (n[0] == "pidele")

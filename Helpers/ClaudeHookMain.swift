@@ -23,20 +23,40 @@ enum ClaudeHookMain {
         // el aviso «Claude necesita tu permiso» de un permiso que ya está en la barra: no se repite ni para el piloto
         if kind == "ask", isPermissionNotice(j), !session.isEmpty, permissionPending(String(session)) { return }
 
-        if kind == "done", let s = Autopilot.load() {
+        // cómo acabó el piloto, para el resumen de la tarjeta: tests / turns / time / brake + vueltas dadas
+        var ended = ""
+        if kind == "done" {
             let last = (j["last_assistant_message"] as? String).flatMap { $0.isEmpty ? nil : $0 }
                 ?? Autopilot.lastAssistantText(transcript: j["transcript_path"] as? String ?? "")
-            if !Autopilot.shouldBrake(last) {
-                var next = s; next.remaining -= 1
-                Autopilot.save(next)
-                open("agentdeck://autopilot?left=\(next.remaining)&place=\(place)")
-                let out = (try? JSONSerialization.data(withJSONObject: ["decision": "block", "reason": s.message])) ?? Data()
+            let brake = Autopilot.shouldBrake(last)
+            // la cola de esta carpeta va primero: «luego dile al de Kemet que…»
+            if !brake, let next = AgentQueue.pop(place: URL(fileURLWithPath: cwd).lastPathComponent) {
+                open("agentdeck://queued?left=\(next.left)&place=\(place)")
+                let out = (try? JSONSerialization.data(withJSONObject: ["decision": "block", "reason": next.text])) ?? Data()
                 FileHandle.standardOutput.write(out + Data([10]))
                 return
             }
-            // freno: una pregunta de verdad. El piloto se apaga y te avisa.
-            Autopilot.save(nil)
-            kind = "ask"
+            if let s = Autopilot.load() {
+                let turns = s.turns ?? 0
+                if Autopilot.goalReached(s.goal, last: last) {
+                    Autopilot.save(nil); ended = "tests&n=\(turns)"
+                } else if !brake {
+                    var next = s; next.remaining -= 1; next.turns = turns + 1
+                    Autopilot.save(next)
+                    open("agentdeck://autopilot?left=\(next.remaining)&place=\(place)")
+                    let out = (try? JSONSerialization.data(withJSONObject: ["decision": "block", "reason": s.message])) ?? Data()
+                    FileHandle.standardOutput.write(out + Data([10]))
+                    return
+                } else {
+                    // freno: una pregunta de verdad. El piloto se apaga y te avisa.
+                    Autopilot.save(nil); ended = "brake&n=\(turns)"
+                    kind = "ask"
+                }
+            } else if let s = Autopilot.loadAny() {
+                // gastado o caducado: se resume en esta parada (si es de hace rato, solo se borra)
+                Autopilot.save(nil)
+                if s.until > Date().timeIntervalSince1970 - 3600 { ended = (s.remaining <= 0 ? "turns" : "time") + "&n=\(s.turns ?? 0)" }
+            }
         } else if kind == "ask", Autopilot.load() != nil {
             Autopilot.save(nil) // un permiso o una pregunta de Claude Code: el piloto se para
         }
@@ -51,7 +71,7 @@ enum ClaudeHookMain {
         try? input.write(to: dir.appendingPathComponent(name))
         // una parada (Stop) puede seguir: el gancho espera lo que contestes en la tarjeta y se lo pasa a ESTA conversación
         let isStop = (j["hook_event_name"] as? String ?? "Stop") == "Stop"
-        open("agentdeck://alert?app=Claude%20Code&kind=\(kind)&place=\(place)&file=\(name)&host=\(host)&wait=\(isStop ? "1" : "0")")
+        open("agentdeck://alert?app=Claude%20Code&kind=\(kind)&place=\(place)&file=\(name)&host=\(host)&wait=\(isStop ? "1" : "0")" + (ended.isEmpty ? "" : "&ap=" + ended))
         guard isStop else { return }
         let wait = Double(ProcessInfo.processInfo.environment["AGENT_BAR_WAIT"] ?? "") ?? 600
         let decision = dir.appendingPathComponent(name + ".decision")

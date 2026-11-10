@@ -97,7 +97,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let change = v("kind") == "permission" ? PermissionChange.read(file: v("file")) : nil
                 let msg = change?.summary ?? (v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file")))
                 if change != nil { DeskStore.dropHookFile(v("file")) }
-                store.raiseAlert(app: v("app"), ask: v("kind") != "done", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1", change: change)
+                store.raiseAlert(app: v("app"), ask: v("kind") != "done", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1", change: change,
+                                 autopilotEnd: v("ap"), turns: Int(v("n")) ?? 0)
+            case "queued": // el gancho mandó lo siguiente de la cola de esa carpeta
+                let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
+                store.queueSent(place: v("place"), left: Int(v("left")) ?? 0)
             case "released": // el gancho de esa conversación dejó de esperar
                 store.alertReleased(token: q.first(where: { $0.name == "file" })?.value ?? "")
             case "autopilot": // lo manda AgentBarClaudeHook cada vez que el piloto sigue solo

@@ -100,6 +100,8 @@ struct AgentAlert: Equatable {
     /// Un permiso de Claude Code (PermissionRequest): qué quiere hacer. Se contesta Permitir / No desde la tarjeta.
     var change: PermissionChange? = nil
     var permission: Bool { change != nil }
+    /// Cómo acabó Autopilot en esta parada («Autopilot · tests en verde tras 7 vueltas»), si venía de él.
+    var autopilotNote: String = ""
     var created = Date()
     let id = UUID()
     var title: String { ask ? T.s("\(app) is waiting for you", "\(app) te espera") : T.s("\(app) is done", "\(app) ha terminado") }
@@ -345,10 +347,12 @@ final class DeskStore: ObservableObject {
     }
 
     /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
-    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false, change: PermissionChange? = nil) {
+    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false, change: PermissionChange? = nil, autopilotEnd: String = "", turns: Int = 0) {
         var a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),
                            message: String(message.prefix(4000)), host: String(host.prefix(120)), token: token, waiting: waiting && !token.isEmpty)
         a.change = change
+        a.autopilotNote = Self.autopilotNote(autopilotEnd, turns: turns)
+        if !autopilotEnd.isEmpty { autopilotLeft = 0 }
         // «Claude necesita tu permiso» de un permiso que ya está en la barra: no se repite
         let permissionNotice = !a.permission && a.ask && a.message.lowercased().contains("permission")
         if permissionNotice, alerts.contains(where: { $0.permission && $0.place == a.place }) { return }
@@ -375,11 +379,55 @@ final class DeskStore: ObservableObject {
     /// Vueltas que le quedan al piloto; 0 = apagado.
     @Published var autopilotLeft: Int = Autopilot.load()?.remaining ?? 0
 
-    /// Enciende el piloto con N vueltas (el mensaje es la primera tecla, «continúa») o lo apaga con 0.
+    /// Objetivo de Autopilot (Ajustes): «» sin objetivo, «tests» hasta que pasen todos. Y el tiempo máximo, en horas.
+    static var autopilotGoal: String {
+        get { UserDefaults.standard.string(forKey: "autopilotGoal") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "autopilotGoal") }
+    }
+    static var autopilotHours: Double {
+        get { (UserDefaults.standard.object(forKey: "autopilotHours") as? Double) ?? 2 }
+        set { UserDefaults.standard.set(newValue, forKey: "autopilotHours") }
+    }
+    /// Lo que Autopilot le dice a Claude en cada vuelta: tu primera tecla, o «hasta que pasen los tests» con ese objetivo.
+    var autopilotMessage: String {
+        DeskStore.autopilotGoal == "tests"
+            ? T.s("Continue until all the tests pass. When they all pass, say so clearly.", "Continúa hasta que pasen todos los tests. Cuando pasen todos, dilo claramente.")
+            : keys.first?.text ?? T.s("continue", "continúa")
+    }
+
+    /// Enciende el piloto con N vueltas (con el objetivo y el tiempo de Ajustes) o lo apaga con 0.
     func setAutopilot(_ n: Int) {
-        if n > 0 { Autopilot.start(n, message: keys.first?.text ?? T.s("continue", "continúa")) } else { Autopilot.save(nil) }
+        if n > 0 { Autopilot.start(n, message: autopilotMessage, goal: DeskStore.autopilotGoal.isEmpty ? nil : DeskStore.autopilotGoal, hours: DeskStore.autopilotHours) }
+        else { Autopilot.save(nil) }
         autopilotLeft = n
-        flashNote(n > 0 ? T.s("Autopilot: \(n) turns", "Autopilot: \(n) vueltas") : T.s("Autopilot off", "Autopilot apagado"))
+        let goal = DeskStore.autopilotGoal == "tests" ? T.s(", until the tests pass", ", hasta que pasen los tests") : ""
+        flashNote(n > 0 ? T.s("Autopilot: \(n) turns\(goal)", "Autopilot: \(n) vueltas\(goal)") : T.s("Autopilot off", "Autopilot apagado"))
+    }
+    static func autopilotNote(_ end: String, turns: Int) -> String {
+        let n = T.s(turns == 1 ? "1 turn" : "\(turns) turns", turns == 1 ? "1 vuelta" : "\(turns) vueltas")
+        switch end {
+        case "tests": return T.s("Autopilot · tests green after \(n)", "Autopilot · tests en verde tras \(n)")
+        case "turns": return T.s("Autopilot · used its \(n)", "Autopilot · ha dado sus \(n)")
+        case "time": return T.s("Autopilot · time's up after \(n)", "Autopilot · se acabó el tiempo tras \(n)")
+        case "brake": return T.s("Autopilot · stopped for a real question after \(n)", "Autopilot · parado por una pregunta tras \(n)")
+        default: return ""
+        }
+    }
+
+    // MARK: - Cola por agente
+
+    /// Las colas, para Ajustes.
+    @Published var queues: [AgentQueue.Queue] = AgentQueue.all()
+    func refreshQueues() { queues = AgentQueue.all() }
+    func queueSent(place: String, left: Int) {
+        refreshQueues()
+        Activity.log("queued", place: place)
+        flashNote(left > 0 ? T.s("\(place): next from its queue (\(left) left)", "\(place): lo siguiente de su cola (quedan \(left))") : T.s("\(place): last one from its queue", "\(place): lo último de su cola"), for: 3)
+    }
+    /// Los nombres de carpeta conocidos (avisos de ahora y de los últimos días), para que «Kemet» se guarde como «Kemet-Capital».
+    func knownPlaces() -> [String] {
+        var seen = Set<String>()
+        return (alerts.map(\.place) + Activity.recentPlaces()).filter { !$0.isEmpty && seen.insert($0).inserted }
     }
     /// Lo pone el AppDelegate: abre la ventana de Pro.
     var showPro: (() -> Void)?
@@ -566,6 +614,7 @@ final class DeskStore: ObservableObject {
     /// Lo dictado con Fn que va a un agente de la barra: «dile al de Kemet que siga», o «permítelo» con un permiso esperando.
     /// Solo si de verdad hay un agente que encaje; si no, se escribe como siempre.
     func routeToAgent(_ text: String) -> Bool {
+        if queueForAgent(text) { return true }
         let waiting = alerts.filter { $0.waiting }
         guard !waiting.isEmpty else { return false }
         if let allow = AgentCommand.permissionShortcut(text), let p = waiting.last(where: { $0.permission }) {
@@ -573,6 +622,17 @@ final class DeskStore: ObservableObject {
         }
         guard let cmd = AgentCommand.parse(text), let a = waiting.last(where: { AgentCommand.matches(cmd.who, place: $0.place) }) else { return false }
         reply(cmd.say, to: a)
+        return true
+    }
+    /// «Luego dile al de Kemet que pase los tests»: si ese agente ya te espera, va ahora; si no, a su cola.
+    func queueForAgent(_ text: String) -> Bool {
+        guard let cmd = AgentCommand.parse(text, later: true) else { return false }
+        if let a = alerts.last(where: { $0.waiting && AgentCommand.matches(cmd.who, place: $0.place) }) { reply(cmd.say, to: a); return true }
+        // solo a un agente que conozcas (avisos de estos días o tus proyectos con git): «luego dile a mi madre…» se escribe como siempre
+        guard let place = (knownPlaces() + LearnedVocabulary.cached).first(where: { AgentCommand.matches(cmd.who, place: $0) }) else { return false }
+        let n = AgentQueue.add(place, cmd.say)
+        refreshQueues()
+        flashNote(T.s("Queued for \(place) (\(n))", "En la cola de \(place) (\(n))"), for: 3)
         return true
     }
 

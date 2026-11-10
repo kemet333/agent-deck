@@ -466,6 +466,7 @@ struct DashboardView: View {
         if d.asks > 0 { parts.append(T.s("\(d.asks) waited for you", d.asks == 1 ? "1 te esperó" : "\(d.asks) te esperaron")) }
         if d.permissions > 0 { parts.append(T.s(d.permissions == 1 ? "1 permission (\(d.allowed) allowed)" : "\(d.permissions) permissions (\(d.allowed) allowed)", d.permissions == 1 ? "1 permiso (\(d.allowed) permitido)" : "\(d.permissions) permisos (\(d.allowed) permitidos)")) }
         if d.autopilot > 0 { parts.append(T.s("\(d.autopilot) on Autopilot", "\(d.autopilot) con Autopilot")) }
+        if d.queued > 0 { parts.append(T.s("\(d.queued) from its queue", "\(d.queued) de su cola")) }
         let head = parts.joined(separator: " · ")
         return d.last.isEmpty ? head : head + "\n" + T.s("Last: ", "Lo último: ") + d.last
     }
@@ -509,7 +510,18 @@ struct DashboardView: View {
                     }
                 }
             }
-            DashSection(title: "Autopilot", footer: T.s("Claude Code keeps going on its own, sending your first key, and stops at a real question or a permission. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla y se para ante una pregunta de verdad o un permiso. Necesita los avisos de Claude Code.")) {
+            DashSection(title: "Autopilot", footer: T.s("Claude Code keeps going on its own, sending your first key (or «until all tests pass»), and stops at the goal, a real question, a permission or the time limit. The card tells you why it stopped. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla (o «hasta que pasen todos los tests») y se para al llegar al objetivo, ante una pregunta de verdad, un permiso o el tiempo máximo. La tarjeta te dice por qué paró. Necesita los avisos de Claude Code.")) {
+                DashRow(title: T.s("Until", "Hasta")) {
+                    Picker("", selection: Binding(get: { DeskStore.autopilotGoal }, set: { DeskStore.autopilotGoal = $0; refresh() })) {
+                        Text(T.s("It runs out of turns", "Que gaste sus vueltas")).tag("")
+                        Text(T.s("All tests pass", "Pasen todos los tests")).tag("tests")
+                    }.labelsHidden().frame(width: 230)
+                }
+                DashRow(title: T.s("At most", "Como mucho")) {
+                    Picker("", selection: Binding(get: { DeskStore.autopilotHours }, set: { DeskStore.autopilotHours = $0; refresh() })) {
+                        Text("30 min").tag(0.5); Text("1 h").tag(1.0); Text("2 h").tag(2.0); Text("4 h").tag(4.0)
+                    }.pickerStyle(.segmented).labelsHidden().frame(width: 230)
+                }
                 DashRow(title: T.s("Keep going", "Seguir solo"), detail: store.autopilotLeft > 0 ? T.s("\(store.autopilotLeft) turns left", "Quedan \(store.autopilotLeft) vueltas") : T.s("Off", "Apagado"), divider: false) {
                     Picker("", selection: Binding(get: { [0, 3, 5, 10, 20].contains(store.autopilotLeft) ? store.autopilotLeft : -1 }, set: { n in
                         guard n >= 0 else { return }
@@ -519,6 +531,19 @@ struct DashboardView: View {
                         Text(T.s("Off", "No")).tag(0); Text("3").tag(3); Text("5").tag(5); Text("10").tag(10); Text("20").tag(20)
                         if ![0, 3, 5, 10, 20].contains(store.autopilotLeft) { Text("\(store.autopilotLeft)").tag(-1) }
                     }.pickerStyle(.segmented).labelsHidden().frame(width: 230)
+                }
+            }
+            DashSection(title: T.s("Queues", "Colas"), footer: T.s("Say with Fn «then tell the Kemet one to run the tests»: when that agent finishes, it gets the next message from its queue, unless it asks you something real.", "Di con Fn «luego dile al de Kemet que pase los tests»: cuando ese agente termine, recibe lo siguiente de su cola, salvo que te pregunte algo de verdad.")) {
+                if store.queues.isEmpty {
+                    DashRow(title: T.s("Nothing queued", "Nada en cola"), detail: T.s("«luego dile al de … que …»", "«luego dile al de … que …»"), divider: false) { EmptyView() }
+                } else {
+                    ForEach(Array(store.queues.enumerated()), id: \.offset) { qi, q in
+                        ForEach(Array(q.items.enumerated()), id: \.offset) { i, m in
+                            DashRow(title: m, detail: i == 0 ? T.s("\(q.name) · next", "\(q.name) · lo siguiente") : q.name, divider: !(qi == store.queues.count - 1 && i == q.items.count - 1)) {
+                                Button { var nq = q; nq.items.remove(at: i); AgentQueue.save(nq); store.refreshQueues() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }.buttonStyle(.plain)
+                            }
+                        }
+                    }
                 }
             }
             DashSection(title: T.s("Message flows", "Flujos de mensajes"), footer: T.s("Queue the next steps for Codex and other agents.", "Encola los siguientes pasos para Codex y otros agentes.")) {
