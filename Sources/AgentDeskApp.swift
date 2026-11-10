@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if offerMoveToApplications() { return }
         migrateFromAgentDeck()
         Chime.prepare()
-        LearnedVocabulary.refresh()
+        LearnedVocabulary.refresh(); Activity.prune()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
@@ -93,8 +93,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             case "alert": // agentdeck://alert?app=Claude%20Code&kind=done|ask&place=proyecto
                 let v = { (n: String) in q.first(where: { $0.name == n })?.value ?? "" }
-                let msg = v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file"))
-                store.raiseAlert(app: v("app"), ask: v("kind") == "ask", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1")
+                // un permiso trae lo que quiere hacer (orden, archivo, cambios): se lee antes de que hookMessage borre el archivo
+                let change = v("kind") == "permission" ? PermissionChange.read(file: v("file")) : nil
+                let msg = change?.summary ?? (v("file").isEmpty ? v("msg") : DeskStore.hookMessage(file: v("file")))
+                if change != nil { DeskStore.dropHookFile(v("file")) }
+                store.raiseAlert(app: v("app"), ask: v("kind") != "done", place: v("place"), message: msg, host: v("host"), token: v("file"), waiting: v("wait") == "1", change: change)
             case "released": // el gancho de esa conversación dejó de esperar
                 store.alertReleased(token: q.first(where: { $0.name == "file" })?.value ?? "")
             case "autopilot": // lo manda AgentBarClaudeHook cada vez que el piloto sigue solo
@@ -344,7 +347,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
         a.messageText = T.s("Remove Agent Bar from Claude Code?", "¿Quitar Agent Bar de Claude Code?")
-        a.informativeText = T.s("The two Agent Bar hooks are removed from ~/.claude/settings.json (a backup is saved first). Nothing else changes. Restart Claude Code sessions. You can turn them on again any time.", "Se quitan los dos ganchos de Agent Bar de ~/.claude/settings.json (antes se guarda una copia). No cambia nada más. Reinicia las sesiones de Claude Code. Puedes volver a activarlos cuando quieras.")
+        a.informativeText = T.s("The Agent Bar hooks are removed from ~/.claude/settings.json (a backup is saved first). Nothing else changes. Restart Claude Code sessions. You can turn them on again any time.", "Se quitan los ganchos de Agent Bar de ~/.claude/settings.json (antes se guarda una copia). No cambia nada más. Reinicia las sesiones de Claude Code. Puedes volver a activarlos cuando quieras.")
         a.addButton(withTitle: T.s("Remove", "Quitar")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
         guard a.runModal() == .alertFirstButtonReturn else { return }
         switch ClaudeHooks.uninstall() {
@@ -356,19 +359,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func connectClaude() {
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
-        if ClaudeHooks.installed {
+        if ClaudeHooks.permissionsInstalled {
             a.messageText = T.s("Claude Code alerts are on", "Los avisos de Claude Code están activos")
             a.informativeText = T.s("When Claude Code finishes or needs you, Agent Bar lights up and plays a sound. To turn them off, remove the two hooks with «agentdeck://alert» from ~/.claude/settings.json.", "Cuando Claude Code termina o te necesita, Agent Bar se enciende y suena. Para quitarlos, borra los dos ganchos con «agentdeck://alert» de ~/.claude/settings.json.")
             a.addButton(withTitle: T.s("Try an alert", "Probar un aviso")); a.addButton(withTitle: "OK")
             if a.runModal() == .alertFirstButtonReturn { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba")) }
             return
         }
+        let upgrade = ClaudeHooks.installed
+        if upgrade {
+            a.messageText = T.s("Answer Claude Code's permissions from the bar?", "¿Contestar los permisos de Claude Code desde la barra?")
+            a.informativeText = T.s("When Claude Code asks to run a command or change a file, a card shows what it wants with Allow, No and See changes. Saying no can carry your reason, and Claude adjusts. With no answer in 60 s, Claude shows its usual dialog. Agent Bar adds one hook (PermissionRequest) to ~/.claude/settings.json and saves a backup first. Restart Claude Code sessions to pick it up.", "Cuando Claude Code pida ejecutar una orden o cambiar un archivo, una tarjeta te enseña qué quiere con Permitir, No y Ver cambios. Al decir que no puedes darle el motivo, y Claude se adapta. Sin respuesta en 60 s, Claude enseña su diálogo de siempre. Agent Bar añade un gancho (PermissionRequest) a ~/.claude/settings.json y antes guarda una copia. Reinicia las sesiones de Claude Code para que lo use.")
+            a.addButton(withTitle: T.s("Add", "Añadir")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        } else {
         a.messageText = T.s("Get an alert when Claude Code finishes?", "¿Avisarte cuando Claude Code termine?")
-        a.informativeText = T.s("Agent Bar will add two hooks to ~/.claude/settings.json: one when Claude Code finishes (Stop) and one when it needs your permission or answer (Notification). A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Bar añadirá dos ganchos a ~/.claude/settings.json: uno cuando Claude Code termina (Stop) y otro cuando necesita tu permiso o tu respuesta (Notification). Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los lean.")
+        a.informativeText = T.s("Agent Bar will add three hooks to ~/.claude/settings.json: when Claude Code finishes (Stop), when it needs your answer (Notification), and when it asks for permission (PermissionRequest), so you can allow or refuse from the bar; with no answer in 60 s Claude shows its usual dialog. A copy of the file is saved first as settings.json.agentdeck-backup. Nothing else changes. Restart Claude Code sessions to pick them up.", "Agent Bar añadirá tres ganchos a ~/.claude/settings.json: cuando Claude Code termina (Stop), cuando necesita tu respuesta (Notification) y cuando pide permiso (PermissionRequest), para que permitas o no desde la barra; sin respuesta en 60 s, Claude enseña su diálogo de siempre. Antes guarda una copia del archivo como settings.json.agentdeck-backup. No cambia nada más. Reinicia las sesiones de Claude Code para que los lean.")
         a.addButton(withTitle: T.s("Turn on alerts", "Activar avisos")); a.addButton(withTitle: T.s("Cancel", "Cancelar"))
+        }
         guard a.runModal() == .alertFirstButtonReturn else { return }
         switch ClaudeHooks.install() {
-        case .added, .alreadyThere: store.raiseAlert(app: "Claude Code", ask: false, place: T.s("alerts on", "avisos activos"))
+        case .added, .alreadyThere:
+            if upgrade { store.flashNote(T.s("Permissions from the bar: restart Claude Code", "Permisos desde la barra: reinicia Claude Code"), for: 4) }
+            else { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("alerts on", "avisos activos")) }
         case .failed(let why): let e = NSAlert(); e.messageText = why; e.runModal()
         }
     }

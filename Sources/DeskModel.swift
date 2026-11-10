@@ -97,6 +97,9 @@ struct AgentAlert: Equatable {
     /// Lo que ha hecho y lo que necesita, en una frase (la IA lo resume; mientras, su primera frase).
     var summary: String = ""
     var waiting: Bool = false
+    /// Un permiso de Claude Code (PermissionRequest): qué quiere hacer. Se contesta Permitir / No desde la tarjeta.
+    var change: PermissionChange? = nil
+    var permission: Bool { change != nil }
     var created = Date()
     let id = UUID()
     var title: String { ask ? T.s("\(app) is waiting for you", "\(app) te espera") : T.s("\(app) is done", "\(app) ha terminado") }
@@ -135,6 +138,7 @@ final class DeskStore: ObservableObject {
     var showFlows: (() -> Void)?
     lazy var voice: VoiceController = {
         let controller = VoiceController(storage: VoiceStorage(folder: Self.folder))
+        controller.routeToAgent = { [weak self] text in self?.routeToAgent(text) ?? false }
         controller.onDelivered = { [weak self, weak controller] text in
             let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
             if controller?.noisy == true {
@@ -341,19 +345,25 @@ final class DeskStore: ObservableObject {
     }
 
     /// Enciende el aviso con un sonido; se va al tocarlo o a los 25 s (salvo que llegue otro).
-    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false) {
+    func raiseAlert(app: String, ask: Bool, place: String, message: String = "", host: String = "", token: String = "", waiting: Bool = false, change: PermissionChange? = nil) {
         var a = AgentAlert(app: app.isEmpty ? T.s("Your agent", "Tu agente") : String(app.prefix(40)), ask: ask, place: String(place.prefix(40)),
                            message: String(message.prefix(4000)), host: String(host.prefix(120)), token: token, waiting: waiting && !token.isEmpty)
-        a.summary = Self.firstSentence(a.message)
+        a.change = change
+        // «Claude necesita tu permiso» de un permiso que ya está en la barra: no se repite
+        let permissionNotice = !a.permission && a.ask && a.message.lowercased().contains("permission")
+        if permissionNotice, alerts.contains(where: { $0.permission && $0.place == a.place }) { return }
+        if a.permission { alerts.removeAll { !$0.permission && $0.ask && $0.place == a.place && $0.message.lowercased().contains("permission") && Date().timeIntervalSince($0.created) < 10 } }
+        a.summary = a.permission ? a.message : Self.firstSentence(a.message)
         alerts.append(a)
-        summarize(a)
+        if !a.permission { summarize(a) }
+        Activity.log(a.permission ? "permission" : a.ask ? "ask" : "done", place: a.place, text: a.permission ? "" : Self.firstSentence(a.message))
         // como mucho 4: el más antiguo se suelta (su conversación se para como siempre)
         while alerts.count > 4 { let old = alerts.removeFirst(); release(old) }
         NSSound(named: ask ? "Ping" : "Glass")?.play()
         DeskStore.haptic(.levelChange)
         // sin mensaje se va solo; con mensaje se queda hasta que contestes o lo cierres
         // si en 45 s no la has contestado (no estás en el Mac), también va a tu WhatsApp, si tienes el puente de Alfred
-        if a.waiting { DispatchQueue.main.asyncAfter(deadline: .now() + 45) { [weak self] in
+        if a.waiting && !a.permission { DispatchQueue.main.asyncAfter(deadline: .now() + 45) { [weak self] in
             guard let self, self.alerts.contains(where: { $0.id == a.id }) else { return }
             WhatsAppRelay.send(a)
         } }
@@ -381,6 +391,7 @@ final class DeskStore: ObservableObject {
     /// Lo cuenta el gancho cada vez que sigue solo.
     func autopilotTurn(left: Int, place: String) {
         autopilotLeft = left
+        Activity.log("autopilot", place: place)
         flashNote(left > 0 ? T.s("Autopilot · \(left) left", "Autopilot · quedan \(left)") : T.s("Autopilot done", "Autopilot terminado"), for: 3)
     }
 
@@ -528,6 +539,43 @@ final class DeskStore: ObservableObject {
         let url = Self.folder.appendingPathComponent("hooks").appendingPathComponent(a.token + ".decision")
         return (try? d.write(to: url, options: .atomic)) != nil
     }
+    // MARK: - Permisos desde la barra
+
+    /// Permitir o no desde la tarjeta (o la voz): va al gancho PermissionRequest de esa sesión. El motivo del no lo lee Claude.
+    /// Si el gancho ya no espera (pasaron 60 s), se trae su app delante: allí está el diálogo.
+    func answerPermission(_ a: AgentAlert, allow: Bool, reason: String = "") {
+        alerts.removeAll { $0.id == a.id }
+        let who = a.place.isEmpty ? a.app : a.place
+        if decide(a, ["action": allow ? "allow" : "deny", "text": reason]) {
+            if allow { Activity.log("allowed", place: a.place) }
+            flashNote(allow ? T.s("Allowed · \(who)", "Permitido · \(who)") : reason.isEmpty ? T.s("Refused · \(who)", "No · \(who)") : T.s("No, with your reason · \(who)", "No, con tu motivo · \(who)"))
+        } else { openHost(a) }
+    }
+    /// «En Claude»: se suelta el gancho (Claude enseña su diálogo) y se trae su app delante.
+    func permissionInApp(_ a: AgentAlert) { dismissAlert(a); openHost(a) }
+    func openHost(_ a: AgentAlert) {
+        guard !a.host.isEmpty, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: a.host) else { return }
+        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    }
+    @MainActor func showChanges(_ a: AgentAlert) {
+        guard let c = a.change else { return }
+        ChangesWindow.show(c, place: a.place, allow: { [weak self] in self?.answerPermission(a, allow: true) },
+                           deny: { [weak self] in self?.answerPermission(a, allow: false) })
+    }
+
+    /// Lo dictado con Fn que va a un agente de la barra: «dile al de Kemet que siga», o «permítelo» con un permiso esperando.
+    /// Solo si de verdad hay un agente que encaje; si no, se escribe como siempre.
+    func routeToAgent(_ text: String) -> Bool {
+        let waiting = alerts.filter { $0.waiting }
+        guard !waiting.isEmpty else { return false }
+        if let allow = AgentCommand.permissionShortcut(text), let p = waiting.last(where: { $0.permission }) {
+            answerPermission(p, allow: allow); return true
+        }
+        guard let cmd = AgentCommand.parse(text), let a = waiting.last(where: { AgentCommand.matches(cmd.who, place: $0.place) }) else { return false }
+        reply(cmd.say, to: a)
+        return true
+    }
+
     /// Cerrar un aviso: si su gancho esperaba, se le suelta y esa conversación se para como siempre.
     func dismissAlert(_ a: AgentAlert) { alerts.removeAll { $0.id == a.id }; release(a) }
     private func release(_ a: AgentAlert) { _ = decide(a, ["action": "release"]) }
@@ -539,6 +587,7 @@ final class DeskStore: ObservableObject {
     func reply(_ text: String, to a: AgentAlert) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
+        if a.permission { let r = AgentCommand.permissionAnswer(t); answerPermission(a, allow: r.allow, reason: r.reason); return }
         alerts.removeAll { $0.id == a.id }
         if decide(a, ["action": "continue", "text": t]) {
             let f = DateFormatter(); f.dateFormat = "HH:mm"
@@ -553,6 +602,11 @@ final class DeskStore: ObservableObject {
             let f = DateFormatter(); f.dateFormat = "HH:mm"
             self.lastSent = "\(f.string(from: Date())) · \(t)"
         }
+    }
+
+    static func dropHookFile(_ name: String) {
+        guard name.range(of: "^[0-9]+-[0-9]+\\.json$", options: .regularExpression) != nil else { return }
+        try? FileManager.default.removeItem(at: folder.appendingPathComponent("hooks").appendingPathComponent(name))
     }
 
     /// Lo que dejó un gancho de Claude Code en Application Support/Agent Deck/hooks/<n>.json: la última respuesta

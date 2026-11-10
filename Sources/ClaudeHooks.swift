@@ -1,6 +1,6 @@
 import AppKit
 
-/// Avisos de Claude Code: dos ganchos en ~/.claude/settings.json que abren agentdeck://alert cuando Claude Code
+/// Avisos de Claude Code: tres ganchos (desde 0.15 también PermissionRequest) en ~/.claude/settings.json que abren agentdeck://alert cuando Claude Code
 /// termina (Stop) o espera tu permiso o tu respuesta (Notification). Solo se añaden si el usuario lo confirma en
 /// la app; antes se guarda una copia del archivo y nunca se toca nada más de su configuración.
 enum ClaudeHooks {
@@ -16,6 +16,21 @@ enum ClaudeHooks {
 
     /// Ganchos de esta versión, apuntando a esta copia de la app.
     static var installed: Bool { text.contains(helper) && text.contains("\"timeout\"") }
+    /// Permisos desde la barra (0.15): el gancho PermissionRequest de esta copia.
+    static var permissionsInstalled: Bool { installed && text.contains("PermissionRequest") }
+    /// Los ganchos que pone Agent Bar: avisos (Stop, Notification) y permisos (PermissionRequest; espera tu respuesta 60 s).
+    static let events: [(event: String, kind: String, matcher: Bool, timeout: Int?)] = [
+        ("Stop", "done", false, Int(waitSeconds) + 60), ("Notification", "ask", false, nil), ("PermissionRequest", "permission", true, 90),
+    ]
+    /// Permisos apagados en Ajustes: el gancho sigue puesto, pero deja pasar el diálogo de Claude Code al momento.
+    static var permissionsOffFile: URL { Autopilot.folder.appendingPathComponent("permissions-off") }
+    static var permissionsPaused: Bool {
+        get { FileManager.default.fileExists(atPath: permissionsOffFile.path) }
+        set {
+            if newValue { try? FileManager.default.createDirectory(at: Autopilot.folder, withIntermediateDirectories: true); try? Data().write(to: permissionsOffFile) }
+            else { try? FileManager.default.removeItem(at: permissionsOffFile) }
+        }
+    }
     static var oldVersion: Bool { (text.contains(marker) || text.contains(helperName)) && !installed }
     private static var text: String { (try? String(contentsOf: settings, encoding: .utf8)) ?? "" }
 
@@ -38,7 +53,7 @@ enum ClaudeHooks {
         try? fm.removeItem(at: backup)
         do { try fm.copyItem(at: settings, to: backup) } catch { return .failed(T.s("Couldn't make a backup, so nothing was changed.", "No se ha podido guardar una copia; no se ha cambiado nada.")) }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
-        for event in ["Stop", "Notification"] {
+        for event in events.map(\.event) {
             let list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
                 !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
             }
@@ -63,7 +78,7 @@ enum ClaudeHooks {
                 return .failed(T.s("~/.claude/settings.json isn't valid JSON, so nothing was changed.", "~/.claude/settings.json no es un JSON válido; no se ha cambiado nada."))
             }
             root = parsed
-            if installed { return .alreadyThere }
+            if permissionsInstalled { return .alreadyThere }
             // copia antes de tocar nada
             let backup = settings.deletingLastPathComponent().appendingPathComponent("settings.json.agentdeck-backup")
             try? fm.removeItem(at: backup)
@@ -72,16 +87,18 @@ enum ClaudeHooks {
             try? fm.createDirectory(at: settings.deletingLastPathComponent(), withIntermediateDirectories: true)
         }
         var hooks = root["hooks"] as? [String: Any] ?? [:]
-        for (event, kind) in [("Stop", "done"), ("Notification", "ask")] {
+        for e in events {
             // los ganchos antiguos de Agent Deck se cambian por los nuevos; los demás no se tocan
-            var list = (hooks[event] as? [[String: Any]] ?? []).filter { entry in
+            var list = (hooks[e.event] as? [[String: Any]] ?? []).filter { entry in
                 !((entry["hooks"] as? [[String: Any]]) ?? []).contains { let c = $0["command"] as? String ?? ""; return c.contains(marker) || c.contains(helperName) }
             }
             // Stop espera tu respuesta en la tarjeta hasta 10 min: Claude Code no debe cortarlo antes
-            var hook: [String: Any] = ["type": "command", "command": command(kind: kind)]
-            if event == "Stop" { hook["timeout"] = Int(waitSeconds) + 60 }
-            list.append(["hooks": [hook]])
-            hooks[event] = list
+            var hook: [String: Any] = ["type": "command", "command": command(kind: e.kind)]
+            if let t = e.timeout { hook["timeout"] = t }
+            var entry: [String: Any] = ["hooks": [hook]]
+            if e.matcher { entry["matcher"] = "*" }
+            list.append(entry)
+            hooks[e.event] = list
         }
         root["hooks"] = hooks
         do {

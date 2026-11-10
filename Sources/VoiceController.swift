@@ -75,6 +75,8 @@ final class VoiceController: ObservableObject {
     }
     var onShortcutsChanged: (()->Void)?
     var onDelivered: ((String)->Void)?
+    /// «Dile al de Kemet que siga» y «permítelo»: si va a un agente que espera en la barra, se le manda a él y no se escribe.
+    var routeToAgent: ((String)->Bool)?
     /// Desde que se suelta Fn hasta que el texto entra en el chat, y si fue con el tiempo real: «Listo en 0,4 s».
     private var releasedAt: Date?
     private var usedLive = false
@@ -320,6 +322,7 @@ final class VoiceController: ObservableObject {
             text=cmd.text;spokenSend=cmd.send;spokenRewrite=key().isEmpty ? nil : cmd.rewrite
             if cmd.send != nil || cmd.rewrite != nil { log("orden: "+(cmd.send == true ? "envía " : cmd.send == false ? "no envíes " : "")+(cmd.rewrite ?? "")) }
             guard !text.isEmpty else { cancel();fail(T.s("Nothing to send.","No hay nada que enviar."));return }
+            if routeToAgent?(text) == true { log("orden: a un agente");cancel();return }
         }
         raw=text;partial="";draft=purpose == .command ? target?.selectedText ?? "":text
         var tone=snapshot.tone(for:capturedBundle)

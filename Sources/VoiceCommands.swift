@@ -118,3 +118,64 @@ enum LearnedVocabulary {
         return FileManager.default.fileExists(atPath: url.appendingPathComponent(".git").path, isDirectory: &dir) && dir.boolValue
     }
 }
+
+/// Hablarle a un agente concreto (0.15): «dile al de Kemet que siga», «tell the Kemet one to run the tests».
+/// Y contestar a un permiso hablando: «sí» / «permítelo» lo permite; cualquier otra cosa es un no con tu motivo,
+/// que Claude lee y con el que se adapta («no, usa la rama equipo»).
+enum AgentCommand {
+    struct Parsed: Equatable { let who: String; let say: String }
+
+    static func parse(_ raw: String) -> Parsed? {
+        let words = raw.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        let n = words.map { SpokenCommands.norm($0) }
+        guard words.count >= 4 else { return nil }
+        let spanish = ["dile", "digale", "dila"].contains(n[0]) || (n[0] == "pidele")
+        let english = n[0] == "tell" || (n[0] == "ask" && n.count > 4)
+        guard spanish || english else { return nil }
+        let filler: Set<String> = spanish ? ["al", "a", "la", "el", "los", "agente", "de", "del", "sesion", "chat", "proyecto"]
+                                          : ["the", "agent", "of", "session", "chat", "project", "my", "in"]
+        let tailFiller: Set<String> = spanish ? ["agente", "sesion", "chat"] : ["one", "agent", "session", "chat", "project"]
+        let joiner = spanish ? "que" : "to"
+        var i = 1
+        while i < n.count, filler.contains(n[i]) { i += 1 }
+        guard let j = n[i...].firstIndex(of: joiner), j > i, j - i <= 4, j + 1 < words.count else { return nil }
+        var name = Array(words[i..<j])
+        while let last = name.last, tailFiller.contains(SpokenCommands.norm(last)) { name.removeLast() }
+        let who = name.joined(separator: " ").trimmingCharacters(in: CharacterSet.punctuationCharacters.union(.whitespaces))
+        var say = words[(j + 1)...].joined(separator: " ").trimmingCharacters(in: .whitespaces)
+        guard !who.isEmpty, !say.isEmpty else { return nil }
+        say = say.prefix(1).uppercased() + say.dropFirst()
+        return Parsed(who: who, say: say)
+    }
+
+    /// ¿Habla de esa carpeta? «kemet» → «Kemet-Capital»; «diego» → «Diego-Operating-System».
+    static func matches(_ who: String, place: String) -> Bool {
+        let key = SpokenCommands.norm(who), p = SpokenCommands.norm(place.replacingOccurrences(of: "-", with: " ").replacingOccurrences(of: "_", with: " "))
+        guard !key.isEmpty, !p.isEmpty else { return false }
+        if p.contains(key) || p.replacingOccurrences(of: " ", with: "").contains(key.replacingOccurrences(of: " ", with: "")) { return true }
+        let pw = p.split(separator: " ")
+        return key.split(separator: " ").contains { k in k.count >= 3 && pw.contains { $0.hasPrefix(k) } }
+    }
+
+    private static let yes: Set<String> = ["si", "vale", "ok", "okay", "permite", "permitelo", "permiteselo", "permitir", "adelante", "dale", "hazlo",
+                                           "venga", "claro", "yes", "yeah", "yep", "allow", "sure", "go", "ahead", "do", "it", "lo", "le", "se",
+                                           "eso", "that", "please", "por", "favor", "sigue", "continua", "approve", "approved"]
+    /// La respuesta a un permiso: (permitir, motivo del no).
+    static func permissionAnswer(_ raw: String) -> (allow: Bool, reason: String) {
+        let w = SpokenCommands.norm(raw).split(separator: " ").map(String.init)
+        if !w.isEmpty, w.count <= 5, w.allSatisfy({ yes.contains($0) }), w.contains(where: { !["lo", "le", "se", "eso", "it", "that", "please", "por", "favor"].contains($0) }) {
+            return (true, "")
+        }
+        var words = raw.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        while let f = words.first, ["no", "nope", "nah"].contains(SpokenCommands.norm(f)) { words.removeFirst() }
+        let reason = words.joined(separator: " ").trimmingCharacters(in: CharacterSet.punctuationCharacters.union(.whitespaces))
+        return (false, reason.isEmpty ? "" : reason.prefix(1).uppercased() + reason.dropFirst())
+    }
+    /// Pulsar Fn con un permiso en la barra y decir solo «permítelo» / «no lo permitas»: va a ese permiso.
+    static func permissionShortcut(_ raw: String) -> Bool? {
+        let s = SpokenCommands.norm(raw)
+        if ["permitelo", "permite", "permitir", "permiteselo", "si permitelo", "vale permitelo", "allow", "allow it", "approve", "approve it"].contains(s) { return true }
+        if ["no lo permitas", "deniegalo", "deniega", "no permitas", "deny", "deny it", "dont allow", "dont allow it", "do not allow"].contains(s) { return false }
+        return nil
+    }
+}

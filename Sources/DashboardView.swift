@@ -460,10 +460,20 @@ struct DashboardView: View {
 
     // MARK: Avisos y piloto
 
+    static func dayLine(_ d: Activity.Day) -> String {
+        var parts: [String] = []
+        if d.done > 0 { parts.append(T.s("\(d.done) done", d.done == 1 ? "1 terminada" : "\(d.done) terminadas")) }
+        if d.asks > 0 { parts.append(T.s("\(d.asks) waited for you", d.asks == 1 ? "1 te esperó" : "\(d.asks) te esperaron")) }
+        if d.permissions > 0 { parts.append(T.s(d.permissions == 1 ? "1 permission (\(d.allowed) allowed)" : "\(d.permissions) permissions (\(d.allowed) allowed)", d.permissions == 1 ? "1 permiso (\(d.allowed) permitido)" : "\(d.permissions) permisos (\(d.allowed) permitidos)")) }
+        if d.autopilot > 0 { parts.append(T.s("\(d.autopilot) on Autopilot", "\(d.autopilot) con Autopilot")) }
+        let head = parts.joined(separator: " · ")
+        return d.last.isEmpty ? head : head + "\n" + T.s("Last: ", "Lo último: ") + d.last
+    }
+
     private var alertsPane: some View {
         VStack(alignment: .leading, spacing: 22) {
             let _ = tick
-            DashSection(title: "Claude Code", footer: T.s("A one-line alert with a summary when a conversation finishes or needs your yes. Agent Bar adds two hooks to ~/.claude/settings.json and saves a backup first.", "Un aviso de una línea con resumen cuando una conversación termina o necesita tu sí. Agent Bar añade dos ganchos a ~/.claude/settings.json y antes guarda una copia.")) {
+            DashSection(title: "Claude Code", footer: T.s("A one-line alert with a summary when a conversation finishes or needs you, and its permissions answered from the bar. Agent Bar adds its hooks to ~/.claude/settings.json and saves a backup first.", "Un aviso de una línea con resumen cuando una conversación termina o te necesita, y sus permisos contestados desde la barra. Agent Bar añade sus ganchos a ~/.claude/settings.json y antes guarda una copia.")) {
                 if ClaudeHooks.installed {
                     DashToggle(title: T.s("Alerts", "Avisos"), detail: T.s("Turns off instantly, without restarting Claude Code", "Se apagan al momento, sin reiniciar Claude Code"), isOn: Binding(get: { !ClaudeHooks.paused }, set: { on in
                         ClaudeHooks.paused = !on
@@ -471,6 +481,13 @@ struct DashboardView: View {
                         store.flashNote(ClaudeHooks.paused ? T.s("Claude Code alerts off", "Avisos de Claude Code apagados") : T.s("Claude Code alerts on", "Avisos de Claude Code activados"))
                         refresh()
                     }))
+                    if ClaudeHooks.permissionsInstalled {
+                        DashToggle(title: T.s("Permissions from the bar", "Permisos desde la barra"), detail: T.s("Allow, No (with your reason) or See changes. No answer in 60 s: Claude asks you there.", "Permitir, No (con tu motivo) o Ver cambios. Sin respuesta en 60 s, Claude te lo pregunta allí."), isOn: Binding(get: { !ClaudeHooks.permissionsPaused }, set: { ClaudeHooks.permissionsPaused = !$0; refresh() }))
+                    } else {
+                        DashRow(title: T.s("Permissions from the bar", "Permisos desde la barra"), detail: T.s("Allow or refuse what Claude Code asks, and see its changes", "Permite o no lo que pide Claude Code y mira sus cambios")) {
+                            Button(T.s("Add…", "Añadir…"), action: after(actions.connectClaude)).buttonStyle(.borderedProminent).controlSize(.small)
+                        }
+                    }
                     DashRow(title: T.s("Try an alert", "Probar un aviso")) {
                         Button(T.s("Try", "Probar")) { store.raiseAlert(app: "Claude Code", ask: false, place: T.s("test", "prueba"), message: T.s("This is how an alert looks.", "Así se ve un aviso.")) }.controlSize(.small)
                     }
@@ -482,6 +499,14 @@ struct DashboardView: View {
                 }
                 if FileManager.default.fileExists(atPath: WhatsAppRelay.folder.path) {
                     DashToggle(title: T.s("Alerts to Alfred's WhatsApp when I'm away", "Avisos al WhatsApp de Alfred si no estoy"), isOn: Binding(get: { UserDefaults.standard.object(forKey: "whatsappAlerts") as? Bool ?? true }, set: { UserDefaults.standard.set($0, forKey: "whatsappAlerts"); refresh() }), divider: false)
+                }
+            }
+            let day = Activity.today()
+            if !day.isEmpty {
+                DashSection(title: T.s("Today", "Hoy"), footer: T.s("What each agent did today, from its alerts. Say «tell the Kemet one to keep going» with Fn to answer one that's waiting. Kept on this Mac for 14 days.", "Lo que ha hecho hoy cada agente, según sus avisos. Di «dile al de Kemet que siga» con Fn para contestar a uno que espera. Se guarda en este Mac 14 días.")) {
+                    ForEach(Array(day.prefix(8).enumerated()), id: \.offset) { i, d in
+                        DashRow(title: d.place, detail: Self.dayLine(d), divider: i < min(day.count, 8) - 1) { EmptyView() }
+                    }
                 }
             }
             DashSection(title: "Autopilot", footer: T.s("Claude Code keeps going on its own, sending your first key, and stops at a real question or a permission. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla y se para ante una pregunta de verdad o un permiso. Necesita los avisos de Claude Code.")) {
