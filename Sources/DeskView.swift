@@ -542,8 +542,9 @@ struct Bar: View {
                 if i > 0 { Divider_() }
                 ForEach(g.keys) { key in
                     DockItem(id: key.id, icon: key.icon, label: key.label, hotkey: key.hotkey, main: key.hotkey == 1, editing: store.editing, tint: nil, store: store,
-                             help: "⌃⌥\(key.hotkey.map(String.init) ?? "") · \(key.text)",
-                             press: { store.press(key) }, edit: { sheet = key }, remove: { withAnimation(Motion.settle) { store.remove(key) } })
+                             help: "⌃⌥\(key.hotkey.map(String.init) ?? "") · \(KeyText.preview(key.text))" + (key.hold.isEmpty ? "" : T.s("\nHold: ", "\nMantener: ") + KeyText.preview(key.hold)),
+                             press: { store.press(key) }, edit: { sheet = key }, remove: { withAnimation(Motion.settle) { store.remove(key) } },
+                             hold: key.hold.isEmpty ? nil : { store.pressHold(key) })
                 }
             }
             if store.editing {
@@ -627,9 +628,13 @@ struct DockItem: View {
     let press: () -> Void
     let edit: () -> Void
     let remove: () -> Void
+    /// Mantener pulsada (0.16): su variante. Al soltar no se manda la normal.
+    var hold: (() -> Void)? = nil
     @Environment(\.barTheme) private var th
     @State private var hover = false
     @State private var pressed = false
+    @State private var holdTask: DispatchWorkItem?
+    @State private var held = false
     @State private var bursts = 0
     @State private var lit = false
     /// En Metal la tecla principal es naranja: lo de encima va oscuro y se enciende en blanco.
@@ -637,7 +642,7 @@ struct DockItem: View {
     private var litColor: Color { face ? .white : th.accent }
 
     var body: some View {
-        Button(action: { editing ? edit() : fire() }) {
+        Button(action: { if held { held = false; return }; editing ? edit() : fire() }) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .regular))
@@ -670,7 +675,17 @@ struct DockItem: View {
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
-        .pressEvents(onPress: { pressed = true }, onRelease: { pressed = false })
+        .pressEvents(onPress: {
+            pressed = true
+            guard let hold, !editing, holdTask == nil else { return }
+            let t = DispatchWorkItem { held = true; glow(); hold() }
+            holdTask = t
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: t)
+        }, onRelease: { pressed = false; holdTask?.cancel(); holdTask = nil })
+        .overlay(alignment: .bottom) {
+            // tiene variante al mantener: un punto bajo la tecla
+            if hold != nil && !editing { Circle().fill(th.faint).frame(width: 3, height: 3).offset(y: -2) }
+        }
         .onChange(of: store.pulse) { _, _ in
             // disparo por atajo de teclado: la misma animación que el clic
             if let id = id, store.lastPressedId == id, !pressed { glow() }
@@ -909,7 +924,38 @@ struct KeyEditor: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(isNew ? T.s("New key", "Nueva tecla") : T.s("Edit key", "Editar tecla")).font(.system(size: 13, weight: .semibold)).foregroundColor(Palette.ink)
             TextField(T.s("Short name (what you see)", "Nombre corto (lo que se ve)"), text: $key.label).textFieldStyle(.roundedBorder)
-            TextField(T.s("What gets typed into the chat", "Lo que se escribe en el chat"), text: $key.text, axis: .vertical).lineLimit(2...5).textFieldStyle(.roundedBorder)
+            HStack {
+                Text(T.s("What gets typed into the chat", "Lo que se escribe en el chat")).font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
+                Spacer()
+                // variables: se rellenan al pulsar la tecla
+                Menu(T.s("Insert", "Insertar")) {
+                    ForEach(KeyText.palette, id: \.token) { v in
+                        Button("\(v.token)  ·  \(v.help)") { key.text += (key.text.isEmpty || key.text.hasSuffix(" ") || key.text.hasSuffix("\n") ? "" : " ") + v.token }
+                    }
+                    Divider()
+                    Button(T.s("Next step  ·  ---", "Paso siguiente  ·  ---")) { key.text += (key.text.hasSuffix("\n") || key.text.isEmpty ? "" : "\n") + "---\n" }
+                    Button(T.s("Wait 5 s  ·  {wait 5}", "Esperar 5 s  ·  {espera 5}")) { key.text += (key.text.hasSuffix("\n") || key.text.isEmpty ? "" : "\n") + T.s("{wait 5}\n", "{espera 5}\n") }
+                }.menuStyle(.borderlessButton).fixedSize().font(.system(size: 11.5))
+            }
+            TextEditor(text: $key.text).font(.system(size: 12.5)).scrollContentBackground(.hidden).frame(height: 70).padding(5)
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.white.opacity(0.06)))
+                .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5))
+            Text(T.s("Variables are filled in when you press it. A line with only --- splits it into steps sent one after another.", "Las variables se rellenan al pulsarla. Una línea con solo --- la parte en pasos que se mandan uno tras otro."))
+                .font(.system(size: 10.5)).foregroundColor(Palette.mute).fixedSize(horizontal: false, vertical: true)
+            Text(T.s("When held down (optional)", "Al mantenerla pulsada (opcional)")).font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
+            TextField(T.s("e.g. «continue without asking me»", "p. ej. «continúa sin preguntarme»"), text: $key.hold).textFieldStyle(.roundedBorder)
+            HStack {
+                Text(T.s("Shows in", "Sale en")).font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
+                Menu(key.apps.isEmpty ? T.s("All apps", "Todas las apps") : key.apps.map(KeyEditor.appName).joined(separator: ", ")) {
+                    Button(T.s("All apps", "Todas las apps")) { key.apps = [] }
+                    Divider()
+                    ForEach(KeyEditor.appChoices(key.apps), id: \.self) { b in
+                        Button { if key.apps.contains(b) { key.apps.removeAll { $0 == b } } else { key.apps.append(b) } } label: {
+                            if key.apps.contains(b) { Label(KeyEditor.appName(b), systemImage: "checkmark") } else { Text(KeyEditor.appName(b)) }
+                        }
+                    }
+                }.menuStyle(.borderlessButton).fixedSize().font(.system(size: 12))
+            }
             Text(T.s("Icon", "Icono")).font(.system(size: 11, weight: .medium)).foregroundColor(Palette.mute)
             LazyVGrid(columns: cols, spacing: 6) {
                 ForEach(deskIcons, id: \.self) { name in
@@ -932,7 +978,18 @@ struct KeyEditor: View {
             }
         }
         .padding(16)
-        .frame(width: 360)
+        .frame(width: 400)
+    }
+
+    /// Las apps abiertas (con ventana) más las ya elegidas, por nombre.
+    static func appChoices(_ chosen: [String]) -> [String] {
+        let running = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular && $0.bundleIdentifier != Bundle.main.bundleIdentifier }.compactMap(\.bundleIdentifier)
+        var seen = Set<String>()
+        return (chosen + running).filter { seen.insert($0).inserted }.sorted { appName($0).localizedCaseInsensitiveCompare(appName($1)) == .orderedAscending }
+    }
+    static func appName(_ bundle: String) -> String {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundle) { return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "") }
+        return bundle
     }
 }
 

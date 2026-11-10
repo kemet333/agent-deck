@@ -16,6 +16,8 @@ struct DeskKey: Codable, Identifiable, Equatable {
         sendEnter = try c.decodeIfPresent(Bool.self, forKey: .sendEnter) ?? true
         icon = try c.decodeIfPresent(String.self, forKey: .icon) ?? "circle"
         group = try c.decodeIfPresent(String.self, forKey: .group) ?? "mías"
+        apps = try c.decodeIfPresent([String].self, forKey: .apps) ?? []
+        hold = try c.decodeIfPresent(String.self, forKey: .hold) ?? ""
     }
     var id: UUID = UUID()
     var label: String
@@ -28,6 +30,11 @@ struct DeskKey: Codable, Identifiable, Equatable {
     var icon: String = "circle"
     /// Grupo en la barra: las teclas del mismo grupo van juntas, separadas por una línea.
     var group: String = "mías"
+    /// Solo en estas apps (bundle ids); vacío = en todas (0.16).
+    var apps: [String] = []
+    /// Lo que escribe al mantenerla pulsada (0.16); vacío = nada.
+    var hold: String = ""
+    func shows(in bundle: String) -> Bool { apps.isEmpty || bundle.isEmpty || apps.contains(bundle) }
 }
 
 /// Iconos que ofrece el editor (nombres de SF Symbols).
@@ -277,14 +284,70 @@ final class DeskStore: ObservableObject {
         DeskStore.haptic()
         lastPressedId = key.id
         pulse += 1
-        Sender.send(key.text, enter: key.sendEnter) { [weak self] result in
-            switch result { case .success: let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(key.text)"
-            case .failure(let error): self?.voice.note(error.localizedDescription) }
+        type(key.text, enter: key.sendEnter)
+    }
+    /// Mantener pulsada: su variante, si tiene.
+    func pressHold(_ key: DeskKey) {
+        guard !key.hold.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        DeskStore.haptic(.levelChange)
+        lastPressedId = key.id
+        pulse += 1
+        type(key.hold, enter: key.sendEnter)
+    }
+
+    /// Escribe lo de una tecla: rellena sus variables y manda sus pasos uno tras otro.
+    func type(_ raw: String, enter: Bool) {
+        let needs = KeyText.uses(raw)
+        let front = NSWorkspace.shared.frontmostApplication.flatMap { $0.bundleIdentifier == Bundle.main.bundleIdentifier ? nil : $0 }
+        var values: [KeyText.Var: String] = [:]
+        let now = Date()
+        if needs.contains(.date) { values[.date] = DateFormatter.localizedString(from: now, dateStyle: .medium, timeStyle: .none) }
+        if needs.contains(.time) { values[.time] = DateFormatter.localizedString(from: now, dateStyle: .none, timeStyle: .short) }
+        if needs.contains(.app) { values[.app] = front?.localizedName ?? "" }
+        if needs.contains(.clipboard) { values[.clipboard] = NSPasteboard.general.string(forType: .string) ?? "" }
+        if needs.contains(.file) { values[.file] = front.flatMap { Sender.frontDocument($0.processIdentifier) } ?? "" }
+        let go: ([KeyText.Var: String]) -> Void = { [weak self] v in self?.sendSteps(KeyText.steps(KeyText.fill(raw, v)), enter: enter) }
+        guard needs.contains(.selection) else { go(values); return }
+        Sender.copySelection { [weak self] sel in
+            guard let sel, !sel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                self?.flashNote(T.s("Select some text first: this key uses it", "Selecciona antes un texto: esta tecla lo usa")); return
+            }
+            values[.selection] = String(sel.prefix(12_000))
+            go(values)
         }
+    }
+    private func sendSteps(_ steps: [KeyText.Step], enter: Bool) {
+        guard let step = steps.first else { return }
+        let run = { [weak self] in
+            Sender.send(step.text, enter: enter) { result in
+                switch result {
+                case .success:
+                    let f = DateFormatter(); f.dateFormat = "HH:mm"; self?.lastSent = "\(f.string(from: Date())) · \(step.text)"
+                    if steps.count > 1 {
+                        self?.flashNote(T.s("Step sent · \(steps.count - 1) to go", "Paso enviado · quedan \(steps.count - 1)"))
+                        // Claude Code pone en cola lo que llega mientras trabaja: el siguiente paso, al poco
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.sendSteps(Array(steps.dropFirst()), enter: enter) }
+                    }
+                case .failure(let error): self?.voice.note(error.localizedDescription)
+                }
+            }
+        }
+        if step.wait > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + step.wait, execute: run) } else { run() }
     }
 
     func press(hotkey: Int) {
-        if let key = keys.first(where: { $0.hotkey == hotkey }) { press(key) }
+        // la de esta app primero, si dos teclas comparten número
+        if let key = keys.first(where: { $0.hotkey == hotkey && !$0.apps.isEmpty && $0.shows(in: frontBundle) })
+            ?? keys.first(where: { $0.hotkey == hotkey && $0.shows(in: frontBundle) }) { press(key) }
+    }
+
+    /// La app de delante (no Agent Bar): la barra enseña solo las teclas de esa app y las de todas.
+    @Published var frontBundle: String = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
+    var visibleKeys: [DeskKey] { keys.filter { $0.shows(in: frontBundle) } }
+
+    /// Sugerencias: lo que has dictado 3 veces o más y aún no es una tecla.
+    var suggestions: [(text: String, count: Int)] {
+        KeySuggestions.from(history: voice.history.filter { $0.kind == "dictation" }.map(\.text), existing: keys.map(\.text) + keys.map(\.hold))
     }
 
     func add(_ draft: DeskKey) {
@@ -299,11 +362,11 @@ final class DeskStore: ObservableObject {
         keys.append(key)
     }
 
-    /// Grupos en orden de aparición, cada uno con sus teclas.
+    /// Grupos en orden de aparición, cada uno con sus teclas (solo las que se ven en la app de delante).
     var groups: [(name: String, keys: [DeskKey])] {
         var order: [String] = []
         var byName: [String: [DeskKey]] = [:]
-        for k in keys {
+        for k in (editing ? keys : visibleKeys) {
             if byName[k.group] == nil { order.append(k.group); byName[k.group] = [] }
             byName[k.group]!.append(k)
         }
@@ -447,7 +510,11 @@ final class DeskStore: ObservableObject {
 
     /// El último chat de IA que tuviste delante: ahí van «Explica» y «Captura».
     var lastAIApp: String?
-    func noteActivated(_ bundle: String?) { if let b = bundle, VoicePreferences.aiApps.contains(b) { lastAIApp = b } }
+    func noteActivated(_ bundle: String?) {
+        if let b = bundle, VoicePreferences.aiApps.contains(b) { lastAIApp = b }
+        // solo cambia la barra si alguna tecla es de una app concreta (así no se recoloca en cada cambio de app)
+        if let b = bundle, b != Bundle.main.bundleIdentifier, b != frontBundle, keys.contains(where: { !$0.apps.isEmpty }) { frontBundle = b }
+    }
 
     private func aiTarget() -> NSRunningApplication? {
         let order = [lastAIApp].compactMap { $0 } + ["com.anthropic.claudefordesktop", "com.openai.chat", "com.todesktop.230313mzl4w4u92", "com.openai.codex"]

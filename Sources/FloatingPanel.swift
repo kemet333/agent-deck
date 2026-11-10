@@ -41,6 +41,7 @@ final class FloatingPanel: NSPanel {
         contentView = host
         relayout(animated: false, recenter: UserDefaults.standard.string(forKey: anchorKey) == nil)
         store.$keys.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
+        store.$frontBundle.dropFirst().removeDuplicates().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$editing.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.relayout(animated: true, recenter: false) }.store(in: &bag)
         store.$collapsed.dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
             // durante la transición conviven las dos vistas y el tamaño medido es el grande: se recoloca al terminar

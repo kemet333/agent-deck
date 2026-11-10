@@ -53,6 +53,15 @@ enum Sender {
         guard let value = attribute(field,kAXSelectedTextRangeAttribute),CFGetTypeID(value)==AXValueGetTypeID() else { return nil }
         let ax = unsafeBitCast(value,to:AXValue.self);var r = CFRange();guard AXValueGetValue(ax,.cfRange,&r) else { return nil };return r
     }
+    /// El documento de la ventana de delante ({archivo} de las teclas): su ruta si la app la da, si no el título de la ventana.
+    static func frontDocument(_ pid:pid_t)->String? {
+        guard accessibilityGranted(prompt:false) else { return nil }
+        let app = AXUIElementCreateApplication(pid)
+        guard let w = attribute(app,kAXFocusedWindowAttribute),CFGetTypeID(w)==AXUIElementGetTypeID() else { return nil }
+        let window = unsafeBitCast(w,to:AXUIElement.self)
+        if let doc = attribute(window,kAXDocumentAttribute) as? String, let url = URL(string:doc), url.isFileURL { return url.path }
+        return (attribute(window,kAXTitleAttribute) as? String).flatMap { $0.isEmpty ? nil : $0 }
+    }
     /// Algunas apps (Electron, webs) no dicen por Accesibilidad qué campo tiene el cursor.
     static let noFocusedField = VoiceServiceError(message:T.s("Place the cursor in the destination text field first.","Coloca primero el cursor en el campo de texto de destino."))
     /// Destino sin campo conocido: la app de delante. Solo para pegar donde esté el cursor (el camino de las teclas de la barra).

@@ -330,7 +330,7 @@ struct DashboardView: View {
 
     private var keysPane: some View {
         VStack(alignment: .leading, spacing: 22) {
-            DashSection(title: T.s("Your keys", "Tus teclas"), footer: T.s("The first key is the main one: it is also what Autopilot sends. Keys 1–9 have a global shortcut ⌃⌥ + number.", "La primera tecla es la principal: también es lo que manda Autopilot. Las teclas 1–9 tienen atajo global ⌃⌥ + número.")) {
+            DashSection(title: T.s("Your keys", "Tus teclas"), footer: T.s("The first key is the main one: it is also what Autopilot sends. Keys 1–9 have a global shortcut ⌃⌥ + number. A key can use {selection}, {clipboard}, {file}…, send several steps, only show in some apps, and do something else when held.", "La primera tecla es la principal: también es lo que manda Autopilot. Las teclas 1–9 tienen atajo global ⌃⌥ + número. Una tecla puede usar {selección}, {portapapeles}, {archivo}…, mandar varios pasos, salir solo en algunas apps y hacer otra cosa al mantenerla.")) {
                 if store.keys.isEmpty { DashRow(title: T.s("No keys yet", "Aún no hay teclas"), divider: false) { EmptyView() } }
                 ForEach(Array(store.keys.enumerated()), id: \.element.id) { i, k in
                     VStack(spacing: 0) {
@@ -340,7 +340,12 @@ struct DashboardView: View {
                                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(i == 0 ? AnyShapeStyle(Dash.accent) : AnyShapeStyle(Color.primary.opacity(0.07))))
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(k.label).font(.system(size: 13, weight: .medium))
-                                Text("«\(k.text)»").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                                Text("«\(KeyText.preview(k.text))»").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
+                                if !k.apps.isEmpty || !k.hold.isEmpty {
+                                    Text([k.apps.isEmpty ? nil : T.s("Only in ", "Solo en ") + k.apps.map(KeyEditor.appName).joined(separator: ", "),
+                                          k.hold.isEmpty ? nil : T.s("Hold: «", "Mantener: «") + KeyText.preview(k.hold) + "»"].compactMap { $0 }.joined(separator: " · "))
+                                        .font(.system(size: 10.5)).foregroundStyle(.tertiary).lineLimit(1)
+                                }
                             }
                             Spacer(minLength: 12)
                             if !k.sendEnter { Image(systemName: "return").font(.system(size: 10)).foregroundStyle(.tertiary).help(T.s("Doesn't press Enter", "No pulsa Intro")) }
@@ -349,6 +354,16 @@ struct DashboardView: View {
                             Button { store.remove(k) } label: { Image(systemName: "trash") }.buttonStyle(.borderless).foregroundStyle(.secondary).help(T.s("Remove", "Quitar"))
                         }.padding(.horizontal, 14).padding(.vertical, 9)
                         if i < store.keys.count - 1 { Rectangle().fill(Color.primary.opacity(0.07)).frame(height: 0.5).padding(.leading, 56) }
+                    }
+                }
+            }
+            let ideas = store.suggestions
+            if !ideas.isEmpty {
+                DashSection(title: T.s("Suggested keys", "Teclas sugeridas"), footer: T.s("Things you've dictated three times or more. One tap makes them a key.", "Lo que has dictado tres veces o más. Con un toque es una tecla.")) {
+                    ForEach(Array(ideas.enumerated()), id: \.offset) { i, idea in
+                        DashRow(title: "«\(idea.text)»", detail: T.s("\(idea.count) times", "\(idea.count) veces"), divider: i < ideas.count - 1) {
+                            Button(T.s("Make it a key", "Hacerla tecla")) { store.add(DeskKey(label: KeySuggestions.label(idea.text), text: idea.text, icon: "sparkles")) }.controlSize(.small)
+                        }
                     }
                 }
             }
