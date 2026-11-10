@@ -19,13 +19,15 @@ struct DashboardActions {
     var shareKeys: () -> Void = {}
     var morePacks: () -> Void = {}
     var toggleBar: () -> Void = {}
+    var moveToApplications: () -> Void = {}
     var quit: () -> Void = {}
     var relaunch: () -> Void = {}
 }
 
 enum DashPane: String, CaseIterable, Identifiable {
-    case general, keys, voice, alerts, packs, appearance, pro, about
+    case general, keys, voice, alerts, packs, appearance, doctor, pro, about
     var id: String { rawValue }
+    static let showNotification = Notification.Name("AgentBarShowPane")
     var title: String {
         switch self {
         case .general: return T.s("General", "General")
@@ -34,6 +36,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Alerts & Autopilot", "Avisos y Autopilot")
         case .packs: return T.s("Key packs", "Packs de teclas")
         case .appearance: return T.s("Appearance", "Aspecto")
+        case .doctor: return T.s("Diagnostics", "Diagnóstico")
         case .pro: return "Agent Bar Pro"
         case .about: return T.s("About", "Acerca de")
         }
@@ -46,6 +49,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Know when your agent is done, and let it keep going.", "Entérate cuando tu agente termine y deja que siga solo.")
         case .packs: return T.s("Ready-made keys for the tools you use.", "Teclas listas para las herramientas que usas.")
         case .appearance: return T.s("How the bar looks and where it lives.", "Cómo se ve la barra y dónde vive.")
+        case .doctor: return T.s("Everything Agent Bar needs, checked, with the fix.", "Todo lo que necesita Agent Bar, comprobado y con su arreglo.")
         case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Autopilot, voz incluida y avisos en el móvil.")
         case .about: return T.s("Agent Bar, made by PROMPTED.", "Agent Bar, hecho por PROMPTED.")
         }
@@ -58,6 +62,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return "bell.badge.fill"
         case .packs: return "square.stack.3d.up.fill"
         case .appearance: return "paintbrush.fill"
+        case .doctor: return "stethoscope"
         case .pro: return "seal.fill"
         case .about: return "info.circle.fill"
         }
@@ -70,6 +75,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return Color(hex: 0xff9f0a)
         case .packs: return Color(hex: 0x5e5ce6)
         case .appearance: return Color(hex: 0x0a84ff)
+        case .doctor: return Color(hex: 0x30d158)
         case .pro: return Dash.accent
         case .about: return Color(hex: 0x30b0c7)
         }
@@ -194,6 +200,9 @@ struct DashboardView: View {
         .background(VisualEffect(material: .underWindowBackground).ignoresSafeArea())
         .tint(Dash.accent)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in refresh() }
+        .onAppear { refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: DashPane.showNotification)) { n in if let p = (n.object as? String).flatMap(DashPane.init(rawValue:)) { pane = p } }
+        .onChange(of: pane) { _, _ in refresh() }
         .sheet(item: $editingKey) { k in KeyEditor(key: k, isNew: false) { store.update($0) } }
         .sheet(isPresented: $addingKey) { KeyEditor(key: DeskKey(label: "", text: ""), isNew: true) { store.add($0) } }
         .confirmationDialog(T.s("Restore the default keys?", "¿Restaurar las teclas de fábrica?"), isPresented: $confirmRestore) {
@@ -201,7 +210,8 @@ struct DashboardView: View {
         } message: { Text(T.s("Your current keys are replaced by the original six.", "Tus teclas actuales se sustituyen por las seis originales.")) }
     }
 
-    private func refresh() { tick += 1; loginOn = SMAppService.mainApp.status == .enabled }
+    private func refresh() { tick += 1; loginOn = SMAppService.mainApp.status == .enabled; problemCount = Doctor.problems(Doctor.checks(DoctorLive.input(voice: voice))).count }
+    @State private var problemCount = 0
     private func after(_ f: @escaping () -> Void) -> () -> Void { { f(); refresh() } }
 
     // MARK: barra lateral
@@ -225,6 +235,10 @@ struct DashboardView: View {
                             DashIcon(symbol: p.symbol, tint: p.tint)
                             Text(p.title).font(.system(size: 13, weight: pane == p ? .semibold : .regular))
                             Spacer()
+                            if p == .doctor, problemCount > 0 {
+                                Text("\(problemCount)").font(.system(size: 10, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                                    .padding(.horizontal, 6).padding(.vertical, 1.5).background(Capsule().fill(Color(hex: 0xff9f0a)))
+                            }
                         }
                         .padding(.horizontal, 8).padding(.vertical, 6)
                         .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(pane == p ? Color.primary.opacity(0.09) : .clear))
@@ -269,6 +283,7 @@ struct DashboardView: View {
                     case .alerts: alertsPane
                     case .packs: packsPane
                     case .appearance: appearancePane
+                    case .doctor: DoctorPane(voice: voice, actions: actions, goTo: { p in withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) { pane = p } })
                     case .pro: ProView(license: License.shared, embedded: true)
                     case .about: aboutPane
                     }

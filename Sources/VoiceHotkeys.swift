@@ -48,7 +48,7 @@ final class VoiceHotkeys {
         let edit=command,epoch=revision
         for a in actions{
             if a == .cancel{cancel();continue}
-            DispatchQueue.main.async{[weak self] in guard let self,self.revision==epoch else{return};switch a{case .start:self.voice.log("Fn: empieza ("+(self.gesture.state == .locked ? "manos libres" : "mantener")+")");self.voice.start(command:edit);case .stop:self.voice.log("Fn: para");self.voice.stop();case .cancel:break}}
+            DispatchQueue.main.async{[weak self] in guard let self,self.revision==epoch else{return};switch a{case .start:DoctorLive.lastFn=Date();self.voice.log("Fn: empieza ("+(self.gesture.state == .locked ? "manos libres" : "mantener")+")");self.voice.start(command:edit);case .stop:self.voice.log("Fn: para");self.voice.stop();case .cancel:break}}
         }
     }
     private func canUseFn()->Bool{

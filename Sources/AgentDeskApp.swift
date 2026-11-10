@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if offerMoveToApplications() { return }
         migrateFromAgentDeck()
         Chime.prepare()
-        LearnedVocabulary.refresh(); Activity.prune()
+        LearnedVocabulary.refresh(); Activity.prune(); DoctorLive.cleanHooks()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
@@ -60,6 +60,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // la primera vez, el tutorial que lo explica y lo deja configurado
         if !UserDefaults.standard.bool(forKey: "tutorialDone") { DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.openTutorial() } }
         voiceHotkeys = VoiceHotkeys(voice: store.voice); voiceHotkeys?.install()
+        DoctorLive.fnReady = { [weak self] in self?.voiceHotkeys?.hasTap ?? false }
+        // si la vez anterior se cerró de golpe, se dice una vez (Ajustes → Diagnóstico para enviar el informe, o no)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in DoctorLive.checkCrashOnLaunch { self?.store.flashNote($0, for: 7) } }
         // sin Accesibilidad todavía, el tap de Fn no se crea: se reintenta hasta que se dé el permiso, sin reabrir la app
         Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] t in
             MainActor.assumeIsolated {
@@ -74,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         _ = Sender.accessibilityGranted(prompt: true)
     }
 
-    // MARK: URL scheme: agentdeck://toggle · dictate · press?n=3 · send?text=hola · show · style?name=glass
+    // MARK: URL scheme: agentdeck://toggle · settings?pane=doctor · dictate · press?n=3 · send?text=hola · show · style?name=glass
     // Para Atajos, Raycast, un Stream Deck físico o un script: `open "agentdeck://press?n=1"`.
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -82,6 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             switch url.host {
             case "toggle": togglePanel()
+            case "settings": showDashboard(pane: q.first(where: { $0.name == "pane" })?.value.flatMap(DashPane.init(rawValue:)))
             case "show": panel.orderFrontRegardless(); store.collapsed = false
             case "dictate": DispatchQueue.main.async { self.store.toggleDictation() }
             case "style":
@@ -254,7 +258,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     @objc func pauseFlow() { store.flows.pause() }
     /// El panel de ajustes: lo abre el engranaje de la barra y «Ajustes…» del menú.
-    @objc func openDashboard() {
+    @objc func openDashboard() { showDashboard(pane: nil) }
+    /// `agentdeck://settings?pane=doctor` abre Ajustes en esa sección.
+    func showDashboard(pane: DashPane?) {
+        if let pane, dashWindow != nil { NotificationCenter.default.post(name: DashPane.showNotification, object: pane.rawValue) }
         if dashWindow == nil {
             let actions = DashboardActions(
                 connectClaude: { [weak self] in self?.connectClaude() },
@@ -268,6 +275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 shareKeys: { [weak self] in self?.shareKeys() },
                 morePacks: { [weak self] in self?.morePacks() },
                 toggleBar: { [weak self] in self?.togglePanel() },
+                moveToApplications: { [weak self] in UserDefaults.standard.set(false, forKey: "neverMoveToApplications"); _ = self?.offerMoveToApplications() },
                 quit: { [weak self] in self?.quit() },
                 relaunch: {
                     // abre otra copia de esta app cuando esta ya se ha cerrado, para cambiar de idioma
@@ -276,7 +284,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     p.arguments = ["-c", "sleep 0.6; /usr/bin/open \"$0\"", path]
                     try? p.run(); NSApp.terminate(nil)
                 })
-            dashWindow = makeDashboardWindow(root: DashboardView(store: store, voice: store.voice, actions: actions))
+            dashWindow = makeDashboardWindow(root: DashboardView(store: store, voice: store.voice, actions: actions, pane: pane ?? .general))
         }
         dashWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }

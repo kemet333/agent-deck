@@ -19,3 +19,6 @@ xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_
  "$project_dir/Sources/Strings.swift" "$project_dir/Sources/Autopilot.swift" "$project_dir/Sources/VoiceCommands.swift" "$project_dir/Sources/Agents.swift" "$project_dir/Sources/Keys.swift" "$project_dir/Tests/AgentChecks.swift" \
  -framework AppKit -framework SwiftUI -o "$voice_test_dir/agent-checks"
 "$voice_test_dir/agent-checks"
+xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
+ "$project_dir/Sources/Strings.swift" "$project_dir/Sources/Doctor.swift" "$project_dir/Tests/DoctorChecks.swift" -o "$voice_test_dir/doctor-checks"
+"$voice_test_dir/doctor-checks"

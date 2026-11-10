@@ -424,8 +424,8 @@ final class VoiceController: ObservableObject {
     }
     private func fail(_ text:String){
         phase = .failed;level=0;message=text
-        // solo el motivo, nunca lo dictado: en Application Support/Agent Deck/voice.log
-        log(text)
+        // solo el motivo, nunca lo dictado: en Application Support/Agent Deck/voice.log («fallo:» lo cuenta Diagnóstico)
+        log("fallo: "+text)
         // el aviso no se queda para siempre: a los 6 s vuelve a reposo; lo dictado queda en el historial
         let failedSession=sessionID
         DispatchQueue.main.asyncAfter(deadline:.now()+6){[weak self] in
