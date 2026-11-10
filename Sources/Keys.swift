@@ -107,3 +107,46 @@ enum KeySuggestions {
         return String(clean.prefix(1).uppercased() + clean.dropFirst()).prefix(16).description
     }
 }
+
+/// Tiempo ahorrado (0.17), estimado y a la vista de cómo se calcula: escribir a 40 palabras por minuto (1,5 s cada una)
+/// frente a hablar (0,4 s) o pulsar una tecla (1 s); cada vuelta de Autopilot o paso de una cola, 15 s de leer y contestar;
+/// cada permiso desde la barra, 5 s de buscar el diálogo. Se guarda por día en Application Support/Agent Deck/savings.json.
+enum Savings {
+    enum Kind: String, CaseIterable { case keys, keyWords, dictWords, autopilot, queued, permissions }
+    struct Totals: Equatable { var c: [Kind: Int] = [:]; subscript(_ k: Kind) -> Int { c[k] ?? 0 } }
+    static var file: URL { Autopilot.folder.appendingPathComponent("savings.json") }
+    static func day(_ d: Date) -> String { let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX"); return f.string(from: d) }
+    static func load() -> [String: [String: Int]] {
+        (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([String: [String: Int]].self, from: $0) } ?? [:]
+    }
+    static func add(_ kind: Kind, _ n: Int = 1, on date: Date = Date()) {
+        guard n > 0 else { return }
+        var all = load()
+        all[day(date), default: [:]][kind.rawValue, default: 0] += n
+        // solo los últimos 60 días
+        let now = Date(), keep = Set((0..<60).map { day(now.addingTimeInterval(Double(-$0) * 86_400)) })
+        all = all.filter { keep.contains($0.key) }
+        try? FileManager.default.createDirectory(at: Autopilot.folder, withIntermediateDirectories: true)
+        if let d = try? JSONEncoder().encode(all) { try? d.write(to: file, options: .atomic) }
+    }
+    /// Lo de los últimos `days` días, hoy incluido.
+    static func totals(days: Int = 7, until date: Date = Date()) -> Totals {
+        let all = load(); var t = Totals()
+        for i in 0..<days {
+            for (k, v) in all[day(date.addingTimeInterval(Double(-i) * 86_400))] ?? [:] { if let kind = Kind(rawValue: k) { t.c[kind, default: 0] += v } }
+        }
+        return t
+    }
+    static func seconds(_ t: Totals) -> Double {
+        let keys = max(0, Double(t[.keyWords]) * 1.5 - Double(t[.keys]) * 1.0)
+        return keys + Double(t[.dictWords]) * 1.1 + Double(t[.autopilot] + t[.queued]) * 15 + Double(t[.permissions]) * 5
+    }
+    static func words(_ s: String) -> Int { s.split(whereSeparator: { $0.isWhitespace }).count }
+    /// «1 h 12 min», «8 min», «40 s».
+    static func duration(_ s: Double) -> String {
+        let m = Int(s / 60)
+        if m >= 60 { return "\(m / 60) h \(m % 60) min" }
+        if m >= 1 { return "\(m) min" }
+        return "\(Int(s)) s"
+    }
+}

@@ -1,3 +1,4 @@
+import AppKit
 import AVFoundation
 import Foundation
 
@@ -39,8 +40,32 @@ enum Chime {
         }
     }
 
+    /// Los avisos de los agentes con la misma familia (0.17): «done» al terminar y «ask» cuando te espera o pide permiso.
+    static func alertFiles(_ set: Set) -> (done: String, ask: String)? {
+        switch set {
+        case .siri: return ("siri/jbl_confirm.caf", "siri/jbl_begin.caf")
+        case .messages: return ("system/acknowledgment_sent.caf", "system/media_handoff.caf")
+        case .dictation: return ("system/end_record.caf", "system/begin_record.caf")
+        default: return nil
+        }
+    }
+    /// El sonido de un aviso: el de la familia elegida; con «Ninguno» o si falta el archivo, el de macOS de siempre.
+    static func alert(ask: Bool) {
+        let set = current
+        if players.isEmpty { prepare() }
+        if set != .none, let p = players[set.rawValue + "-" + (ask ? "ask" : "done")] ?? players[set.rawValue + "-" + (ask ? "start" : "send")] {
+            p.stop(); p.currentTime = 0; p.play(); return
+        }
+        NSSound(named: ask ? "Ping" : "Glass")?.play()
+    }
+
     static func prepare() {
         for set in Set.allCases {
+            if let a = alertFiles(set) {
+                for (cue, file) in [("done", a.done), ("ask", a.ask)] {
+                    if let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: systemFolder + file)) { p.volume = 0.6; p.prepareToPlay(); players[set.rawValue + "-" + cue] = p }
+                }
+            }
             guard let files = systemFiles(set) else { continue }
             for (cue, file) in [("start", files.start), ("send", files.send)] {
                 if let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: systemFolder + file)) { p.volume = 0.6; p.prepareToPlay(); players[set.rawValue + "-" + cue] = p }

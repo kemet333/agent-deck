@@ -287,6 +287,12 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 22) {
             let _ = tick
             let ax = Sender.accessibilityGranted(prompt: false)
+            let week = Savings.totals(days: 7)
+            if Savings.seconds(week) >= 30 {
+                DashSection(title: T.s("This week", "Esta semana"), footer: T.s("An estimate: typing at 40 words a minute against talking or one key; 15 s for each Autopilot turn or queued step you didn't have to read and answer; 5 s for each permission from the bar.", "Es una estimación: escribir a 40 palabras por minuto frente a hablar o pulsar una tecla; 15 s por cada vuelta de Autopilot o paso de una cola que no has tenido que leer y contestar; 5 s por cada permiso desde la barra.")) {
+                    DashRow(title: T.s("Time saved ≈ ", "Tiempo ahorrado ≈ ") + Savings.duration(Savings.seconds(week)), detail: Self.savingsLine(week), divider: false) { EmptyView() }
+                }
+            }
             DashSection(title: T.s("Startup", "Inicio")) {
                 DashToggle(title: T.s("Open at login", "Abrir al iniciar sesión"), detail: T.s("Agent Bar is ready as soon as you log in.", "Agent Bar está lista nada más entrar."), isOn: Binding(get: { loginOn }, set: { _ in
                     do { if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() } else { try SMAppService.mainApp.register() } } catch { NSLog("Agent Bar: inicio de sesión: \(error)") }
@@ -404,7 +410,7 @@ struct DashboardView: View {
                 if !voice.keyTest.isEmpty { Text(voice.keyTest).font(.system(size: 11)).foregroundStyle(.secondary).padding(.horizontal, 14).padding(.bottom, 10).frame(maxWidth: .infinity, alignment: .leading) }
             }
             DashSection(title: T.s("While you talk", "Mientras hablas")) {
-                DashRow(title: T.s("Sound", "Sonido"), detail: T.s("When it starts listening and when it sends", "Al empezar a escuchar y al enviar")) {
+                DashRow(title: T.s("Sounds", "Sonidos"), detail: T.s("When it listens, sends, and when an agent is done or needs you", "Al escuchar, al enviar y cuando un agente termina o te espera")) {
                     Picker("", selection: Binding(get: { Chime.current }, set: { v in Chime.current = v; Chime.play("start", set: v); DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Chime.play("send", set: v) }; refresh() })) {
                         ForEach(Chime.Set.allCases) { Text($0.title).tag($0) }
                     }.pickerStyle(.menu).labelsHidden().fixedSize()
@@ -474,6 +480,16 @@ struct DashboardView: View {
     }
 
     // MARK: Avisos y piloto
+
+    static func savingsLine(_ t: Savings.Totals) -> String {
+        var p: [String] = []
+        if t[.dictWords] > 0 { p.append(T.s("\(t[.dictWords]) words spoken", "\(t[.dictWords]) palabras dictadas")) }
+        if t[.keys] > 0 { p.append(T.s("\(t[.keys]) keys", t[.keys] == 1 ? "1 tecla" : "\(t[.keys]) teclas")) }
+        if t[.autopilot] > 0 { p.append(T.s("\(t[.autopilot]) Autopilot turns", "\(t[.autopilot]) vueltas de Autopilot")) }
+        if t[.queued] > 0 { p.append(T.s("\(t[.queued]) from queues", "\(t[.queued]) de colas")) }
+        if t[.permissions] > 0 { p.append(T.s("\(t[.permissions]) permissions", "\(t[.permissions]) permisos")) }
+        return p.joined(separator: " · ")
+    }
 
     static func dayLine(_ d: Activity.Day) -> String {
         var parts: [String] = []

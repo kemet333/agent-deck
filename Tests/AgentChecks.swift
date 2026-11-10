@@ -75,6 +75,13 @@ enum AgentChecks {
         let day = Activity.today()
         check("today: one row per folder", day.count == 2 && day.first?.place == "Kemet-Capital")
         check("today: counts", day.first.map { $0.done == 1 && $0.permissions == 1 && $0.allowed == 1 && $0.last == "Hecho el login." } == true)
+        // tiempo ahorrado
+        Savings.add(.dictWords, 100); Savings.add(.keys, 2); Savings.add(.keyWords, 10); Savings.add(.autopilot, 2)
+        Savings.add(.dictWords, 50, on: Date().addingTimeInterval(-10 * 86_400))
+        let week = Savings.totals(days: 7)
+        check("savings: only this week", week[.dictWords] == 100 && week[.autopilot] == 2)
+        check("savings: estimate", abs(Savings.seconds(week) - (100 * 1.1 + (10 * 1.5 - 2) + 30)) < 0.01)
+        check("savings: duration text", Savings.duration(4320) == "1 h 12 min" && Savings.duration(480) == "8 min" && Savings.duration(40) == "40 s")
         try? FileManager.default.removeItem(at: tmp)
         if failed > 0 { print("AGENTS_FAILED \(failed)"); exit(1) }
         print("AGENTS_OK — synthetic only")

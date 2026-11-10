@@ -136,6 +136,13 @@ final class DeskStore: ObservableObject {
     @Published var startPulse = 0
     private var listeningSince = Date.distantPast
     @Published var sendPulse = 0
+    /// Estados del orbe (0.17): «hecho» un instante en verde tras enviar; «te espera» en ámbar con un aviso pendiente.
+    @Published var justDone = false
+    func markDone() {
+        justDone = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in self?.justDone = false }
+    }
+    var needsYou: Bool { alerts.contains { $0.waiting && ($0.ask || $0.permission) } }
     @Published var dictationNote: String = ""
     @Published var voiceWorking = false
     @Published var voiceNeedsAttention = false
@@ -150,6 +157,8 @@ final class DeskStore: ObservableObject {
         controller.routeToAgent = { [weak self] text in self?.routeToAgent(text) ?? false }
         controller.onDelivered = { [weak self, weak controller] text in
             let f=DateFormatter();f.dateFormat="HH:mm";self?.lastSent="\(f.string(from:Date())) · \(text)"
+            Savings.add(.dictWords, Savings.words(text))
+            self?.markDone()
             if controller?.noisy == true {
                 let n=T.s("Voices around: press Enter to send","Hay voces alrededor: pulsa Intro para enviar")
                 self?.flash=n
@@ -284,6 +293,7 @@ final class DeskStore: ObservableObject {
         DeskStore.haptic()
         lastPressedId = key.id
         pulse += 1
+        Savings.add(.keys); Savings.add(.keyWords, Savings.words(key.text))
         type(key.text, enter: key.sendEnter)
     }
     /// Mantener pulsada: su variante, si tiene.
@@ -292,6 +302,7 @@ final class DeskStore: ObservableObject {
         DeskStore.haptic(.levelChange)
         lastPressedId = key.id
         pulse += 1
+        Savings.add(.keys); Savings.add(.keyWords, Savings.words(key.hold))
         type(key.hold, enter: key.sendEnter)
     }
 
@@ -323,6 +334,7 @@ final class DeskStore: ObservableObject {
                 switch result {
                 case .success:
                     let f = DateFormatter(); f.dateFormat = "HH:mm"; self?.lastSent = "\(f.string(from: Date())) · \(step.text)"
+                    if steps.count == 1 { self?.markDone() }
                     if steps.count > 1 {
                         self?.flashNote(T.s("Step sent · \(steps.count - 1) to go", "Paso enviado · quedan \(steps.count - 1)"))
                         // Claude Code pone en cola lo que llega mientras trabaja: el siguiente paso, al poco
@@ -426,7 +438,7 @@ final class DeskStore: ObservableObject {
         Activity.log(a.permission ? "permission" : a.ask ? "ask" : "done", place: a.place, text: a.permission ? "" : Self.firstSentence(a.message))
         // como mucho 4: el más antiguo se suelta (su conversación se para como siempre)
         while alerts.count > 4 { let old = alerts.removeFirst(); release(old) }
-        NSSound(named: ask ? "Ping" : "Glass")?.play()
+        Chime.alert(ask: a.ask || a.permission)
         DeskStore.haptic(.levelChange)
         // sin mensaje se va solo; con mensaje se queda hasta que contestes o lo cierres
         // si en 45 s no la has contestado (no estás en el Mac), también va a tu WhatsApp, si tienes el puente de Alfred
@@ -485,6 +497,7 @@ final class DeskStore: ObservableObject {
     func queueSent(place: String, left: Int) {
         refreshQueues()
         Activity.log("queued", place: place)
+        Savings.add(.queued)
         flashNote(left > 0 ? T.s("\(place): next from its queue (\(left) left)", "\(place): lo siguiente de su cola (quedan \(left))") : T.s("\(place): last one from its queue", "\(place): lo último de su cola"), for: 3)
     }
     /// Los nombres de carpeta conocidos (avisos de ahora y de los últimos días), para que «Kemet» se guarde como «Kemet-Capital».
@@ -503,6 +516,7 @@ final class DeskStore: ObservableObject {
     func autopilotTurn(left: Int, place: String) {
         autopilotLeft = left
         Activity.log("autopilot", place: place)
+        Savings.add(.autopilot)
         flashNote(left > 0 ? T.s("Autopilot · \(left) left", "Autopilot · quedan \(left)") : T.s("Autopilot done", "Autopilot terminado"), for: 3)
     }
 
@@ -663,6 +677,7 @@ final class DeskStore: ObservableObject {
         let who = a.place.isEmpty ? a.app : a.place
         if decide(a, ["action": allow ? "allow" : "deny", "text": reason]) {
             if allow { Activity.log("allowed", place: a.place) }
+            Savings.add(.permissions)
             flashNote(allow ? T.s("Allowed · \(who)", "Permitido · \(who)") : reason.isEmpty ? T.s("Refused · \(who)", "No · \(who)") : T.s("No, with your reason · \(who)", "No, con tu motivo · \(who)"))
         } else { openHost(a) }
     }

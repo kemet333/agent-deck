@@ -394,12 +394,16 @@ struct Orb: View {
                     Ripple(trigger: store.sendPulse, color: th.accent.opacity(0.8), size: 22, reach: 1.7)
                     if store.listening {
                         VoiceBlob(level: store.level, size: 30).transition(.scale(scale: 0.5).combined(with: .opacity))
+                    } else if store.voiceWorking {
+                        // pensando: un arco fino que gira alrededor del punto
+                        ThinkingDot(color: th.accent).transition(.opacity)
                     } else {
                     TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                         let t = ctx.date.timeIntervalSinceReferenceDate
-                        let breath = 0.5 + 0.5 * sin(t * 1.4)
+                        // te espera: respira más deprisa, en ámbar; hecho: verde un instante
+                        let breath = 0.5 + 0.5 * sin(t * (store.needsYou ? 3.2 : 1.4))
                         Circle()
-                            .fill(th.accent)
+                            .fill(store.justDone ? Color(hex: 0x34c759) : store.needsYou ? Color(hex: 0xff9f0a) : th.accent)
                             .frame(width: store.listening ? 9 : 7 + 1.5 * breath, height: store.listening ? 9 : 7 + 1.5 * breath)
                             .shadow(color: th.accent.opacity(0.35 + 0.35 * breath), radius: store.listening ? 10 : 4 + 4 * breath)
                     }
@@ -423,10 +427,27 @@ struct Orb: View {
             .scaleEffect(hover ? 1.06 : 1)
             .animation(Motion.tap, value: hover)
             .animation(Motion.settle, value: store.listening)
+            .animation(.easeInOut(duration: 0.35), value: store.justDone)
+            .animation(.easeInOut(duration: 0.35), value: store.voiceWorking)
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
         .help(T.s("Unfold Agent Bar (⌃⌥D)", "Desplegar Agent Bar (⌃⌥D)"))
+    }
+}
+
+/// El orbe pensando (transcribiendo o limpiando): el punto quieto y un arco fino que gira a su alrededor.
+struct ThinkingDot: View {
+    let color: Color
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1 / 60)) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            ZStack {
+                Circle().fill(color).frame(width: 6, height: 6).shadow(color: color.opacity(0.5), radius: 4)
+                Circle().trim(from: 0, to: 0.28).stroke(color.opacity(0.85), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+                    .frame(width: 17, height: 17).rotationEffect(.degrees(t.truncatingRemainder(dividingBy: 0.9) / 0.9 * 360))
+            }
+        }
     }
 }
 

@@ -19,6 +19,9 @@ struct OnboardingView: View {
     @State private var speechOK = SFSpeechRecognizer.authorizationStatus() == .authorized
     @State private var claudeOK = ClaudeHooks.installed
     @State private var apiKey = ""
+    /// Lo último enviado al abrir: si cambia, el paso «Pruébalo» se marca.
+    @State private var sentAtStart = ""
+    @State private var started = false
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private let pages = 8
 
@@ -31,7 +34,10 @@ struct OnboardingView: View {
                 HStack(spacing: 6) { ForEach(0..<pages, id: \.self) { i in Circle().fill(i == page ? Color.accentColor : Color.secondary.opacity(0.3)).frame(width: 6, height: 6) } }
                 Spacer()
                 if page > 0 { Button(T.s("Back", "Atrás")) { withAnimation { page -= 1 } } }
-                if page < pages - 1 {
+                if page == 0 {
+                    Button(T.s("Full tour", "Recorrido completo")) { withAnimation { page = 1 } }
+                    Button(T.s("Start", "Empezar")) { finish() }.keyboardShortcut(.defaultAction)
+                } else if page < pages - 1 {
                     Button(T.s("Next", "Siguiente")) { withAnimation { page += 1 } }.keyboardShortcut(.defaultAction)
                 } else {
                     Button(T.s("Start using Agent Bar", "Empezar a usar Agent Bar")) { finish() }.keyboardShortcut(.defaultAction)
@@ -40,6 +46,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 24).padding(.vertical, 14)
         }
         .frame(width: 620, height: 560)
+        .onAppear { if !started { started = true; sentAtStart = store.lastSent } }
         .onReceive(tick) { _ in
             axOK = Sender.accessibilityGranted(prompt: false)
             micOK = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
@@ -63,15 +70,19 @@ struct OnboardingView: View {
 
     // MARK: páginas
 
+    /// La primera página (0.17): listo en 60 segundos. Cuatro cosas que se marcan solas al hacerlas; el resto del recorrido
+    /// es opcional («Recorrido completo»).
     private var welcome: some View {
-        step("rectangle.split.3x1", T.s("Welcome to Agent Bar", "Bienvenido a Agent Bar"),
-             T.s("Agent Bar is a small bar that answers your AI agents for you. Press one key and it types «continue», «test it» or «fix it» into whatever chat is in front (Claude, ChatGPT, Cursor, Codex, a terminal) and sends it. You can also talk to it, ask it about anything you select or see, and it tells you when Claude Code is done.",
-                  "Agent Bar es una barra pequeña que contesta a tus agentes de IA por ti. Pulsas una tecla y escribe «continúa», «pruébalo» o «arréglalo» en el chat que tengas delante (Claude, ChatGPT, Cursor, Codex, una terminal) y lo envía. También puedes hablarle, preguntarle por lo que selecciones o veas, y te avisa cuando Claude Code termina.")) {
-            bullet("hand.tap", T.s("Tap a key or press ⌃⌥ and its number.", "Toca una tecla o pulsa ⌃⌥ y su número."))
-            bullet("mic", T.s("Hold fn and talk.", "Mantén fn y habla."))
-            bullet("text.magnifyingglass", T.s("Explain what you selected, or snap the screen.", "Explica lo seleccionado o haz una captura."))
-            bullet("bell.badge", T.s("Get an alert when your agent is done.", "Recibe un aviso cuando tu agente termina."))
-            Text(T.s("This tour takes two minutes and sets everything up.", "Este recorrido dura dos minutos y lo deja todo listo.")).font(.callout).foregroundStyle(.secondary).padding(.top, 6)
+        step("bolt.fill", T.s("Ready in 60 seconds", "Lista en 60 segundos"),
+             T.s("Agent Bar answers your AI agents for you: one key types «continue», «test it» or «fix it» in the chat in front and sends it, and fn lets you talk. Four steps, each ticks itself when it's done.",
+                  "Agent Bar contesta a tus agentes de IA por ti: una tecla escribe «continúa», «pruébalo» o «arréglalo» en el chat de delante y lo envía, y con fn le hablas. Cuatro pasos; cada uno se marca solo al hacerlo.")) {
+            permissionRow(axOK, T.s("1 · Let it type", "1 · Déjale escribir"), T.s("Accessibility, so it can paste and press Enter in your chat.", "Accesibilidad, para pegar y pulsar Intro en tu chat."), T.s("Allow", "Permitir")) {
+                _ = Sender.accessibilityGranted(prompt: true)
+                if let u = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") { NSWorkspace.shared.open(u) }
+            }
+            permissionRow(micOK, T.s("2 · Let it hear you", "2 · Déjale oírte"), T.s("The microphone, for fn. You can skip it.", "El micrófono, para fn. Puedes saltártelo."), T.s("Allow", "Permitir")) { voice.allowApple() }
+            permissionRow(store.lastSent != sentAtStart, T.s("3 · Try it", "3 · Pruébalo"), T.s("Click in any chat, hold fn and say «hello», or tap a key on the bar.", "Haz clic en cualquier chat, mantén fn y di «hola», o toca una tecla de la barra."), "") {}
+            permissionRow(claudeOK, T.s("4 · Claude Code (optional)", "4 · Claude Code (opcional)"), T.s("An alert when it's done, and its permissions from the bar.", "Un aviso cuando termina y sus permisos desde la barra."), T.s("Connect…", "Conectar…"), connectClaude)
         }
     }
 
@@ -208,7 +219,7 @@ struct OnboardingView: View {
                 Text(why).font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
-            if !ok { Button(action, action: run) }
+            if !ok && !action.isEmpty { Button(action, action: run) }
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.secondary.opacity(0.08)))
