@@ -44,6 +44,13 @@ struct VoiceChecks {
         setbuf(stdout,nil)
         let root=FileManager.default.temporaryDirectory.appendingPathComponent("agentdeck-voice-tests-"+UUID().uuidString,isDirectory:true)
         try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true);defer{try? FileManager.default.removeItem(at:root)}
+        // el portapapeles se devuelve cuando el chat ya ha leído el dictado (11/11: se pegaba lo que había copiado antes)
+        let t0=Date(timeIntervalSince1970:1000)
+        func at(_ d:Date,_ x:Double)->Bool{abs(d.timeIntervalSince(t0)-x)<0.001}
+        check("paste restore waits for a slow chat to read",at(PasteTiming.restoreAt(tap:t0,firstRead:t0.addingTimeInterval(2.4),settle:0.6),2.7))
+        check("paste restore never before Enter",at(PasteTiming.restoreAt(tap:t0,firstRead:t0.addingTimeInterval(0.05),settle:0.9),0.9))
+        check("paste restore waits up to 8 s when nobody read it",at(PasteTiming.restoreAt(tap:t0,firstRead:nil,settle:0.6),8))
+        check("paste restore with an early clipboard manager read keeps a wide margin",at(PasteTiming.restoreAt(tap:t0,firstRead:t0.addingTimeInterval(-0.5),settle:0.6),3))
         var g=FnGesture()
         check("Fn short tap does not record",g.down(at:0).isEmpty && g.up(at:0.1).isEmpty)
         check("Fn double tap locks recording",g.down(at:0.3)==[.start] && g.state == .locked)

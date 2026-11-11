@@ -9,7 +9,10 @@ import Foundation
 final class RealtimeTranscriber {
     var onPartial: ((String) -> Void)?
     private var task: URLSessionWebSocketTask?
-    private let engine = AVAudioEngine()
+    /// Uno nuevo en cada escucha: si cambia el micro (AirPods, una llamada), el anterior se queda sin poder arrancar.
+    private var engine = AVAudioEngine()
+    /// Por qué no arrancó la última vez (para voice.log).
+    private(set) var startProblem = ""
     private let outFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 24_000, channels: 1, interleaved: true)!
     private var pending: [Data] = []          // audio grabado antes de que la conexión esté lista
     private var ready = false
@@ -27,6 +30,7 @@ final class RealtimeTranscriber {
         req.timeoutInterval = 10
         // un permiso temporal (ek_…, de la voz incluida de Pro) también va como subprotocolo, que es como lo documenta OpenAI
         if key.hasPrefix("ek_") { req.setValue("realtime, openai-insecure-api-key." + key, forHTTPHeaderField: "Sec-WebSocket-Protocol") }
+        engine = AVAudioEngine(); startProblem = ""
         let t = URLSession.shared.webSocketTask(with: req)
         task = t; ready = false; failed = false; text = ""; finalText = nil; pending = []
         t.resume()
@@ -45,13 +49,13 @@ final class RealtimeTranscriber {
         // el micro: lo que llegue antes de que conecte espera en «pending»
         let input = engine.inputNode
         let inFormat = input.outputFormat(forBus: 0)
-        guard inFormat.sampleRate > 0, let conv = AVAudioConverter(from: inFormat, to: outFormat) else { stopSocket(); return false }
+        guard inFormat.sampleRate > 0, inFormat.channelCount > 0, let conv = AVAudioConverter(from: inFormat, to: outFormat) else { startProblem = "micro sin formato (\(Int(inFormat.sampleRate)) Hz)"; stopSocket(); return false }
         let outF = outFormat
         input.installTap(onBus: 0, bufferSize: 2400, format: inFormat) { [weak self] buffer, _ in
             guard let data = RealtimeTranscriber.convert(buffer, conv, outF) else { return }
             Task { @MainActor in self?.push(data) }
         }
-        do { engine.prepare(); try engine.start() } catch { input.removeTap(onBus: 0); stopSocket(); return false }
+        do { engine.prepare(); try engine.start() } catch { startProblem = "micro: " + error.localizedDescription; input.removeTap(onBus: 0); stopSocket(); return false }
         running = true
         return true
     }

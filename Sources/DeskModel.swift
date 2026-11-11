@@ -280,7 +280,7 @@ final class DeskStore: ObservableObject {
         if needs.contains(.date) { values[.date] = DateFormatter.localizedString(from: now, dateStyle: .medium, timeStyle: .none) }
         if needs.contains(.time) { values[.time] = DateFormatter.localizedString(from: now, dateStyle: .none, timeStyle: .short) }
         if needs.contains(.app) { values[.app] = front?.localizedName ?? "" }
-        if needs.contains(.clipboard) { values[.clipboard] = NSPasteboard.general.string(forType: .string) ?? "" }
+        if needs.contains(.clipboard) { values[.clipboard] = PasteSession.userString ?? "" }
         if needs.contains(.file) { values[.file] = front.flatMap { Sender.frontDocument($0.processIdentifier) } ?? "" }
         let go: ([KeyText.Var: String]) -> Void = { [weak self] v in self?.sendSteps(KeyText.steps(KeyText.fill(raw, v)), enter: enter) }
         guard needs.contains(.selection) else { go(values); return }
@@ -583,7 +583,10 @@ final class DeskStore: ObservableObject {
     private var alertApple: Dictation?
     private var alertHeard = ""
 
+    /// Terminando de escuchar (esperando el texto final): los toques de más se ignoran, para no enviar dos veces.
+    private var alertFinishing = false
     @MainActor func talkToAlert(_ a: AgentAlert) {
+        if alertFinishing { flashNote(T.s("Sending what you said…", "Enviando lo que has dicho…"), for: 2); return }
         if alertListening == a.id { finishAlertVoice(a); return }
         if alertListening != nil { cancelAlertVoice() }
         alertHeard = ""; alertListening = a.id; DeskStore.haptic(.levelChange)
@@ -610,8 +613,10 @@ final class DeskStore: ObservableObject {
     }
     @MainActor private func finishAlertVoice(_ a: AgentAlert) {
         if let live = alertLive {
+            alertFinishing = true
             live.finish(timeout: 3) { [weak self] text in
                 guard let self else { return }
+                self.alertFinishing = false
                 if let text, !text.isEmpty { self.alertHeard = text }
                 self.alertLive = nil; self.sendAlertVoice(a)
             }
@@ -623,7 +628,7 @@ final class DeskStore: ObservableObject {
         guard !t.isEmpty else { flashNote(T.s("I didn't hear anything", "No he oído nada")); return }
         reply(t, to: a)
     }
-    @MainActor private func cancelAlertVoice() { alertLive?.cancel(); alertLive = nil; alertApple?.cancel(); alertApple = nil; alertListening = nil; alertLevel = 0 }
+    @MainActor private func cancelAlertVoice() { alertFinishing = false; alertLive?.cancel(); alertLive = nil; alertApple?.cancel(); alertApple = nil; alertListening = nil; alertLevel = 0 }
 
     /// La respuesta para el gancho que espera en esa conversación: Application Support/Agent Deck/hooks/<archivo>.decision
     private func decide(_ a: AgentAlert, _ obj: [String: String]) -> Bool {
@@ -704,11 +709,19 @@ final class DeskStore: ObservableObject {
         }
         let app = a.host.isEmpty ? nil : NSRunningApplication.runningApplications(withBundleIdentifier: a.host).first
         app?.activate()
-        DispatchQueue.main.asyncAfter(deadline: .now() + (app == nil ? 0.05 : 0.35)) {
-            Sender.send(t, enter: true)
-            let f = DateFormatter(); f.dateFormat = "HH:mm"
-            self.lastSent = "\(f.string(from: Date())) · \(t)"
+        // se pega cuando su app ya está delante (como mucho 2 s): antes se pegaba a los 0,35 s fijos y, si aún no
+        // había llegado, el texto iba a otra parte o se pegaba lo que hubiera en el portapapeles
+        func paste(_ tries: Int) {
+            if let app, NSWorkspace.shared.frontmostApplication?.processIdentifier != app.processIdentifier, tries < 20 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { paste(tries + 1) }; return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + (app == nil ? 0.05 : 0.2)) {
+                Sender.send(t, enter: true)
+                let f = DateFormatter(); f.dateFormat = "HH:mm"
+                self.lastSent = "\(f.string(from: Date())) · \(t)"
+            }
         }
+        paste(0)
     }
 
     static func dropHookFile(_ name: String) {

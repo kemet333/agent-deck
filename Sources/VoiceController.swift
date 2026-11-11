@@ -98,7 +98,7 @@ final class VoiceController: ObservableObject {
         guard usesQuickSend, preferences.streaming, preferences.engine == .openAI, !live.running else { return }
         let k = key(); guard !k.isEmpty else { return }
         live.onPartial = { [weak self] t in guard let self, self.preferences.showLiveText, self.phase == .listening || self.prewarmed else { return }; self.partial = t }
-        _ = live.start(key: k, model: preferences.liveModel, languages: preferences.spokenLanguages, keywords: preferences.keywords)
+        if !live.start(key: k, model: preferences.liveModel, languages: preferences.spokenLanguages, keywords: preferences.keywords) { log("tiempo real no arrancó: " + live.startProblem) }
     }
     /// Fn subió sin llegar a dictar (un toque, o un atajo con Fn): se tira lo grabado.
     func dropPrewarm() {
@@ -206,7 +206,15 @@ final class VoiceController: ObservableObject {
     }
     func note(_ text:String) { message=text }
     func toggle() { if phase == .listening || phase == .permission {stop()}else if working{cancel()}else{start()} }
+    /// Fn pulsado mientras el dictado anterior aún se transcribe o se pega: empieza en cuanto termine (si sigues
+    /// pulsando o en manos libres). Antes la pulsación se perdía sin decir nada (Diego, 11/11: «al pulsar muchas veces no se activa»).
+    private var queuedStart: Bool?
+    var stillWanted: () -> Bool = { true }
     func start(command:Bool=false) {
+        if working && phase != .permission {
+            queuedStart=command;note(T.s("One moment: finishing the previous one…","Un momento: termino el anterior…"));log("Fn: espera al anterior")
+            waitAndStart();return
+        }
         guard !active else{return}
         if !draft.isEmpty && audio == nil && !active { if recordedID == nil { remember(draft,id:UUID(),kind:"draft") }; cancel() }
         guard draft.isEmpty && audio == nil else{message=T.s("Copy or discard the pending draft before recording again.","Copia o descarta el borrador pendiente antes de volver a grabar.");showWorkspace?();return}
@@ -256,7 +264,18 @@ final class VoiceController: ObservableObject {
         }
         a.start()
     }
+    private func waitAndStart() {
+        DispatchQueue.main.asyncAfter(deadline:.now()+0.1){[weak self] in
+            guard let self,let command=self.queuedStart else{return}
+            if self.working { self.waitAndStart();return }
+            self.queuedStart=nil
+            guard self.stillWanted() else{if self.message.hasPrefix(T.s("One moment","Un momento")){self.message=""};return}
+            self.message="";self.start(command:command)
+        }
+    }
     func stop() {
+        // soltó Fn antes de que terminara el anterior: no se graba nada
+        if queuedStart != nil { queuedStart=nil;if message.hasPrefix(T.s("One moment","Un momento")){message=""};return }
         if phase == .permission{cancel();return}
         guard phase == .listening,let id=sessionID else{return}
         // Solo voces lejanas (la mesa de al lado, una tele): no se envía nada. Tu voz cerca del micro pasa de ~-28 dB;

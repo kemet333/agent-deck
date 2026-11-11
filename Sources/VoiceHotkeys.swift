@@ -15,6 +15,7 @@ final class VoiceHotkeys {
     var hasTap: Bool { tap != nil }
     init(voice:VoiceController){self.voice=voice}
     func install(){
+        voice.stillWanted={[weak self] in guard let self else{return false};return self.gesture.state == .holding || self.gesture.state == .locked}
         uninstall()
         local=NSEvent.addLocalMonitorForEvents(matching:.keyDown){[weak self] event in
             let consumed=MainActor.assumeIsolated{if event.keyCode==53,self?.voice.active==true{self?.cancel();return true};return false}
