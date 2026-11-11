@@ -64,6 +64,17 @@ final class PasteSession: NSObject, NSPasteboardItemDataProvider {
     var untouched: Bool { pasteboard.changeCount == written }
     func markTapped() { tapped = Date() }
 
+    /// Espera a que la app de destino lea el texto tras el ⌘V (como mucho `timeout`): true si lo leyó (o si ya lo había
+    /// leído antes un gestor de portapapeles, cuando no se puede saber), false si nadie lo leyó.
+    func whenRead(timeout: TimeInterval = 3, _ done: @escaping @MainActor (Bool) -> Void) {
+        let tap = tapped ?? Date()
+        if let r = firstRead { done(true); _ = r; return }
+        if Date().timeIntervalSince(tap) >= timeout { done(false); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { [weak self] in self?.whenRead(timeout: timeout, done) ?? done(false) }
+    }
+    /// Lo leyó alguien antes del ⌘V (un gestor de portapapeles): entonces no sabemos cuándo lo lee el chat.
+    var readBeforeTap: Bool { if let r = firstRead, let t = tapped { return r < t.addingTimeInterval(-0.02) }; return false }
+
     /// Devuelve el portapapeles cuando la app ya ha leído el texto (o al acabar el margen). `settle`: lo mínimo tras ⌘V.
     func restoreWhenRead(settle: TimeInterval) {
         guard !finished else { return }
@@ -180,17 +191,22 @@ enum Sender {
         // un texto largo tarda más en entrar en el chat: el Intro espera en proporción (antes, 0,12 s fijos, y un dictado
         // de minuto y medio se quedaba sin enviar, 09/11)
         let enterDelay=min(0.9,0.12+Double(text.count)/1500)
-        let settle=max(0.6,enterDelay+(confirmEnter ? 0.8 : 0.35))
         DispatchQueue.main.asyncAfter(deadline:.now()+0.05){
             paste.markTapped()
             tap(keyV,flags:.maskCommand)
-            if enter { DispatchQueue.main.asyncAfter(deadline:.now()+enterDelay){ tap(keyReturn,flags:[]) } }
-            // en apps que no dejan ver su campo (Claude, Electron) no se puede comprobar si el Intro entró: un segundo Intro
-            // poco después; si el primero ya envió, el campo está vacío y no hace nada
-            if enter && confirmEnter { DispatchQueue.main.asyncAfter(deadline:.now()+enterDelay+0.45){ tap(keyReturn,flags:[]) } }
-            // el portapapeles se devuelve cuando el chat ya ha leído el dictado (si va lento, espera por él)
-            paste.restoreWhenRead(settle:settle)
-            DispatchQueue.main.asyncAfter(deadline:.now()+settle){ completion?(.success(())) }
+            // el Intro, cuando el chat ya ha cogido el texto: con un tiempo fijo, en un chat lento caía antes que el texto
+            // (en un campo vacío) y no se enviaba nada (11/11). Si lo leyó antes un gestor de portapapeles, el tiempo de siempre.
+            paste.whenRead{ read in
+                let wait = paste.readBeforeTap ? enterDelay : max(0.12,enterDelay-0.05)
+                @MainActor func finish(){ paste.restoreWhenRead(settle:0.3);DispatchQueue.main.asyncAfter(deadline:.now()+0.3){ completion?(.success(())) } }
+                guard enter, read else { if enter { NSLog("Agent Bar: el chat no cogió el texto en 3 s; no se pulsa Intro") };finish();return }
+                DispatchQueue.main.asyncAfter(deadline:.now()+wait){
+                    tap(keyReturn,flags:[])
+                    // en apps que no dejan ver su campo (Claude, Electron) no se puede comprobar si el Intro entró: un segundo Intro
+                    // poco después; si el primero ya envió, el campo está vacío y no hace nada
+                    if confirmEnter { DispatchQueue.main.asyncAfter(deadline:.now()+0.45){ tap(keyReturn,flags:[]);finish() } } else { finish() }
+                }
+            }
         }
     }
     static func deliver(_ text:String,to target:TextTarget,enter:Bool,method:VoiceInsertion = .paste,guardTerminal:Bool = false,verifyBeforeEnter:Bool = true,allow:@escaping()->Bool = {true},completion:@escaping(Result<Void,Error>)->Void) {
@@ -231,7 +247,7 @@ enum Sender {
             guard deliveryRevision==epoch,allow(),matches(target,selection:true),paste.untouched else { restore();completion(.failure(VoiceServiceError(message:T.s("The destination or clipboard changed before insertion. Your draft is kept.","El destino o el portapapeles cambió antes de insertar. Se conserva el borrador."))));return }
             paste.markTapped()
             guard tap(keyV,flags:.maskCommand) else{restore();completion(.failure(VoiceServiceError(message:T.s("The paste event could not be created. Your draft is kept.","No se ha podido crear el evento de pegado. Se conserva el borrador."))));return}
-            DispatchQueue.main.asyncAfter(deadline:.now()+0.3){ // los chats Electron/web tardan algo en meter el pegado
+            paste.whenRead{ _ in DispatchQueue.main.asyncAfter(deadline:.now()+0.25){ // los chats Electron/web tardan algo en meter el pegado
                 guard deliveryRevision==epoch,allow() else{restore();completion(.failure(CancellationError()));return}
                 // Enter is only sent to the same field and never runs a terminal command automatically.
                 if enter && !(guardTerminal && isTerminal(target)) {
@@ -240,7 +256,7 @@ enum Sender {
                     guard tap(keyReturn,flags:[]) else{restore();completion(.failure(VoiceServiceError(message:T.s("Text pasted, but Enter could not be sent.","El texto se pegó, pero no se ha podido pulsar Intro."))));return}
                 }
                 DispatchQueue.main.asyncAfter(deadline:.now()+0.45){finish();completion(.success(()))}
-            }
+            }}
         }
     }
     /// Los chats (Electron, web) no devuelven por Accesibilidad el texto tal cual: solo se da por fallido el pegado
