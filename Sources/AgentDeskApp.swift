@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if offerMoveToApplications() { return }
         migrateFromAgentDeck()
         Chime.prepare()
-        LearnedVocabulary.refresh(); Activity.prune(); DoctorLive.cleanHooks(); TeamSync.shared.start()
+        LearnedVocabulary.refresh(); Activity.prune(); DoctorLive.cleanHooks(); TeamSync.shared.start(); AgentAwakeMonitor.shared.start()
         panel = FloatingPanel(store: store)
         panel.orderFrontRegardless()
         installStatusItem()
@@ -292,7 +292,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         dashWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
-    func applicationWillTerminate(_ notification: Notification) { store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown() }
+    func applicationWillTerminate(_ notification: Notification) { store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown();AgentAwakeMonitor.shared.stop() }
     /// Abierta desde Descargas o desde el disco, macOS la ejecuta desde una carpeta temporal y no deja darle
     /// Accesibilidad ni micrófono de forma estable. Se ofrece a copiarse en Aplicaciones y abrirse desde allí.
     /// Devuelve true si va a relanzarse desde Aplicaciones.

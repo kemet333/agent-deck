@@ -592,6 +592,7 @@ struct DashboardView: View {
                     }.pickerStyle(.segmented).labelsHidden().frame(width: 230)
                 }
             }
+            KeepAwakeSection()
             DashSection(title: T.s("Queues", "Colas"), footer: T.s("Say with Fn «then tell the Kemet one to run the tests»: when that agent finishes, it gets the next message from its queue, unless it asks you something real.", "Di con Fn «luego dile al de Kemet que pase los tests»: cuando ese agente termine, recibe lo siguiente de su cola, salvo que te pregunte algo de verdad.")) {
                 if store.queues.isEmpty {
                     DashRow(title: T.s("Nothing queued", "Nada en cola"), detail: T.s("«luego dile al de … que …»", "«luego dile al de … que …»"), divider: false) { EmptyView() }
@@ -775,4 +776,16 @@ func makeDashboardWindow(root: some View) -> NSWindow {
     w.contentView = NSHostingView(rootView: root)
     w.center()
     return w
+}
+
+/// Avisos y Autopilot → Mac despierto (0.20): el interruptor y lo que está pasando ahora.
+@MainActor
+struct KeepAwakeSection: View {
+    @ObservedObject var monitor = AgentAwakeMonitor.shared
+    var body: some View {
+        DashSection(title: T.s("Keep the Mac awake", "Mac despierto"), footer: T.s("While Claude Code, Codex or another terminal agent is working (it or what it runs is using the CPU), the Mac doesn't go to sleep on its own; 5 minutes after they all stop, it can sleep again. The screen can still turn off. Never below 30 % battery or when the Mac is very hot. With the lid closed the Mac still sleeps.",
+                                                                                    "Mientras Claude Code, Codex u otro agente de terminal esté trabajando (él o lo que ha lanzado gasta CPU), el Mac no se duerme solo; 5 minutos después de que paren todos, vuelve a poder dormirse. La pantalla sí puede apagarse. Nunca con menos del 30 % de batería ni con el Mac muy caliente. Con la tapa cerrada el Mac se duerme igual.")) {
+            DashToggle(title: T.s("While my agents are working", "Mientras trabajan mis agentes"), detail: monitor.status, isOn: $monitor.enabled, divider: false)
+        }
+    }
 }
