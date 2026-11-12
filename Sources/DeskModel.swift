@@ -259,7 +259,7 @@ final class DeskStore: ObservableObject {
         lastPressedId = key.id
         pulse += 1
         Savings.add(.keys); Savings.add(.keyWords, Savings.words(key.text))
-        type(key.text, enter: key.sendEnter)
+        type(key.text, enter: key.sendEnter, apps: key.apps)
     }
     /// Mantener pulsada: su variante, si tiene.
     func pressHold(_ key: DeskKey) {
@@ -268,11 +268,11 @@ final class DeskStore: ObservableObject {
         lastPressedId = key.id
         pulse += 1
         Savings.add(.keys); Savings.add(.keyWords, Savings.words(key.hold))
-        type(key.hold, enter: key.sendEnter)
+        type(key.hold, enter: key.sendEnter, apps: key.apps)
     }
 
     /// Escribe lo de una tecla: rellena sus variables y manda sus pasos uno tras otro.
-    func type(_ raw: String, enter: Bool) {
+    func type(_ raw: String, enter: Bool, apps: [String] = []) {
         let needs = KeyText.uses(raw)
         let front = NSWorkspace.shared.frontmostApplication.flatMap { $0.bundleIdentifier == Bundle.main.bundleIdentifier ? nil : $0 }
         var values: [KeyText.Var: String] = [:]
@@ -282,7 +282,7 @@ final class DeskStore: ObservableObject {
         if needs.contains(.app) { values[.app] = front?.localizedName ?? "" }
         if needs.contains(.clipboard) { values[.clipboard] = PasteSession.userString ?? "" }
         if needs.contains(.file) { values[.file] = front.flatMap { Sender.frontDocument($0.processIdentifier) } ?? "" }
-        let go: ([KeyText.Var: String]) -> Void = { [weak self] v in self?.sendSteps(KeyText.steps(KeyText.fill(raw, v)), enter: enter) }
+        let go: ([KeyText.Var: String]) -> Void = { [weak self] v in self?.sendSteps(KeyText.steps(KeyText.fill(raw, v)), enter: enter, apps: apps) }
         guard needs.contains(.selection) else { go(values); return }
         Sender.copySelection { [weak self] sel in
             guard let sel, !sel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -292,8 +292,25 @@ final class DeskStore: ObservableObject {
             go(values)
         }
     }
-    private func sendSteps(_ steps: [KeyText.Step], enter: Bool) {
+    private func sendSteps(_ steps: [KeyText.Step], enter: Bool, apps: [String] = []) {
         guard let step = steps.first else { return }
+        // una combinación («{pulsa ⇧B}», el pack Trader): se pulsa solo si la app de la tecla sigue delante, nunca en otra
+        if let combo = step.press {
+            let pressIt = { [weak self] in
+                guard let self else { return }
+                let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
+                if !apps.isEmpty && !apps.contains(front) {
+                    self.flashNote(T.s("Not pressed: \(combo.label) only works with its app in front", "No se ha pulsado: \(combo.label) solo va con su app delante"), for: 3); return
+                }
+                guard Sender.accessibilityGranted(prompt: true) else { return }
+                Sender.tap(CGKeyCode(combo.key), flags: CGEventFlags(rawValue: combo.flags))
+                let f = DateFormatter(); f.dateFormat = "HH:mm"; self.lastSent = "\(f.string(from: Date())) · \(combo.label)"
+                if steps.count == 1 { self.markDone() }
+                else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { self.sendSteps(Array(steps.dropFirst()), enter: enter, apps: apps) } }
+            }
+            if step.wait > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + step.wait, execute: pressIt) } else { pressIt() }
+            return
+        }
         let run = { [weak self] in
             Sender.send(step.text, enter: enter) { result in
                 switch result {
@@ -303,7 +320,7 @@ final class DeskStore: ObservableObject {
                     if steps.count > 1 {
                         self?.flashNote(T.s("Step sent · \(steps.count - 1) to go", "Paso enviado · quedan \(steps.count - 1)"))
                         // Claude Code pone en cola lo que llega mientras trabaja: el siguiente paso, al poco
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.sendSteps(Array(steps.dropFirst()), enter: enter) }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.sendSteps(Array(steps.dropFirst()), enter: enter, apps: apps) }
                     }
                 case .failure(let error): self?.voice.note(error.localizedDescription)
                 }
@@ -380,7 +397,9 @@ final class DeskStore: ObservableObject {
         for k in pack.keys {
             let free = (1...9).first { !used.contains($0) }
             if let f = free { used.insert(f) }
-            new.append(DeskKey(label: k.label.isEmpty ? String(k.text.prefix(16)) : k.label, text: k.text, hotkey: free, sendEnter: k.enter, icon: k.icon.isEmpty ? "sparkles" : k.icon, group: group))
+            var d = DeskKey(label: k.label.isEmpty ? String(k.text.prefix(16)) : k.label, text: k.text, hotkey: free, sendEnter: k.enter, icon: k.icon.isEmpty ? "sparkles" : k.icon, group: group)
+            d.apps = k.apps ?? []
+            new.append(d)
         }
         keys = new
         flashNote(T.s("Pack «\(group)» added", "Pack «\(group)» añadido"))

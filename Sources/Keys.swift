@@ -45,7 +45,45 @@ enum KeyText {
         return out + text[last...]
     }
 
-    struct Step: Equatable { var text: String; var wait: Double }
+    /// Una combinación de teclas que se pulsa en vez de escribir (0.21, Agent Bar para traders): «{pulsa ⇧B}».
+    struct Combo: Equatable { var key: UInt16; var flags: UInt64; var label: String }
+    struct Step: Equatable { var text: String; var wait: Double; var press: Combo? = nil }
+
+    static let shiftBit: UInt64 = 0x20000, controlBit: UInt64 = 0x40000, optionBit: UInt64 = 0x80000, commandBit: UInt64 = 0x100000
+    /// Teclas por su posición (las letras están en el mismo sitio en el teclado español que en el inglés).
+    static let keyCodes: [String: UInt16] = [
+        "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12, "w": 13, "e": 14, "r": 15,
+        "y": 16, "t": 17, "1": 18, "2": 19, "3": 20, "4": 21, "6": 22, "5": 23, "9": 25, "7": 26, "8": 28, "0": 29, "o": 31, "u": 32,
+        "i": 34, "p": 35, "l": 37, "j": 38, "k": 40, "n": 45, "m": 46,
+        "intro": 36, "enter": 36, "return": 36, "tab": 48, "espacio": 49, "space": 49, "esc": 53, "escape": 53,
+        "izquierda": 123, "left": 123, "derecha": 124, "right": 124, "abajo": 125, "down": 125, "arriba": 126, "up": 126,
+        "f1": 122, "f2": 120, "f3": 99, "f4": 118, "f5": 96, "f6": 97, "f7": 98, "f8": 100, "f9": 101, "f10": 109, "f11": 103, "f12": 111,
+    ]
+    /// «⇧B», «⇧⌥S», «shift+b», «mayús+alt+s», «cmd+enter» → la combinación. nil si no se entiende.
+    static func combo(_ raw: String) -> Combo? {
+        var s = raw.trimmingCharacters(in: .whitespaces)
+        var flags: UInt64 = 0
+        let symbols: [(Character, UInt64)] = [("⇧", shiftBit), ("⌥", optionBit), ("⌘", commandBit), ("⌃", controlBit)]
+        while let c = s.first, let f = symbols.first(where: { $0.0 == c }) { flags |= f.1; s.removeFirst(); s = s.trimmingCharacters(in: .whitespaces) }
+        let parts = key(Substring(s)).split(whereSeparator: { $0 == "+" || $0 == " " }).map(String.init).filter { !$0.isEmpty }
+        guard let last = parts.last else { return nil }
+        let words: [String: UInt64] = ["shift": shiftBit, "mayus": shiftBit, "mayusculas": shiftBit, "alt": optionBit, "option": optionBit, "opt": optionBit,
+                                       "opcion": optionBit, "cmd": commandBit, "command": commandBit, "comando": commandBit, "ctrl": controlBit, "control": controlBit]
+        for w in parts.dropLast() { guard let f = words[w] else { return nil }; flags |= f }
+        guard let code = keyCodes[last] else { return nil }
+        var label = ""
+        if flags & controlBit != 0 { label += "⌃" }; if flags & optionBit != 0 { label += "⌥" }
+        if flags & shiftBit != 0 { label += "⇧" }; if flags & commandBit != 0 { label += "⌘" }
+        return Combo(key: code, flags: flags, label: label + (last.count == 1 ? last.uppercased() : last.capitalized))
+    }
+    /// «{pulsa ⇧B}» / «{press shift+b}» en una línea sola.
+    private static func pressCombo(_ line: String) -> Combo? {
+        let k = line.trimmingCharacters(in: .whitespaces)
+        guard k.hasPrefix("{"), k.hasSuffix("}") else { return nil }
+        let inner = String(k.dropFirst().dropLast())
+        for p in ["pulsa ", "press "] where key(Substring(inner)).hasPrefix(p) { return combo(String(inner.dropFirst(p.count))) }
+        return nil
+    }
     /// Los pasos de una tecla en cadena. Sin «---», un solo paso.
     static func steps(_ text: String) -> [Step] {
         var steps: [Step] = [], current: [String] = [], wait = 0.0
@@ -57,6 +95,10 @@ enum KeyText {
         for line in text.components(separatedBy: "\n") {
             let l = line.trimmingCharacters(in: .whitespaces)
             if l == "---" { flush(); continue }
+            if let c = pressCombo(l) {
+                if !current.joined().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { flush() }
+                steps.append(Step(text: "", wait: wait, press: c)); wait = 0; continue
+            }
             if let w = waitSeconds(l) {
                 if !current.joined().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { flush() }
                 wait = min(600, wait + w); continue
@@ -76,7 +118,9 @@ enum KeyText {
     /// Un resumen corto para la lista de teclas: «3 pasos» o el texto.
     static func preview(_ text: String) -> String {
         let s = steps(text)
-        return s.count > 1 ? T.s("\(s.count) steps: ", "\(s.count) pasos: ") + s.map(\.text).map { String($0.prefix(24)) }.joined(separator: " → ") : text
+        let shown = s.map { $0.press.map { T.s("press ", "pulsa ") + $0.label } ?? String($0.text.prefix(24)) }
+        if s.count == 1, let c = s.first?.press { return T.s("Presses ", "Pulsa ") + c.label }
+        return s.count > 1 ? T.s("\(s.count) steps: ", "\(s.count) pasos: ") + shown.joined(separator: " → ") : text
     }
 }
 

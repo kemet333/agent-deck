@@ -11,19 +11,20 @@ struct GrowthChecks {
         let path = CommandLine.arguments.dropFirst().first ?? "docs/packs/packs.json"
         let data = (try? Data(contentsOf: URL(fileURLWithPath: path))) ?? Data()
         let packs = Gallery.parse(data)
-        check(packs.count == 8, "8 packs en packs.json: \(packs.count)")
+        check(packs.count == 9, "9 packs en packs.json: \(packs.count)")
         check(packs.allSatisfy { $0.es?.keys != nil && $0.pack(spanish: true).valid }, "todos con español")
-        check(packs.first?.pack(spanish: true).keys.first?.text == "haz un plan primero y espera a mi ok", "Claude Code en español")
+        check(packs.first { $0.id == "claude-code" }?.pack(spanish: true).keys.first?.text == "haz un plan primero y espera a mi ok", "Claude Code en español")
+        check(packs.first { $0.id == "trader-tradingview" }?.keys.allSatisfy { $0.apps == ["com.tradingview.tradingviewapp.desktop"] } == true, "el pack Trader solo en TradingView")
         check(Gallery.filter(packs, query: "atención").map(\.id) == ["support"], "buscar en español: \(Gallery.filter(packs, query: "atención").map(\.id))")
         check(Gallery.filter(packs, query: "TESTS codex").map(\.id) == ["codex"], "varias palabras, sin mayúsculas")
         check(Gallery.filter(packs, query: "", tool: "Cursor").count == 1, "por herramienta")
-        check(Gallery.tools(packs).first == "Claude Code" && Set(Gallery.tools(packs)).count == Gallery.tools(packs).count, "herramientas sin repetir")
+        check(Gallery.tools(packs).first == "TradingView" && Set(Gallery.tools(packs)).count == Gallery.tools(packs).count, "herramientas sin repetir")
 
         // un catálogo con un pack roto y un id repetido: solo entra el bueno
         let bad = #"{"version":1,"packs":[{"id":"a","name":"A","by":"x","tool":"t","about":"","keys":[{"label":"k","text":"hola","icon":"","enter":true}]},{"id":"a","name":"A2","by":"x","tool":"t","about":"","keys":[{"label":"k","text":"y","icon":"","enter":true}]},{"id":"b","name":"","by":"x","tool":"t","about":"","keys":[]}]}"#
         check(Gallery.parse(Data(bad.utf8)).map(\.name) == ["A"], "rotos y repetidos fuera")
         check(Gallery.parse(Data(#"{"version":2,"packs":[]}"#.utf8)).isEmpty, "otra versión del catálogo no se lee")
-        let mail = Gallery.proposal(packs[0].pack(spanish: false), by: "Diego")?.absoluteString ?? ""
+        let mail = Gallery.proposal(packs.first { $0.id == "claude-code" }!.pack(spanish: false), by: "Diego")?.absoluteString ?? ""
         check(mail.hasPrefix("mailto:hello@workwithprompted.com?subject=Agent%20Bar%20pack"), "proponer = borrador de correo: \(mail.prefix(70))")
         check(mail.contains("getagentbar.com/p/"), "el correo lleva el enlace del pack")
 
@@ -95,7 +96,7 @@ struct GrowthChecks {
         check(Invite.clean("abc\"><script>") == "abc", "nada raro en el código")
         check(Invite.link(code: "ZylBs") == "https://getagentbar.com/?aff=ZylBs", "enlace de invitación")
         check(Invite.link(code: "") == "https://getagentbar.com/", "sin código, la web")
-        let p = packs[0].pack(spanish: false)
+        let p = packs.first { $0.id == "claude-code" }!.pack(spanish: false)
         check(Invite.link(code: "ZylBs", pack: p) == "https://getagentbar.com/p/?aff=ZylBs#" + p.encoded, "pack con código")
         check(Invite.link(code: "", pack: p) == p.shareURL, "pack sin código = el enlace de siempre")
         check(Invite.message(code: "Z", pack: nil).hasSuffix("https://getagentbar.com/?aff=Z"), "el mensaje termina en el enlace")

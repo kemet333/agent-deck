@@ -3,14 +3,18 @@ import Foundation
 /// Un pack de teclas: un nombre y sus teclas. Se comparte como enlace (getagentbar.com/p#… o agentdeck://pack?d=…)
 /// con el JSON en base64url, sin servidor: el enlace lleva el pack entero.
 struct KeyPack: Codable, Equatable {
-    struct Key: Codable, Equatable { var label: String; var text: String; var icon: String; var enter: Bool }
+    struct Key: Codable, Equatable {
+        var label: String; var text: String; var icon: String; var enter: Bool
+        /// Solo en estas apps (bundle ids), como el pack Trader solo en TradingView (0.21). nil = en todas.
+        var apps: [String]? = nil
+    }
     var name: String
     var keys: [Key]
 
     /// Límites para que un enlace no traiga nada raro: como mucho 12 teclas y textos cortos.
     var valid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && name.count <= 40 && (1...12).contains(keys.count)
-            && keys.allSatisfy { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty && $0.text.count <= 2000 && $0.label.count <= 24 && $0.icon.count <= 60 }
+            && keys.allSatisfy { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty && $0.text.count <= 2000 && $0.label.count <= 24 && $0.icon.count <= 60 && ($0.apps ?? []).count <= 10 }
     }
 
     var encoded: String {

@@ -25,7 +25,7 @@ struct DashboardActions {
 }
 
 enum DashPane: String, CaseIterable, Identifiable {
-    case general, keys, voice, alerts, packs, team, appearance, doctor, pro, about
+    case general, keys, voice, alerts, trading, packs, team, appearance, doctor, pro, about
     var id: String { rawValue }
     static let showNotification = Notification.Name("AgentBarShowPane")
     var title: String {
@@ -36,6 +36,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Alerts & Autopilot", "Avisos y Autopilot")
         case .packs: return T.s("Key packs", "Packs de teclas")
         case .team: return T.s("Team", "Equipo")
+        case .trading: return "Trading"
         case .appearance: return T.s("Appearance", "Aspecto")
         case .doctor: return T.s("Diagnostics", "Diagnóstico")
         case .pro: return "Agent Bar Pro"
@@ -50,6 +51,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return T.s("Know when your agent is done, and let it keep going.", "Entérate cuando tu agente termine y deja que siga solo.")
         case .packs: return T.s("Ready-made keys for the tools you use.", "Teclas listas para las herramientas que usas.")
         case .team: return T.s("The same keys and words for everyone on your team.", "Las mismas teclas y palabras para todo tu equipo.")
+        case .trading: return T.s("Execute in TradingView with one key: mechanical, not impulsive.", "Ejecuta en TradingView con una tecla: mecánico, no impulsivo.")
         case .appearance: return T.s("How the bar looks and where it lives.", "Cómo se ve la barra y dónde vive.")
         case .doctor: return T.s("Everything Agent Bar needs, checked, with the fix.", "Todo lo que necesita Agent Bar, comprobado y con su arreglo.")
         case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Autopilot, voz incluida y avisos en el móvil.")
@@ -64,6 +66,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return "bell.badge.fill"
         case .packs: return "square.stack.3d.up.fill"
         case .team: return "person.2.fill"
+        case .trading: return "chart.line.uptrend.xyaxis"
         case .appearance: return "paintbrush.fill"
         case .doctor: return "stethoscope"
         case .pro: return "seal.fill"
@@ -78,6 +81,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .alerts: return Color(hex: 0xff9f0a)
         case .packs: return Color(hex: 0x5e5ce6)
         case .team: return Color(hex: 0x64d2ff)
+        case .trading: return Color(hex: 0x32d74b)
         case .appearance: return Color(hex: 0x0a84ff)
         case .doctor: return Color(hex: 0x30d158)
         case .pro: return Dash.accent
@@ -287,6 +291,7 @@ struct DashboardView: View {
                     case .alerts: alertsPane
                     case .packs: PacksPane(store: store, actions: actions)
                     case .team: TeamPane(store: store, voice: voice)
+                    case .trading: TradingPane(store: store, actions: actions)
                     case .appearance: appearancePane
                     case .doctor: DoctorPane(voice: voice, actions: actions, goTo: { p in withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) { pane = p } })
                     case .pro: ProView(license: License.shared, embedded: true)
