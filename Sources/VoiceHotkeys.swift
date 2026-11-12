@@ -23,7 +23,8 @@ final class VoiceHotkeys {
         }
         let key=voice.preferences.talkKey
         guard voice.preferences.fnEnabled else{voice.shortcutStatus=T.s("The talk key is off. The Dictate button remains available.","La tecla para hablar está apagada. El botón Dictar sigue disponible.");return}
-        let mask=(1<<CGEventType.flagsChanged.rawValue)|(1<<CGEventType.keyDown.rawValue)|(1<<CGEventType.keyUp.rawValue)
+        // clics y rueda: con una modificadora como tecla para hablar, ⌃+clic o ⌃+rueda no son para hablar (12/11)
+        let mask=(1<<CGEventType.flagsChanged.rawValue)|(1<<CGEventType.keyDown.rawValue)|(1<<CGEventType.keyUp.rawValue)|(1<<CGEventType.leftMouseDown.rawValue)|(1<<CGEventType.rightMouseDown.rawValue)|(1<<CGEventType.otherMouseDown.rawValue)|(1<<CGEventType.scrollWheel.rawValue)
         let callback: CGEventTapCallBack = {_,type,event,ref in
             guard let ref else{return Unmanaged.passUnretained(event)}
             let handler=Unmanaged<VoiceHotkeys>.fromOpaque(ref).takeUnretainedValue()
@@ -63,6 +64,11 @@ final class VoiceHotkeys {
     }
     private func handle(_ type:CGEventType,_ event:CGEvent)->Bool{
         if type == .tapDisabledByTimeout{if let tap,Sender.accessibilityGranted(prompt:false){CGEvent.tapEnable(tap:tap,enable:true)};return false}
+        if type == .leftMouseDown || type == .rightMouseDown || type == .otherMouseDown || type == .scrollWheel {
+            // un clic o la rueda con la tecla para hablar pulsada (⌃+clic, ⌃+rueda): no era para hablar
+            if ownsFn,voice.preferences.talkKey.kind == .modifier {ownsFn=false;delayed?.cancel();apply(gesture.cancel())}
+            return false
+        }
         if type == .tapDisabledByUserInput{cancel();voice.shortcutStatus=T.s("The system disabled Fn. Reopen Voice to enable it again.","El sistema ha desactivado Fn. Vuelve a abrir Voz para reactivarlo.");return false}
         let code=event.getIntegerValueField(.keyboardEventKeycode)
         if type == .keyUp,code==53,suppressEscapeUp{suppressEscapeUp=false;return true}
