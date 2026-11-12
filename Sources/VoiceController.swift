@@ -5,7 +5,7 @@ import Speech
 
 @MainActor
 final class VoiceController: ObservableObject {
-    @Published var preferences: VoicePreferences { didSet { savePreferences();if oldValue.fnEnabled != preferences.fnEnabled { onShortcutsChanged?() } } }
+    @Published var preferences: VoicePreferences { didSet { savePreferences();if oldValue.fnEnabled != preferences.fnEnabled || oldValue.talkKey != preferences.talkKey { onShortcutsChanged?() } } }
     @Published private(set) var history: [VoiceRecord]
     @Published private(set) var phase: VoicePhase = .idle
     @Published var draft = "" { didSet { persistDraft() } }

@@ -76,7 +76,7 @@ struct VoiceWorkspaceView: View {
                 TextField(T.s("Language hint (es, en…), blank for automatic","Idioma (es, en…), vacío para automático"),text:$voice.preferences.language)
             }
             card(T.s("Keyboard & insertion","Teclado e inserción")){
-                Toggle(T.s("Enable Fn dictation","Activar dictado con Fn"),isOn:$voice.preferences.fnEnabled)
+                Toggle(T.s("Enable the talk key (\(voice.preferences.talkKey.short))","Activar la tecla para hablar (\(voice.preferences.talkKey.short))"),isOn:$voice.preferences.fnEnabled)
                 Text(voice.shortcutStatus).font(.system(size:10)).foregroundStyle(Palette.mute)
                 Toggle(T.s("Avoid Fn conflicts while Vowen is running","Evitar conflictos de Fn mientras Vowen está abierto"),isOn:$voice.preferences.avoidVowenConflict)
                 Text(T.s("If you have disabled Fn in Vowen yourself, you may disable this guard. Agent Bar does not change Vowen or macOS keyboard settings.","Si ya has desactivado Fn en Vowen, puedes desmarcar esta protección. Agent Bar no modifica Vowen ni el teclado de macOS.")).font(.system(size:10)).foregroundStyle(Palette.mute)

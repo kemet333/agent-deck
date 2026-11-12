@@ -21,6 +21,7 @@ enum DoctorLive {
         i.keyConfigured = voice.keyConfigured
         i.proVoice = ProVoice.available
         i.fnEnabled = voice.preferences.fnEnabled
+        i.keyName = voice.preferences.talkKey.short
         i.fnReady = fnReady()
         i.lastFn = lastFn
         i.voiceFailures = Doctor.failures(log: (try? String(contentsOf: Autopilot.folder.appendingPathComponent("voice.log"), encoding: .utf8)) ?? "")

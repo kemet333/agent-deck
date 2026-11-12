@@ -5,7 +5,7 @@ voice_test_dir="${AGENT_DECK_TEST_DIR:-${TMPDIR:-/private/tmp}/agent-deck-voice-
 mkdir -p "$voice_test_dir/modules"
 xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
  "$project_dir/Sources/Strings.swift" "$project_dir/Sources/VoiceModels.swift" "${project_dir}/Sources/VoiceAudioFile.swift" "$project_dir/Sources/OpenAIVoiceClient.swift" \
- "$project_dir/Sources/VoiceKeychain.swift" "$project_dir/Sources/VoiceRecorder.swift" "$project_dir/Sources/Sender.swift" "$project_dir/Sources/PasteTiming.swift" \
+ "$project_dir/Sources/VoiceKeychain.swift" "$project_dir/Sources/VoiceRecorder.swift" "$project_dir/Sources/Sender.swift" "$project_dir/Sources/PasteTiming.swift" "$project_dir/Sources/TalkKey.swift" \
  "$project_dir/Sources/Dictation.swift" "$project_dir/Sources/VoiceController.swift" "$project_dir/Sources/RealtimeTranscriber.swift" "$project_dir/Sources/Chime.swift" "$project_dir/Sources/VoiceCommands.swift" "$project_dir/Tests/VoiceChecks.swift" \
  -framework AppKit -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication -o "$voice_test_dir/voice-checks"
 "$voice_test_dir/voice-checks"

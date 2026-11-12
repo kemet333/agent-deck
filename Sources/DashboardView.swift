@@ -454,9 +454,12 @@ struct DashboardView: View {
                     TextField("auto", text: $voice.preferences.language).textFieldStyle(.roundedBorder).frame(width: 90)
                 }
             }
-            DashSection(title: T.s("Keyboard & insertion", "Teclado e inserción"), footer: T.s("Hold Fn to dictate; double-tap Fn or Fn+Control for hands-free; Fn+Option edits the selection; Escape cancels. The clipboard is restored if it hasn't changed.", "Mantén Fn para dictar; doble toque o Fn+Control para manos libres; Fn+Opción edita la selección; Escape cancela. El portapapeles se restaura si no ha cambiado.")) {
-                DashToggle(title: T.s("Dictate with Fn", "Dictar con Fn"), detail: voice.shortcutStatus, isOn: $voice.preferences.fnEnabled)
-                DashToggle(title: T.s("Avoid Fn conflicts while Vowen is running", "Evitar conflictos de Fn con Vowen abierto"), isOn: $voice.preferences.avoidVowenConflict)
+            DashSection(title: T.s("Keyboard & insertion", "Teclado e inserción"), footer: T.s("Hold the talk key to dictate; double-tap it for hands-free; Escape cancels. With Fn, also Fn+Control (hands-free) and Fn+Option (edits the selection). If your keyboard's Fn doesn't reach the Mac (Aula, Keychron…), choose another key. The clipboard is restored if it hasn't changed.", "Mantén la tecla para hablar; doble toque para manos libres; Escape cancela. Con Fn, también Fn+Control (manos libres) y Fn+Opción (edita la selección). Si el Fn de tu teclado no llega al Mac (Aula, Keychron…), elige otra tecla. El portapapeles se restaura si no ha cambiado.")) {
+                DashToggle(title: T.s("Talk key", "Tecla para hablar"), detail: voice.shortcutStatus, isOn: $voice.preferences.fnEnabled)
+                TalkKeyRow(voice: voice)
+                if voice.preferences.talkKey.kind == .fn {
+                    DashToggle(title: T.s("Avoid Fn conflicts while Vowen is running", "Evitar conflictos de Fn con Vowen abierto"), isOn: $voice.preferences.avoidVowenConflict)
+                }
                 DashToggle(title: T.s("Insert automatically in the original field", "Insertar solo en el campo original"), isOn: $voice.preferences.autoPaste)
                 DashRow(title: T.s("Insertion method", "Método de inserción")) {
                     Picker("", selection: $voice.preferences.insertion) { Text(T.s("Paste", "Pegar")).tag(VoiceInsertion.paste); Text(T.s("Direct", "Directo")).tag(VoiceInsertion.direct) }
@@ -787,5 +790,69 @@ struct KeepAwakeSection: View {
                                                                                     "Mientras Claude Code, Codex u otro agente de terminal esté trabajando (él o lo que ha lanzado gasta CPU), el Mac no se duerme solo; 5 minutos después de que paren todos, vuelve a poder dormirse. La pantalla sí puede apagarse. Nunca con menos del 30 % de batería ni con el Mac muy caliente. Con la tapa cerrada el Mac se duerme igual.")) {
             DashToggle(title: T.s("While my agents are working", "Mientras trabajan mis agentes"), detail: monitor.status, isOn: $monitor.enabled, divider: false)
         }
+    }
+}
+
+/// Ajustes → Voz → Tecla (0.20): Fn o la que quieras. «Pulsar otra…» escucha la siguiente tecla; si en 8 s no llega
+/// nada, casi seguro era el Fn de un teclado de fuera (Aula F75, Keychron…), que no se lo manda al Mac.
+@MainActor
+struct TalkKeyRow: View {
+    @ObservedObject var voice: VoiceController
+    @State private var listening = false
+    @State private var note = ""
+    @State private var monitor: Any?
+    @State private var started = Date()
+
+    var body: some View {
+        DashRow(title: T.s("Key", "Tecla"), detail: note.isEmpty ? (listening ? T.s("Press the key you want to use…", "Pulsa la tecla que quieras usar…") : T.s("Hold to talk · double-tap for hands-free · Escape cancels", "Mantener para hablar · doble toque para manos libres · Escape cancela")) : note) {
+            if listening {
+                Button(T.s("Cancel", "Cancelar")) { stop("") }.controlSize(.small)
+            } else {
+                Menu {
+                    ForEach(TalkKey.presets, id: \.self) { k in
+                        Button { choose(k) } label: { if k == voice.preferences.talkKey { Label(k.name, systemImage: "checkmark") } else { Text(k.name) } }
+                    }
+                    Divider()
+                    Button(T.s("Press another key…", "Pulsar otra…")) { listen() }
+                } label: { Text(voice.preferences.talkKey.name) }
+                .menuStyle(.borderlessButton).fixedSize().controlSize(.small)
+            }
+        }
+        .onDisappear { stop("") }
+    }
+
+    private func choose(_ k: TalkKey) {
+        voice.preferences.talkKey = k; voice.preferences.fnEnabled = true
+        note = k == .rightOption ? T.s("Tip: if you type @ or # with this key, pick Right ⌃ Control or Right ⌘ Command instead.", "Consejo: si escribes @ o # con esta tecla, mejor ⌃ Control derecha o ⌘ Comando derecha.") : ""
+    }
+    private func listen() {
+        note = ""; listening = true; started = Date()
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { e in
+            let code = Int(e.keyCode)
+            if e.type == .keyDown, code == 53 { stop(""); return nil }
+            if e.type == .flagsChanged {
+                // solo al pulsar (no al soltar) una modificadora de un lado, o Fn
+                let raw = UInt64(e.modifierFlags.rawValue)
+                var pressed = false
+                if code == 63 { pressed = e.modifierFlags.contains(.function) } else if let side = TalkKey.sideBits[code] { pressed = raw & side != 0 }
+                guard pressed else { return e }
+                if let k = TalkKey.usable(code: code, isModifier: true) { choose(k); stop(T.s("\(k.name) chosen: hold it and talk.", "\(k.name) elegida: mantenla y habla.")) }
+                else { note = T.s("That one doesn't work (Caps Lock). Try another.", "Esa no sirve (Bloq Mayús). Prueba otra.") }
+                return nil
+            }
+            if let k = TalkKey.usable(code: code, isModifier: false) { choose(k); stop(T.s("\(k.name) chosen: hold it and talk.", "\(k.name) elegida: mantenla y habla.")) }
+            else { note = T.s("That key types something. Use a key on its own side (Right ⌥, Right ⌃…) or F1–F20.", "Esa tecla escribe. Usa una de un lado (⌥ derecha, ⌃ derecha…) o F1–F20.") }
+            return nil
+        }
+        let mine = started
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+            guard listening, started == mine else { return }
+            stop(T.s("Nothing arrived. If you pressed your keyboard's Fn, that keyboard keeps Fn to itself (Aula, Keychron…): choose Right ⌥ Option or Right ⌃ Control.",
+                     "No ha llegado nada. Si pulsaste el Fn de tu teclado, ese teclado se queda el Fn para él (Aula, Keychron…): elige ⌥ Opción derecha o ⌃ Control derecha."))
+        }
+    }
+    private func stop(_ message: String) {
+        if let m = monitor { NSEvent.removeMonitor(m) }; monitor = nil
+        listening = false; if !message.isEmpty { note = message }
     }
 }

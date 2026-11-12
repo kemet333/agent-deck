@@ -11,6 +11,8 @@ enum VoicePhase: String { case idle, permission, listening, transcribing, cleani
 struct VoicePreferences: Codable {
     var engine: VoiceEngine = .openAI
     var fnEnabled = true
+    /// La tecla para hablar (0.20): Fn o la que elijas (el Fn de teclados como el Aula F75 no llega al Mac).
+    var talkKey: TalkKey = .fn
     var avoidVowenConflict = false // Agent Bar se queda Fn antes que Vowen (tap en cabeza que consume la tecla); Diego usa las dos (06/11)
     var autoPaste = true
     var insertion: VoiceInsertion = .paste
@@ -133,12 +135,13 @@ struct FnGesture {
 /// Los ajustes guardados por versiones anteriores no traen los campos nuevos: se leen uno a uno y lo que falta
 /// toma su valor por defecto, en vez de perder todos los ajustes.
 extension VoicePreferences {
-    private enum K: String, CodingKey { case engine, fnEnabled, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps, streaming, liveModel, showLiveText, learnVocabulary }
+    private enum K: String, CodingKey { case engine, fnEnabled, talkKey, avoidVowenConflict, autoPaste, insertion, autoEnter, guardTerminal, transcriptionModel, textModel, language, tone, dictionary, instructions, expansions, appTones, saveHistory, promptInAIApps, streaming, liveModel, showLiveText, learnVocabulary }
     init(from decoder: Decoder) throws {
         self.init()
         let c = try decoder.container(keyedBy: K.self)
         engine = (try? c.decodeIfPresent(VoiceEngine.self, forKey: .engine)) ?? engine
         fnEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .fnEnabled)) ?? fnEnabled
+        talkKey = (try? c.decodeIfPresent(TalkKey.self, forKey: .talkKey)) ?? talkKey
         avoidVowenConflict = (try? c.decodeIfPresent(Bool.self, forKey: .avoidVowenConflict)) ?? avoidVowenConflict
         autoPaste = (try? c.decodeIfPresent(Bool.self, forKey: .autoPaste)) ?? autoPaste
         insertion = (try? c.decodeIfPresent(VoiceInsertion.self, forKey: .insertion)) ?? insertion

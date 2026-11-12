@@ -51,6 +51,23 @@ struct VoiceChecks {
         check("paste restore never before Enter",at(PasteTiming.restoreAt(tap:t0,firstRead:t0.addingTimeInterval(0.05),settle:0.9),0.9))
         check("paste restore waits up to 8 s when nobody read it",at(PasteTiming.restoreAt(tap:t0,firstRead:nil,settle:0.6),8))
         check("paste restore with an early clipboard manager read keeps a wide margin",at(PasteTiming.restoreAt(tap:t0,firstRead:t0.addingTimeInterval(-0.5),settle:0.6),3))
+        // tecla para hablar (0.20): el Fn de teclados como el Aula F75 no llega al Mac; se elige otra
+        let ro=TalkKey.rightOption
+        check("right Option down is seen by its own side bit",ro.modifierDown(eventCode:61,flags:0x80000|0x40)==true)
+        check("right Option up",ro.modifierDown(eventCode:61,flags:0)==false)
+        check("left Option does not trigger right Option",ro.modifierDown(eventCode:58,flags:0x80000|0x20)==nil)
+        check("right Option with left still held is released",ro.modifierDown(eventCode:61,flags:0x80000|0x20)==false)
+        check("Option plus Shift is typing, not talking",ro.othersHeld(flags:0x80000|0x40|0x20000))
+        check("Option alone is not other modifiers",!ro.othersHeld(flags:0x80000|0x40))
+        check("letters and space cannot be the talk key",TalkKey.usable(code:0,isModifier:false)==nil && TalkKey.usable(code:49,isModifier:false)==nil)
+        check("F13 can be the talk key",TalkKey.usable(code:105,isModifier:false)==TalkKey(kind:.key,code:105))
+        check("Caps Lock cannot be the talk key",TalkKey.usable(code:57,isModifier:true)==nil)
+        check("right Control can be the talk key",TalkKey.usable(code:62,isModifier:true) == TalkKey.rightControl)
+        let oldPrefs=try JSONDecoder().decode(VoicePreferences.self,from:Data(#"{"fnEnabled":true}"#.utf8))
+        check("old settings keep Fn",oldPrefs.talkKey == .fn)
+        var withKey=VoicePreferences();withKey.talkKey = .rightControl
+        let savedKey=try JSONDecoder().decode(VoicePreferences.self,from:JSONEncoder().encode(withKey)).talkKey
+        check("talk key is saved",savedKey == .rightControl)
         var g=FnGesture()
         check("Fn short tap does not record",g.down(at:0).isEmpty && g.up(at:0.1).isEmpty)
         check("Fn double tap locks recording",g.down(at:0.3)==[.start] && g.state == .locked)

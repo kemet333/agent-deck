@@ -21,7 +21,8 @@ final class VoiceHotkeys {
             let consumed=MainActor.assumeIsolated{if event.keyCode==53,self?.voice.active==true{self?.cancel();return true};return false}
             return consumed ? nil:event
         }
-        guard voice.preferences.fnEnabled else{voice.shortcutStatus=T.s("Fn is disabled. The Dictate button remains available.","Fn está desactivado. El botón Dictar sigue disponible.");return}
+        let key=voice.preferences.talkKey
+        guard voice.preferences.fnEnabled else{voice.shortcutStatus=T.s("The talk key is off. The Dictate button remains available.","La tecla para hablar está apagada. El botón Dictar sigue disponible.");return}
         let mask=(1<<CGEventType.flagsChanged.rawValue)|(1<<CGEventType.keyDown.rawValue)|(1<<CGEventType.keyUp.rawValue)
         let callback: CGEventTapCallBack = {_,type,event,ref in
             guard let ref else{return Unmanaged.passUnretained(event)}
@@ -35,7 +36,9 @@ final class VoiceHotkeys {
         tap=port;runSource=CFMachPortCreateRunLoopSource(kCFAllocatorDefault,port,0)
         if let runSource{CFRunLoopAddSource(CFRunLoopGetMain(),runSource,.commonModes)}
         CGEvent.tapEnable(tap:port,enable:true)
-        voice.shortcutStatus=T.s("Fn ready · hold, double-tap or Fn+Control · Fn+Option edits selection","Fn listo · mantener, doble toque o Fn+Control · Fn+Opción edita la selección")
+        voice.shortcutStatus = key.kind == .fn
+            ? T.s("Fn ready · hold, double-tap or Fn+Control · Fn+Option edits selection","Fn listo · mantener, doble toque o Fn+Control · Fn+Opción edita la selección")
+            : T.s("\(key.name) ready · hold to talk, double-tap for hands-free","\(key.name) lista · mantener para hablar, doble toque para manos libres")
     }
     func uninstall(){
         revision+=1;delayed?.cancel();delayed=nil;_ = gesture.cancel();ownsFn=false
@@ -65,6 +68,8 @@ final class VoiceHotkeys {
         if type == .keyUp,code==53,suppressEscapeUp{suppressEscapeUp=false;return true}
         if type == .keyDown,code==53,(voice.active || gesture.state == .holding || gesture.state == .locked){cancel();suppressEscapeUp=true;return true}
         guard voice.preferences.fnEnabled else{return false}
+        let key=voice.preferences.talkKey
+        if key.kind != .fn { return handleOther(key,type,event,Int(code)) }
         let flags=NSEvent.ModifierFlags(rawValue:UInt(event.flags.rawValue)),fn=flags.contains(.function),mods=flags.intersection([.command,.control,.option,.shift])
         let now=ProcessInfo.processInfo.systemUptime
         // Release order does not matter for Fn+Control: releasing Fn first must not cancel hands-free.
@@ -86,5 +91,43 @@ final class VoiceHotkeys {
         let work=DispatchWorkItem{[weak self] in guard let self else{return};self.apply(self.gesture.held(at:ProcessInfo.processInfo.systemUptime))}
         delayed=work;DispatchQueue.main.asyncAfter(deadline:.now()+0.185,execute:work)
         return true
+    }
+
+    /// Otra tecla para hablar (0.20): una modificadora de un lado o una tecla que no escribe (F13, Inicio…).
+    /// Una modificadora nunca se traga (las demás apps la siguen viendo); si se usa para escribir (⌥2 = @, ⌥ + ⇧…),
+    /// la grabación se cancela. Una tecla normal sí se traga: no debe hacer nada más.
+    private func handleOther(_ key:TalkKey,_ type:CGEventType,_ event:CGEvent,_ code:Int)->Bool{
+        let now=ProcessInfo.processInfo.systemUptime,raw=event.flags.rawValue
+        func press(){
+            guard canUseFn() else{return}
+            ownsFn=true;command=false;if !voice.active{voice.prewarm()};apply(gesture.down(at:now));delayed?.cancel()
+            let work=DispatchWorkItem{[weak self] in guard let self else{return};self.apply(self.gesture.held(at:ProcessInfo.processInfo.systemUptime))}
+            delayed=work;DispatchQueue.main.asyncAfter(deadline:.now()+0.185,execute:work)
+        }
+        func release(){
+            delayed?.cancel();ownsFn=false;apply(gesture.up(at:now))
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.6){[weak self] in self?.voice.dropPrewarm()}
+        }
+        switch key.kind {
+        case .modifier:
+            if type == .flagsChanged,let down=key.modifierDown(eventCode:code,flags:raw){
+                if down {
+                    if key.othersHeld(flags:raw) || raw & 0x800000 != 0 {delayed?.cancel();apply(gesture.cancel());return false}
+                    press()
+                } else if ownsFn { release() }
+                return false
+            }
+            if ownsFn,(type == .keyDown || (type == .flagsChanged && key.othersHeld(flags:raw))) {
+                ownsFn=false;delayed?.cancel();apply(gesture.cancel())
+            }
+            return false
+        case .key:
+            guard code==key.code,type == .keyDown || type == .keyUp else{return false}
+            if type == .keyDown { if event.getIntegerValueField(.keyboardEventAutorepeat) == 0 { press() } }
+            else { release() }
+            return true
+        case .fn:
+            return false
+        }
     }
 }

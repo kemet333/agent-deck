@@ -26,6 +26,7 @@ enum Doctor {
         var keyConfigured = true
         var proVoice = false
         var fnEnabled = true
+        var keyName = "Fn"
         var fnReady = true
         var lastFn: Date?
         var voiceFailures: [Failure] = []
@@ -77,11 +78,11 @@ enum Doctor {
         }
         // Fn
         if !i.fnEnabled {
-            out.append(Check(id: "fn", title: T.s("Fn is off", "Fn está apagado"), detail: T.s("Turn it on in Voice. The Dictate button still works.", "Se enciende en Voz. El botón Dictar sigue funcionando."), level: .info, actions: [Action(fix: .voiceSettings, title: T.s("Voice", "Voz"))]))
+            out.append(Check(id: "fn", title: T.s("\(i.keyName) is off", "\(i.keyName) está apagado"), detail: T.s("Turn it on in Voice. The Dictate button still works.", "Se enciende en Voz. El botón Dictar sigue funcionando."), level: .info, actions: [Action(fix: .voiceSettings, title: T.s("Voice", "Voz"))]))
         } else if !i.fnReady {
-            out.append(Check(id: "fn", title: T.s("Fn isn't listening", "Fn no escucha"), detail: i.accessibility ? T.s("Restart Agent Bar. If it keeps happening, turn Accessibility off and on again for Agent Bar.", "Reinicia Agent Bar. Si sigue pasando, quita y vuelve a dar Accesibilidad a Agent Bar.") : T.s("It needs Accessibility. Agent Bar retries every 3 seconds.", "Necesita Accesibilidad. Agent Bar lo reintenta cada 3 segundos."), level: .fail, actions: [Action(fix: .accessibility, title: T.s("Open settings", "Abrir ajustes"))]))
+            out.append(Check(id: "fn", title: T.s("\(i.keyName) isn't listening", "\(i.keyName) no escucha"), detail: i.accessibility ? T.s("Restart Agent Bar. If it keeps happening, turn Accessibility off and on again for Agent Bar.", "Reinicia Agent Bar. Si sigue pasando, quita y vuelve a dar Accesibilidad a Agent Bar.") : T.s("It needs Accessibility. Agent Bar retries every 3 seconds.", "Necesita Accesibilidad. Agent Bar lo reintenta cada 3 segundos."), level: .fail, actions: [Action(fix: .accessibility, title: T.s("Open settings", "Abrir ajustes"))]))
         } else {
-            out.append(Check(id: "fn", title: T.s("Fn is listening", "Fn escucha"), detail: i.lastFn.map { T.s("Last used ", "Último uso: ") + ago($0, now: i.now) } ?? T.s("Hold Fn and speak.", "Mantén Fn y habla."), level: .ok))
+            out.append(Check(id: "fn", title: T.s("\(i.keyName) is listening", "\(i.keyName) escucha"), detail: i.lastFn.map { T.s("Last used ", "Último uso: ") + ago($0, now: i.now) } ?? T.s("Hold \(i.keyName) and speak.", "Mantén \(i.keyName) y habla."), level: .ok))
         }
         // fallos de voz recientes
         let day = i.voiceFailures.filter { i.now.timeIntervalSince($0.date) < 86_400 }
