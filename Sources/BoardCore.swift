@@ -40,6 +40,13 @@ enum BoardCore {
         ("gemini", "Gemini CLI", "gemini", "gemini"),
         ("shell", "Terminal", "", ""),
     ]
+    /// every agent gets a character name, so a board of twelve reads like a crew, not a list of «claude-7»
+    static let personajes = ["Mila", "Ren", "Juno", "Ada", "Bex", "Cy", "Pip", "Otto", "Nova", "Lia", "Kai", "Zoe", "Ivo", "Uma", "Teo", "Nia", "Rui", "Eli", "Sol", "Vera", "Leo", "Ona", "Gus", "Max"]
+    static func personajeLibre(usados: [String]) -> String {
+        let u = Set(usados.map { $0.lowercased() })
+        if let p = personajes.first(where: { !u.contains($0.lowercased()) }) { return p }
+        return nombreLibre(personajes[usados.count % personajes.count], usados: usados)
+    }
     static let maxLanzar = 12, maxConsolas = 24, rawMax = 512 * 1024, textoMax = 8000
     static let trabajandoSegundos = 2.5
 
@@ -58,10 +65,11 @@ enum BoardCore {
         let tail = String(textoDesdeEntrada.suffix(900))
         return pide.firstMatch(in: tail, range: NSRange(tail.startIndex..., in: tail)) != nil
     }
-    enum Estado: String { case trabajando, te_necesita, en_reposo, terminada, dormida }
-    static func estado(vivo: Bool, salida: Int32?, ahora: Double, inicio: Double, ultimaSalida: Double, desdeEntrada: String, avisoPide: Bool = false) -> Estado {
+    enum Estado: String { case trabajando, te_necesita, en_reposo, pausada, terminada, dormida }
+    static func estado(vivo: Bool, salida: Int32?, ahora: Double, inicio: Double, ultimaSalida: Double, desdeEntrada: String, avisoPide: Bool = false, pausada: Bool = false) -> Estado {
         if !vivo { return .dormida }
         if salida != nil { return .terminada }
+        if pausada { return .pausada }
         if ahora - ultimaSalida < trabajandoSegundos && ahora - inicio > 1.5 { return .trabajando }
         return avisoPide || pidePermiso(desdeEntrada) ? .te_necesita : .en_reposo
     }

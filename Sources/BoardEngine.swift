@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 /// The agents board's engine: the consoles (each a BoardPty), their state, the composer, orders, handoffs, the
@@ -16,6 +17,9 @@ final class BoardEngine {
         var inicio: Double
         var salida: Int32?
         var avisoPide = false
+        var pausada = false
+        var turnos = 0
+        var ultimoEstado = ""
     }
     private(set) var state = BoardCore.State()
     private var vivos: [String: Live] = [:]
@@ -49,20 +53,21 @@ final class BoardEngine {
     // MARK: state
     func estado(_ id: String) -> BoardCore.Estado {
         guard let v = vivos[id] else { return .dormida }
-        return BoardCore.estado(vivo: true, salida: v.salida, ahora: now(), inicio: v.inicio, ultimaSalida: v.ultimaSalida, desdeEntrada: v.desdeEntrada, avisoPide: v.avisoPide)
+        return BoardCore.estado(vivo: true, salida: v.salida, ahora: now(), inicio: v.inicio, ultimaSalida: v.ultimaSalida, desdeEntrada: v.desdeEntrada, avisoPide: v.avisoPide, pausada: v.pausada)
     }
     func vista() -> [String: Any] {
-        var cuenta: [String: Int] = ["trabajando": 0, "te_necesita": 0, "en_reposo": 0, "terminada": 0, "dormida": 0]
+        var cuenta: [String: Int] = ["trabajando": 0, "te_necesita": 0, "en_reposo": 0, "pausada": 0, "terminada": 0, "dormida": 0]
         let lista: [[String: Any]] = state.consolas.map { c in
             let e = estado(c.id); cuenta[e.rawValue, default: 0] += 1
             var o = dict(c)
             o["estado"] = e.rawValue; o["cliNombre"] = BoardCore.cliNombre(c)
             o["salida"] = vivos[c.id]?.salida.map { Int($0) } ?? NSNull()
+            o["inicio"] = vivos[c.id]?.inicio ?? 0; o["turnos"] = vivos[c.id]?.turnos ?? 0
             return o
         }
         let nombres = state.consolas.map(\.nombre)
         let props = state.consolas.flatMap { c in vivos[c.id].map { BoardCore.propuestas(orquestador: c, desdeEntrada: $0.desdeEntrada, nombres: nombres) } ?? [] }
-        return ["consolas": lista, "bucles": state.bucles.map(dict), "cuenta": cuenta, "max": BoardCore.maxLanzar,
+        return ["consolas": lista, "bucles": state.bucles.map(dict), "cuenta": cuenta, "max": BoardCore.maxLanzar, "ahora": now(), "turnos": vivos.values.reduce(0) { $0 + $1.turnos },
                 "propuestas": props.suffix(12).map { ["de": $0.de, "deNombre": $0.deNombre, "a": $0.a, "texto": $0.texto] }]
     }
     private func dict<T: Encodable>(_ v: T) -> [String: Any] {
@@ -90,8 +95,8 @@ final class BoardEngine {
             let comando = (n["comando"] as? String ?? "").trimmingCharacters(in: .whitespaces)
             if cli == "custom" && comando.isEmpty { throw BoardError("Falta el comando de la consola.") }
             let base = (n["nombre"] as? String ?? "").trimmingCharacters(in: .whitespaces)
-            let defecto = cli == "custom" ? "consola" : (BoardCore.clis.first { $0.id == cli }?.nombre.split(separator: " ").first.map { String($0).lowercased() } ?? cli)
-            let nombre = BoardCore.nombreLibre(String((base.isEmpty ? defecto : base).prefix(40)), usados: (state.consolas + nuevas).map(\.nombre))
+            let usados = (state.consolas + nuevas).map(\.nombre)
+            let nombre = base.isEmpty ? BoardCore.personajeLibre(usados: usados) : BoardCore.nombreLibre(String(base.prefix(40)), usados: usados)
             let w = min(1600, max(380, (n["w"] as? Double) ?? 580)), h = min(1200, max(240, (n["h"] as? Double) ?? 410))
             let prompt = (n["prompt"] as? String).flatMap { $0.isEmpty ? nil : String($0.prefix(4000)) }
             nuevas.append(.init(id: UUID().uuidString.lowercased(), nombre: nombre, cli: cli, comando: cli == "custom" ? String(comando.prefix(500)) : nil,
@@ -289,7 +294,28 @@ final class BoardEngine {
             }
         }
     }
-    private func tick() { leerAvisos(); vueltaBucles() }
+    /// a turn is finished each time a console goes from working to waiting (at rest or needing you)
+    func contarTurnos() {
+        for id in vivos.keys {
+            let e = estado(id).rawValue
+            if vivos[id]!.ultimoEstado == "trabajando" && (e == "en_reposo" || e == "te_necesita") { vivos[id]!.turnos += 1 }
+            vivos[id]!.ultimoEstado = e
+        }
+    }
+    private func tick() { leerAvisos(); contarTurnos(); vueltaBucles() }
+    /// pause or resume a console's whole session (SIGSTOP / SIGCONT): it keeps its place and its conversation
+    func pausar(_ id: String, _ si: Bool) throws {
+        _ = try buscar(id)
+        guard let v = vivos[id], v.salida == nil else { return }
+        _ = Darwin.kill(-v.pty.pid, si ? SIGSTOP : SIGCONT); _ = Darwin.kill(v.pty.pid, si ? SIGSTOP : SIGCONT)
+        vivos[id]?.pausada = si
+    }
+    func todas(pausar si: Bool) { for c in state.consolas { try? pausar(c.id, si) } }
+    func agrupar(_ ids: [String], equipo: String) {
+        let nombre = String(equipo.trimmingCharacters(in: .whitespaces).prefix(40))
+        for i in state.consolas.indices where ids.contains(state.consolas[i].id) { state.consolas[i].equipo = nombre }
+        save()
+    }
 
     // MARK: the page's calls
     func handle(_ path: String, _ m: [String: Any]) throws -> Any {
@@ -307,6 +333,9 @@ final class BoardEngine {
         case "/orden": return orden(m["texto"] as? String ?? "")
         case "/bucle": return ["id": try nuevoBucle(m)]
         case "/bucle/parar": return ["ok": pararBucle(id, quitar: m["quitar"] as? Bool == true)]
+        case "/pausar": try pausar(id, m["si"] as? Bool != false); return ["ok": true]
+        case "/todas": todas(pausar: m["pausar"] as? Bool == true); return ["ok": true]
+        case "/agrupar": agrupar(m["ids"] as? [String] ?? [], equipo: m["equipo"] as? String ?? ""); return ["ok": true]
         case "/flujo": replay(); return ["ok": true]
         default: throw BoardError("No encontrado.")
         }

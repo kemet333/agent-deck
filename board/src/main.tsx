@@ -3,4 +3,4 @@ import {createRoot} from 'react-dom/client';
 import {TableroView} from './Board';
 import './standalone.css';
 
-createRoot(document.getElementById('root')!).render(<div className="jarvis view-agents"><TableroView/></div>);
+createRoot(document.getElementById('root')!).render(<TableroView/>);
