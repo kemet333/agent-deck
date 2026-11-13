@@ -411,7 +411,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     @objc func quit() { NSApp.terminate(nil) }
 
-    // MARK: atajos globales ⌃⌥1…9 y ⌃⌥D
+    // MARK: atajos globales ⌃⌥1…9, ⌃⌥D y ⌃⌥A
 
     func installHotkeys() {
         monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -419,6 +419,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Task { @MainActor [weak self] in
                 guard let self,mods == [.control,.option] else { return }
                 if code == 2 { self.togglePanel(); return }
+                if code == 0 { self.openBoard(); return }               // A: tablero de agentes
                 if code == 3 { self.openFlows(); return }
                 if code == 35 { self.pauseFlow(); return }
                 if code == 43 { self.openVoice(); return }
