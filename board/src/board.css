@@ -1,0 +1,102 @@
+/* Agentes · tablero de consolas. Same family as Entregas (board.css): dark, system type, thin separators, colour only for
+   state. Green working, amber needs you (the one that matters), grey at rest. */
+.jarvis .j-workspace.tb-root{--tb-sep:#ffffff12;--tb-ink:#f2f3f5;--tb-2:#a3a7b0;--tb-3:#70757f;--tb-fill:#ffffff09;--tb-sel:#2c6fd6;--tb-ok:#34c759;--tb-need:#ff9f0a;--tb-rest:#8e8e93;
+ left:max(16px,calc(50% - 980px));right:max(16px,calc(50% - 980px));top:14px;overflow:hidden;display:grid;grid-template-columns:236px minmax(0,1fr);grid-template-rows:minmax(0,1fr);
+ border-radius:14px;background:#0f1013;box-shadow:0 0 0 1px var(--tb-sep),0 18px 50px #0007;font:13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;color:var(--tb-ink);letter-spacing:-.08px}
+.jarvis .tb-root button,.jarvis .tb-root input,.jarvis .tb-root select,.jarvis .tb-root textarea{font:inherit;color:inherit}
+.jarvis .tb-root .tb-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--tb-rest);flex:none}
+.jarvis .tb-root .is-trabajando .tb-dot,.jarvis .tb-root .tb-dot.is-trabajando{background:var(--tb-ok);box-shadow:0 0 0 3px #34c75922;animation:tb-pulse 1.4s ease-in-out infinite}
+.jarvis .tb-root .is-te_necesita .tb-dot,.jarvis .tb-root .tb-needs .tb-dot{background:var(--tb-need);box-shadow:0 0 0 3px #ff9f0a33}
+.jarvis .tb-root .is-terminada .tb-dot,.jarvis .tb-root .is-dormida .tb-dot{background:#48484a}
+@keyframes tb-pulse{50%{box-shadow:0 0 0 6px #34c75900}}
+
+/* Mapa de misión (source list) */
+.jarvis .tb-mission{display:flex;flex-direction:column;gap:2px;min-height:0;overflow:auto;padding:14px 10px;background:#16171bcc;border-right:1px solid var(--tb-sep);scrollbar-width:none}
+.jarvis .tb-mission h2{margin:2px 8px 10px;font-size:13px;font-weight:600}
+.jarvis .tb-mission h3{margin:14px 8px 4px;font-size:11px;font-weight:600;color:var(--tb-3)}
+.jarvis .tb-counts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 4px 6px}
+.jarvis .tb-counts span{display:flex;flex-direction:column;gap:1px;padding:8px;border-radius:9px;background:var(--tb-fill);font-size:10.5px;color:var(--tb-2)}
+.jarvis .tb-counts b{font-size:19px;font-weight:600;color:var(--tb-ink);font-variant-numeric:tabular-nums}
+.jarvis .tb-counts .is-te_necesita b{color:var(--tb-need)}.jarvis .tb-counts .is-trabajando b{color:var(--tb-ok)}
+.jarvis .tb-mission section>button{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:7px;background:none;text-align:left;cursor:pointer}
+.jarvis .tb-mission section>button:hover{background:var(--tb-fill)}
+.jarvis .tb-mission section>button span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jarvis .tb-mission section>button small{color:var(--tb-3);font-size:11px}
+.jarvis .tb-needs{margin:4px 2px;padding:4px;border-radius:10px;background:#ff9f0a14;box-shadow:inset 0 0 0 1px #ff9f0a40}
+.jarvis .tb-needs h3{margin-top:4px;color:var(--tb-need)}
+.jarvis .tb-loop{display:grid;gap:2px;margin:2px 4px;padding:8px;border-radius:8px;background:var(--tb-fill);color:var(--tb-2)}
+.jarvis .tb-loop.on{color:var(--tb-ink)}
+.jarvis .tb-loop small{color:var(--tb-3);font-size:11px}
+.jarvis .tb-loop button{justify-self:start;display:inline-flex;gap:4px;align-items:center;margin-top:4px;padding:3px 8px;border:0;border-radius:6px;background:#ffffff14;cursor:pointer;font-size:11.5px}
+.jarvis .tb-empty-side{margin:10px 8px;color:var(--tb-3)}
+
+/* Main: toolbar · board · order bar */
+.jarvis .tb-main{position:relative;height:100%;display:flex;flex-direction:column;min-width:0;min-height:0}
+.jarvis .tb-toolbar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--tb-sep)}
+.jarvis .tb-toolbar h1{margin:0;font-size:15px;font-weight:600}
+.jarvis .tb-hint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tb-3);font-size:12px}
+.jarvis .tb-primary,.jarvis .tb-secondary,.jarvis .tb-danger{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:0;border-radius:8px;cursor:pointer;font-weight:500;white-space:nowrap}
+.jarvis .tb-primary{background:var(--tb-sel);color:#fff}.jarvis .tb-primary:disabled{opacity:.45;cursor:default}
+.jarvis .tb-secondary{background:#ffffff14}.jarvis .tb-secondary:disabled{opacity:.45}
+.jarvis .tb-danger{background:#ff453a;color:#fff}
+.jarvis .tb-error{margin:8px 14px 0;padding:8px 10px;border-radius:8px;background:#ff453a22;color:#ffb4ae}
+.jarvis .tb-canvas{position:relative;flex:1;overflow:auto;min-height:0;background:radial-gradient(#ffffff0c 1px,transparent 1px) 0 0/22px 22px}
+.jarvis .tb-plane{position:relative}
+.jarvis .tb-empty{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:min(440px,80%);text-align:center}
+.jarvis .tb-empty h2{margin:0 0 8px;font-size:20px;font-weight:600}
+.jarvis .tb-empty p{margin:0 0 16px;color:var(--tb-2)}
+
+/* A console */
+.jarvis .tb-card{position:absolute;display:flex;flex-direction:column;border-radius:11px;background:#0b0c10;box-shadow:0 0 0 1px var(--tb-sep),0 12px 32px #0008;overflow:hidden}
+.jarvis .tb-card.is-te_necesita{box-shadow:0 0 0 1.5px var(--tb-need),0 12px 32px #0008}
+.jarvis .tb-card.is-focus{box-shadow:0 0 0 1.5px var(--tb-sel),0 14px 40px #000a;z-index:2}
+.jarvis .tb-card header{display:flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;background:#17181d;border-bottom:1px solid var(--tb-sep);cursor:grab;user-select:none;touch-action:none}
+.jarvis .tb-card header strong{font-weight:600;white-space:nowrap}
+.jarvis .tb-card .tb-meta{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tb-3);font-size:12px}
+.jarvis .tb-card .tb-state{color:var(--tb-2);font-size:11.5px;white-space:nowrap}
+.jarvis .tb-card.is-te_necesita .tb-state{color:var(--tb-need);font-weight:600}
+.jarvis .tb-card header nav{display:flex;gap:2px}
+.jarvis .tb-card header nav button,.jarvis .tb-icon{display:grid;place-items:center;width:26px;height:26px;border:0;border-radius:6px;background:none;color:var(--tb-2);cursor:pointer}
+.jarvis .tb-card header nav button:hover,.jarvis .tb-icon:hover{background:#ffffff14;color:var(--tb-ink)}
+.jarvis .tb-term{flex:1;min-height:0;padding:6px 4px 4px 8px}
+.jarvis .tb-term .xterm{height:100%}
+.jarvis .tb-sleep{flex:1;display:grid;place-content:center;justify-items:center;gap:12px;color:var(--tb-2)}
+.jarvis .tb-sleep p{margin:0}
+.jarvis .tb-resize{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 55%,#ffffff30 55%,#ffffff30 62%,transparent 62%,transparent 72%,#ffffff30 72%,#ffffff30 79%,transparent 79%)}
+
+/* Orders */
+.jarvis .tb-order{display:flex;gap:8px;align-items:flex-end;padding:10px 14px;border-top:1px solid var(--tb-sep);background:#121317}
+.jarvis .tb-order textarea{flex:1;min-height:32px;max-height:120px;padding:7px 10px;border:0;border-radius:8px;background:#ffffff0d;resize:none;outline:0}
+.jarvis .tb-order textarea:focus{box-shadow:0 0 0 2px #2c6fd688}
+.jarvis .tb-toast{position:absolute;left:50%;bottom:66px;transform:translateX(-50%);margin:0;padding:8px 14px;border-radius:10px;background:#2c2c2e;box-shadow:0 8px 24px #0008;white-space:nowrap}
+
+/* Dialogs */
+.jarvis .tb-modal-back{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:#0008}
+.jarvis .tb-modal{display:grid;gap:12px;width:min(480px,92vw);max-height:86vh;overflow:auto;padding:20px;border-radius:14px;background:#1c1c1f;box-shadow:0 0 0 1px var(--tb-sep),0 24px 60px #000b}
+.jarvis .tb-modal.wide{width:min(1080px,96vw)}
+.jarvis .tb-modal h2{margin:0;font-size:16px;font-weight:600}
+.jarvis .tb-modal p{margin:0;color:var(--tb-2)}
+.jarvis .tb-modal label{display:grid;gap:5px;color:var(--tb-2);font-size:12px}
+.jarvis .tb-modal input,.jarvis .tb-modal select,.jarvis .tb-modal textarea{padding:7px 9px;border:0;border-radius:7px;background:#ffffff10;color:var(--tb-ink);outline:0;min-width:0}
+.jarvis .tb-modal input:focus,.jarvis .tb-modal select:focus,.jarvis .tb-modal textarea:focus{box-shadow:0 0 0 2px #2c6fd688}
+.jarvis .tb-modal .tb-check{display:flex;align-items:center;gap:8px}
+.jarvis .tb-two{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+.jarvis .tb-note{font-size:12px}
+.jarvis .tb-presets{display:flex;flex-wrap:wrap;gap:6px}
+.jarvis .tb-chip{padding:5px 10px;border:0;border-radius:99px;background:#ffffff12;cursor:pointer;font-size:12px}
+.jarvis .tb-chip:hover{background:#ffffff1f}
+.jarvis .tb-rows{display:grid;gap:6px}
+.jarvis .tb-row{display:grid;grid-template-columns:130px 130px 1fr 110px 150px 1.4fr 28px;gap:6px;align-items:center}
+.jarvis .tb-row.head span{color:var(--tb-3);font-size:11px}
+.jarvis .tb-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.jarvis .tb-grow{flex:1}
+@media (max-width:900px){.jarvis .j-workspace.tb-root{grid-template-columns:1fr}.jarvis .tb-mission{display:none}.jarvis .tb-hint{display:none}.jarvis .tb-row{grid-template-columns:1fr 1fr;}.jarvis .tb-row.head{display:none}}
+/* the compact Alfred bar sits under the stage, as in Entregas and Memoria; the toolbar title is a toolbar title */
+.jarvis.view-agents .j-stage{bottom:74px}
+.jarvis .j-workspace.tb-root .tb-toolbar h1{margin:0;font:600 15px/1.2 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;color:var(--tb-ink);letter-spacing:-.1px}
+.jarvis .tb-props{margin:4px 2px;padding:4px 6px 8px;border-radius:10px;background:#2c6fd614;box-shadow:inset 0 0 0 1px #2c6fd640;display:grid;gap:6px}
+.jarvis .tb-props h3{margin:4px 2px 0;color:#7fb0ff}
+.jarvis .tb-prop{display:grid;gap:4px;padding:6px 8px;border-radius:8px;background:#ffffff0a}
+.jarvis .tb-prop b{color:#7fb0ff;font-weight:600}
+.jarvis .tb-prop button{justify-self:start;display:inline-flex;gap:4px;align-items:center;padding:3px 8px;border:0;border-radius:6px;background:#2c6fd6;color:#fff;cursor:pointer;font-size:11.5px}
+.jarvis .tb-props .tb-chip{justify-self:start}

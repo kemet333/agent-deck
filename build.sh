@@ -16,7 +16,8 @@ xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" 
   "$project_dir"/Sources/VoiceKeychain.swift "$project_dir"/Sources/VoiceRecorder.swift \
   "$project_dir"/Sources/VoiceController.swift "$project_dir"/Sources/RealtimeTranscriber.swift "$project_dir"/Sources/VoiceHotkeys.swift "$project_dir"/Sources/VoiceWorkspaceView.swift \
   "$project_dir"/Sources/FlowCore.swift "$project_dir"/Sources/FlowController.swift "$project_dir"/Sources/ClaudeHooks.swift "$project_dir"/Sources/Autopilot.swift "$project_dir"/Sources/KeyPacks.swift "$project_dir"/Sources/OnboardingView.swift "$project_dir"/Sources/FlowWorkspaceView.swift "$project_dir"/Sources/DashboardView.swift "$project_dir"/Sources/License.swift "$project_dir"/Sources/ProView.swift "$project_dir"/Sources/ProVoice.swift \
-  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication -framework IOKit \
+  "$project_dir"/Sources/BoardCore.swift "$project_dir"/Sources/BoardPty.swift "$project_dir"/Sources/BoardEngine.swift "$project_dir"/Sources/BoardWindow.swift \
+  -framework SwiftUI -framework AppKit -framework ServiceManagement -framework Speech -framework AVFoundation -framework Security -framework LocalAuthentication -framework IOKit -framework WebKit \
   -o "$app_dir/Contents/MacOS/AgentDesk"
 xcrun swiftc -swift-version 5 -O -target arm64-apple-macosx14.0 -sdk "$sdk_dir" \
   -module-cache-path "$build_dir/modules" -parse-as-library \
@@ -31,6 +32,7 @@ xcrun swiftc -swift-version 5 -O -sdk "$sdk_dir" -module-cache-path "$build_dir/
 "$build_dir/build-icon" "$build_dir/AppIcon.iconset" "$app_dir/Contents/Resources/AppIcon.icns"
 cp "$project_dir/Resources/Info.plist" "$app_dir/Contents/Info.plist"
 cp "$project_dir/docs/packs/packs.json" "$app_dir/Contents/Resources/packs.json"
+rm -rf "$app_dir/Contents/Resources/board"; cp -R "$project_dir/Resources/board" "$app_dir/Contents/Resources/board"
 xattr -cr "$app_dir"
 # Con un certificado local (el mismo que Diego OS) la identidad no cambia entre builds y macOS conserva los permisos.
 identity="${AGENT_DECK_SIGN_IDENTITY:-Diego OS Local}"

@@ -31,3 +31,6 @@ xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_
 "$voice_test_dir/trading-checks"
 "$voice_test_dir/awake-checks"
 "$voice_test_dir/doctor-checks"
+xcrun swiftc -swift-version 5 -parse-as-library -module-cache-path "$voice_test_dir/modules" \
+ "$project_dir/Sources/BoardCore.swift" "$project_dir/Sources/BoardPty.swift" "$project_dir/Sources/BoardEngine.swift" "$project_dir/Tests/BoardChecks.swift" -o "$voice_test_dir/board-checks"
+"$voice_test_dir/board-checks"

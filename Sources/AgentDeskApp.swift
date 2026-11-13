@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var proWindow: NSWindow?
     var flowWindow: NSWindow?
     var dashWindow: NSWindow?
+    var board: BoardWindowController?
     var styleSync: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -85,6 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             switch url.host {
             case "toggle": togglePanel()
+            case "board", "agents": openBoard()
             case "settings": showDashboard(pane: q.first(where: { $0.name == "pane" })?.value.flatMap(DashPane.init(rawValue:)))
             case "show": panel.orderFrontRegardless(); store.collapsed = false
             case "dictate": DispatchQueue.main.async { self.store.toggleDictation() }
@@ -178,6 +180,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Lo justo: todo lo demás vive en Ajustes (el panel), que ya lo tiene todo con su explicación.
         let menu = NSMenu(); menu.delegate = self
         menu.addItem(withTitle: T.s("Settings…", "Ajustes…"), action: #selector(openDashboard), keyEquivalent: ",")
+        menu.addItem(withTitle: T.s("Agents board…", "Tablero de agentes…"), action: #selector(openBoard), keyEquivalent: "a")
+        menu.items.last?.keyEquivalentModifierMask = [.control, .option]
         menu.addItem(.separator())
         menu.addItem(withTitle: T.s("Show or hide the bar", "Mostrar u ocultar la barra"), action: #selector(togglePanel), keyEquivalent: "d")
         menu.items.last?.keyEquivalentModifierMask = [.control, .option]
@@ -263,6 +267,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func pauseFlow() { store.flows.pause() }
     /// El panel de ajustes: lo abre el engranaje de la barra y «Ajustes…» del menú.
     @objc func openDashboard() { showDashboard(pane: nil) }
+    /// Tablero de agentes (⌃⌥A, agentdeck://board): Claude Code, Codex, Gemini or any command in real terminals on one board.
+    @objc func openBoard() {
+        if board == nil { board = BoardWindowController(engine: BoardEngine(folder: Autopilot.folder, activityFile: { Activity.file() })) }
+        board?.show()
+    }
     /// `agentdeck://settings?pane=doctor` abre Ajustes en esa sección.
     func showDashboard(pane: DashPane?) {
         if let pane, dashWindow != nil { NotificationCenter.default.post(name: DashPane.showNotification, object: pane.rawValue) }
@@ -292,7 +301,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         dashWindow?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
-    func applicationWillTerminate(_ notification: Notification) { store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown();AgentAwakeMonitor.shared.stop() }
+    func applicationWillTerminate(_ notification: Notification) { board?.engine.stopAll(); store.flows.shutdown();voiceHotkeys?.uninstall();store.voice.shutdown();Sender.shutdown();AgentAwakeMonitor.shared.stop() }
     /// Abierta desde Descargas o desde el disco, macOS la ejecuta desde una carpeta temporal y no deja darle
     /// Accesibilidad ni micrófono de forma estable. Se ofrece a copiarse en Aplicaciones y abrirse desde allí.
     /// Devuelve true si va a relanzarse desde Aplicaciones.
