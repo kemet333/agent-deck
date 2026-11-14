@@ -12,16 +12,24 @@ struct ProView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
                 if !embedded { Text("Agent Bar Pro").font(.system(size: 26, weight: .semibold)) }
-                Text(T.s("49 € · once · 3 Macs", "49 € · una vez · 3 Macs")).font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
+                Text(T.s("€49 · once · 3 Macs", "49 € · una vez · 3 Macs")).font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
                 if !embedded { Spacer() }
             }
             VStack(alignment: .leading, spacing: 9) {
-                row("airplane", T.s("Autopilot: Claude Code keeps going on its own and stops at a real question.", "Autopilot: Claude Code sigue solo y para ante una pregunta de verdad."))
-                row("mic.fill", T.s("Voice included: talk without your own OpenAI key (monthly minutes included).", "Voz incluida: habla sin tu propia clave de OpenAI (minutos al mes incluidos)."))
-                row("iphone", T.s("Alerts on your phone, and answer from there.", "Avisos en el móvil, y contestar desde allí."))
-                row("keyboard", T.s("Works with Agent Pad when it ships.", "Funciona con Agent Pad cuando salga."))
-                row("heart", T.s("Pay once. Updates included. Everything free stays free.", "Pagas una vez. Actualizaciones incluidas. Lo gratis sigue gratis."))
+                row("airplane", T.s("Full Autopilot: «until all tests pass», a time limit and as many turns as you want.", "Autopilot completo: «hasta que pasen todos los tests», tiempo máximo y las vueltas que quieras."))
+                row("rectangle.split.3x3", T.s("The agents board: Claude Code, Codex and Gemini in real terminals, side by side.", "El tablero de agentes: Claude Code, Codex y Gemini en terminales reales, uno al lado del otro."))
+                row("list.number", T.s("Per-agent queues: «then tell the Kemet one to…» waits for that agent to finish.", "Colas por agente: «luego dile al de Kemet que…» espera a que ese agente termine."))
+                row("mic.fill", T.s("Voice included: talk without your own OpenAI key.", "Voz incluida: habla sin tu propia clave de OpenAI."))
+                row("person.2.fill", T.s("Run a team: one file with your keys and words for everyone.", "Lleva un equipo: un archivo con tus teclas y palabras para todos."))
             }
+            VStack(alignment: .leading, spacing: 7) {
+                Text(T.s("Coming to Pro", "Llega a Pro")).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                row("iphone", T.s("Alerts and approvals on your phone.", "Avisos y permisos en el móvil."), soon: true)
+                row("sun.max", T.s("A daily recap of what each agent did.", "Resumen diario de lo que hizo cada agente."), soon: true)
+                row("chart.line.uptrend.xyaxis", T.s("Trader with Tradovate: close, reverse and move the stop to break-even.", "Trader con Tradovate: cerrar, invertir y stop a breakeven."), soon: true)
+                row("keyboard", T.s("Agent Pad, set up on its own.", "Agent Pad, configurado solo."), soon: true)
+            }
+            row("heart", T.s("Pay once. Updates included. Everything free stays free.", "Pagas una vez. Actualizaciones incluidas. Lo gratis sigue gratis."))
             Divider()
             if license.isPro, let s = license.saved {
                 HStack(spacing: 10) {
@@ -35,7 +43,7 @@ struct ProView: View {
                 }
             } else {
                 HStack {
-                    Button { NSWorkspace.shared.open(License.checkoutURL) } label: { Text(T.s("Buy Pro · 49 €", "Comprar Pro · 49 €")).fontWeight(.semibold).padding(.horizontal, 6) }
+                    Button { NSWorkspace.shared.open(License.checkoutURL) } label: { Text(T.s("Get Pro · €49", "Comprar Pro · 49 €")).fontWeight(.semibold).padding(.horizontal, 6) }
                         .controlSize(.large).keyboardShortcut(.defaultAction)
                     Spacer()
                 }
@@ -55,10 +63,10 @@ struct ProView: View {
         .frame(maxWidth: embedded ? 560 : nil, alignment: .leading)
     }
 
-    private func row(_ icon: String, _ text: String) -> some View {
+    private func row(_ icon: String, _ text: String, soon: Bool = false) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon).frame(width: 20).foregroundStyle(Color(red: 1, green: 0.357, blue: 0.122))
-            Text(text).font(.system(size: 13)).fixedSize(horizontal: false, vertical: true)
+            Image(systemName: icon).frame(width: 20).foregroundStyle(soon ? Color.secondary : Color(red: 1, green: 0.357, blue: 0.122))
+            Text(text).font(.system(size: 13)).foregroundStyle(soon ? .secondary : .primary).fixedSize(horizontal: false, vertical: true)
         }
     }
 }

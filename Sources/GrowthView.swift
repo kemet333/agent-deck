@@ -104,7 +104,7 @@ struct TeamPane: View {
             DashSection(title: T.s("Do you run the team?", "¿Llevas tú el equipo?"), footer: T.s("The file carries your keys (not another team's) and your voice dictionary. Change it and save it again: everyone gets it within 12 hours, or at once with «Check now».",
                                                                                                  "El archivo lleva tus teclas (no las de otro equipo) y tu diccionario de voz. Cámbialo y vuelve a guardarlo: a todos les llega en menos de 12 horas, o al momento con «Comprobar ahora».")) {
                 DashRow(title: T.s("Create a team file", "Crear un archivo de equipo"), detail: T.s("\(Team.strip(store.keys).count) keys · \(dictionaryWords.count) words", "\(Team.strip(store.keys).count) teclas · \(dictionaryWords.count) palabras"), symbol: "square.and.arrow.down", divider: false) {
-                    Button(T.s("Create…", "Crear…")) { TeamSync.exportDialog(keys: store.keys, vocabulary: dictionaryWords) }.controlSize(.small)
+                    Button(T.s("Create…", "Crear…")) { if !store.needsPro(T.s("Creating a team", "Crear un equipo")) { TeamSync.exportDialog(keys: store.keys, vocabulary: dictionaryWords) } }.controlSize(.small)
                 }
             }
             invite

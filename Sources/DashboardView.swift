@@ -54,7 +54,7 @@ enum DashPane: String, CaseIterable, Identifiable {
         case .trading: return T.s("Execute in TradingView with one key: mechanical, not impulsive.", "Ejecuta en TradingView con una tecla: mecánico, no impulsivo.")
         case .appearance: return T.s("How the bar looks and where it lives.", "Cómo se ve la barra y dónde vive.")
         case .doctor: return T.s("Everything Agent Bar needs, checked, with the fix.", "Todo lo que necesita Agent Bar, comprobado y con su arreglo.")
-        case .pro: return T.s("Autopilot, voice included and alerts on your phone.", "Autopilot, voz incluida y avisos en el móvil.")
+        case .pro: return T.s("Your agents keep working without you. €49, once.", "Tus agentes siguen trabajando sin ti. 49 €, una vez.")
         case .about: return T.s("Agent Bar, made by PROMPTED.", "Agent Bar, hecho por PROMPTED.")
         }
     }
@@ -579,19 +579,22 @@ struct DashboardView: View {
             }
             DashSection(title: "Autopilot", footer: T.s("Claude Code keeps going on its own, sending your first key (or «until all tests pass»), and stops at the goal, a real question, a permission or the time limit. The card tells you why it stopped. Needs Claude Code alerts.", "Claude Code sigue solo mandando tu primera tecla (o «hasta que pasen todos los tests») y se para al llegar al objetivo, ante una pregunta de verdad, un permiso o el tiempo máximo. La tarjeta te dice por qué paró. Necesita los avisos de Claude Code.")) {
                 DashRow(title: T.s("Until", "Hasta")) {
-                    Picker("", selection: Binding(get: { DeskStore.autopilotGoal }, set: { DeskStore.autopilotGoal = $0; refresh() })) {
+                    if !License.shared.unlocked { ProBadge { store.showPro?() } }
+                    Picker("", selection: Binding(get: { License.shared.unlocked ? DeskStore.autopilotGoal : "" }, set: { v in if store.needsPro(T.s("Autopilot goals", "Los objetivos de Autopilot")) { return }; DeskStore.autopilotGoal = v; refresh() })) {
                         Text(T.s("It runs out of turns", "Que gaste sus vueltas")).tag("")
                         Text(T.s("All tests pass", "Pasen todos los tests")).tag("tests")
                     }.labelsHidden().frame(width: 230)
                 }
                 DashRow(title: T.s("At most", "Como mucho")) {
-                    Picker("", selection: Binding(get: { DeskStore.autopilotHours }, set: { DeskStore.autopilotHours = $0; refresh() })) {
+                    if !License.shared.unlocked { ProBadge { store.showPro?() } }
+                    Picker("", selection: Binding(get: { License.shared.unlocked ? DeskStore.autopilotHours : 2 }, set: { v in if store.needsPro(T.s("Autopilot time limits", "Los límites de tiempo de Autopilot")) { return }; DeskStore.autopilotHours = v; refresh() })) {
                         Text("30 min").tag(0.5); Text("1 h").tag(1.0); Text("2 h").tag(2.0); Text("4 h").tag(4.0)
                     }.pickerStyle(.segmented).labelsHidden().frame(width: 230)
                 }
                 DashRow(title: T.s("Keep going", "Seguir solo"), detail: store.autopilotLeft > 0 ? T.s("\(store.autopilotLeft) turns left", "Quedan \(store.autopilotLeft) vueltas") : T.s("Off", "Apagado"), divider: false) {
                     Picker("", selection: Binding(get: { [0, 3, 5, 10, 20].contains(store.autopilotLeft) ? store.autopilotLeft : -1 }, set: { n in
                         guard n >= 0 else { return }
+                        if n > License.freeAutopilotTurns && store.needsPro(T.s("More than 3 turns", "Más de 3 vueltas")) { return }
                         if n > 0 && !ClaudeHooks.installed { actions.connectClaude(); refresh(); if !ClaudeHooks.installed { return } }
                         store.setAutopilot(n)
                     })) {
@@ -859,5 +862,17 @@ struct TalkKeyRow: View {
     private func stop(_ message: String) {
         if let m = monitor { NSEvent.removeMonitor(m) }; monitor = nil
         listening = false; if !message.isEmpty { note = message }
+    }
+}
+
+/// La marca «PRO» junto a lo que es de Pro (solo cuando License.enforced y sin licencia). Al tocarla, la ventana de Pro.
+struct ProBadge: View {
+    var action: () -> Void = {}
+    var body: some View {
+        Button(action: action) {
+            Text("PRO").font(.system(size: 9.5, weight: .bold, design: .rounded)).tracking(0.6)
+                .padding(.horizontal, 6).padding(.vertical, 2.5).foregroundStyle(.white)
+                .background(Capsule().fill(Dash.accent))
+        }.buttonStyle(.plain).help(T.s("Part of Agent Bar Pro", "Es de Agent Bar Pro"))
     }
 }

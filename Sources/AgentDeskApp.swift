@@ -271,6 +271,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func openDashboard() { showDashboard(pane: nil) }
     /// Tablero de agentes (⌃⌥A, agentdeck://board): Claude Code, Codex, Gemini or any command in real terminals on one board.
     @objc func openBoard() {
+        if store.needsPro(T.s("The agents board", "El tablero de agentes")) { return }
         if board == nil { board = BoardWindowController(engine: BoardEngine(folder: Autopilot.folder, activityFile: { Activity.file() })) }
         board?.show()
     }

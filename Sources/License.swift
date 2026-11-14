@@ -14,7 +14,12 @@ final class License: ObservableObject {
     static let productID = 0
     static let checkoutURL = URL(string: "https://getagentbar.com/#pricing")!
     /// Mientras sea false, todo sigue gratis (beta): la licencia se puede activar, pero nada se bloquea.
-    static let enforced = false
+    /// Se enciende cuando exista la tienda de Lemon Squeezy (storeID/productID de arriba).
+    static let enforcedSetting = false
+    /// Para probar los bloqueos sin encenderlos: AGENT_BAR_ENFORCE_PRO=1 al abrir la app.
+    static var enforced: Bool { enforcedSetting || ProcessInfo.processInfo.environment["AGENT_BAR_ENFORCE_PRO"] == "1" }
+    /// Pro (decidido por Diego el 14/11/2026: 49 € una vez, 3 Macs). Gratis se queda con Autopilot de 3 vueltas sin objetivo.
+    static let freeAutopilotTurns = 3
 
     struct Saved: Codable { var key: String; var instance: String; var checked: Double; var valid: Bool; var email: String }
 

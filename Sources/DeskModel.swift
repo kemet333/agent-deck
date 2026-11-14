@@ -456,10 +456,13 @@ final class DeskStore: ObservableObject {
 
     /// Enciende el piloto con N vueltas (con el objetivo y el tiempo de Ajustes) o lo apaga con 0.
     func setAutopilot(_ n: Int) {
-        if n > 0 { Autopilot.start(n, message: autopilotMessage, goal: DeskStore.autopilotGoal.isEmpty ? nil : DeskStore.autopilotGoal, hours: DeskStore.autopilotHours) }
+        // gratis: hasta 3 vueltas, sin objetivo y con el tiempo de siempre; el objetivo, el tiempo y más vueltas son de Pro
+        let pro = License.shared.unlocked
+        let n = pro ? n : min(n, License.freeAutopilotTurns)
+        if n > 0 { Autopilot.start(n, message: pro ? autopilotMessage : (keys.first?.text ?? T.s("continue", "continúa")), goal: pro && !DeskStore.autopilotGoal.isEmpty ? DeskStore.autopilotGoal : nil, hours: pro ? DeskStore.autopilotHours : 2) }
         else { Autopilot.save(nil) }
         autopilotLeft = n
-        let goal = DeskStore.autopilotGoal == "tests" ? T.s(", until the tests pass", ", hasta que pasen los tests") : ""
+        let goal = pro && DeskStore.autopilotGoal == "tests" ? T.s(", until the tests pass", ", hasta que pasen los tests") : ""
         flashNote(n > 0 ? T.s("Autopilot: \(n) turns\(goal)", "Autopilot: \(n) vueltas\(goal)") : T.s("Autopilot off", "Autopilot apagado"))
     }
     static func autopilotNote(_ end: String, turns: Int) -> String {
@@ -491,10 +494,15 @@ final class DeskStore: ObservableObject {
     }
     /// Lo pone el AppDelegate: abre la ventana de Pro.
     var showPro: (() -> Void)?
+    /// Una función de Pro sin licencia (solo cuando License.enforced): nota en la barra y la ventana de Pro. true = está bloqueada.
+    func needsPro(_ what: String) -> Bool {
+        guard !License.shared.unlocked else { return false }
+        flashNote(T.s("\(what) is part of Agent Bar Pro", "\(what) son de Agent Bar Pro"), for: 3)
+        showPro?(); return true
+    }
     func toggleAutopilot() {
-        if autopilotLeft == 0 && !License.shared.unlocked { showPro?(); return }
         if autopilotLeft == 0 && !ClaudeHooks.installed { flashNote(T.s("Turn on Claude Code alerts first (menu)", "Activa antes los avisos de Claude Code (menú)"), for: 3.5); return }
-        setAutopilot(autopilotLeft > 0 ? 0 : 5)
+        setAutopilot(autopilotLeft > 0 ? 0 : (License.shared.unlocked ? 5 : License.freeAutopilotTurns))
     }
     /// Lo cuenta el gancho cada vez que sigue solo.
     func autopilotTurn(left: Int, place: String) {
@@ -701,6 +709,7 @@ final class DeskStore: ObservableObject {
         if let a = alerts.last(where: { $0.waiting && AgentCommand.matches(cmd.who, place: $0.place) }) { reply(cmd.say, to: a); return true }
         // solo a un agente que conozcas (avisos de estos días o tus proyectos con git): «luego dile a mi madre…» se escribe como siempre
         guard let place = (knownPlaces() + LearnedVocabulary.cached).first(where: { AgentCommand.matches(cmd.who, place: $0) }) else { return false }
+        if needsPro(T.s("Per-agent queues", "Las colas por agente")) { return true }
         let n = AgentQueue.add(place, cmd.say)
         refreshQueues()
         flashNote(T.s("Queued for \(place) (\(n))", "En la cola de \(place) (\(n))"), for: 3)
