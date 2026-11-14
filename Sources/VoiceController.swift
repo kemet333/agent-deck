@@ -206,6 +206,37 @@ final class VoiceController: ObservableObject {
     }
     func note(_ text:String) { message=text }
     func toggle() { if phase == .listening || phase == .permission {stop()}else if working{cancel()}else{start()} }
+    /// Escucha sin tecla (agentdeck://dictate?auto=1; Diego OS la abre tras dos chasquidos, cuando Alfred acaba de hablar):
+    /// graba, y para sola cuando dejas de hablar (1,3 s de silencio después de haber hablado). Si en 8 s no dices nada, no
+    /// envía nada. El texto va adonde esté el cursor, con Intro, como cualquier dictado.
+    private var autoWatch: Timer?
+    func startAuto() {
+        guard !active else { return }
+        autoWatch?.invalidate(); autoWatch = nil
+        start()
+        guard phase == .permission || phase == .listening else { return }
+        log("escucha automática: empieza")
+        var listeningSince: Date?, heard = false, quietSince: Date?, samples: [Float] = []
+        autoWatch = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] t in
+            MainActor.assumeIsolated {
+                guard let self else { t.invalidate(); return }
+                if self.phase == .permission { return }
+                guard self.phase == .listening else { t.invalidate(); self.autoWatch = nil; return }
+                let now = Date(); if listeningSince == nil { listeningSince = now }
+                let db = 20 * log10(max(self.level, 0.000_001))
+                samples.append(db); if samples.count > 200 { samples.removeFirst(samples.count - 200) }
+                // el fondo: lo más bajo de lo último oído (una habitación tranquila ronda -50 dB; con la tele, -35)
+                let floor = samples.count >= 6 ? samples.sorted()[samples.count / 5] : -50
+                if db >= max(-36, floor + 10) { heard = true; quietSince = nil }
+                else if heard && db < max(-46, floor + 6) { if quietSince == nil { quietSince = now } }
+                else if heard { quietSince = nil }
+                let elapsed = now.timeIntervalSince(listeningSince!)
+                if heard, let q = quietSince, now.timeIntervalSince(q) >= 1.3 { t.invalidate(); self.autoWatch = nil; self.log("escucha automática: silencio, envío"); self.stop() }
+                else if !heard && elapsed >= 8 { t.invalidate(); self.autoWatch = nil; self.log("escucha automática: no has hablado"); self.cancel(); self.fail(T.s("I didn't hear anything. Nothing was sent.","No te he oído. No he enviado nada.")) }
+                else if elapsed >= 90 { t.invalidate(); self.autoWatch = nil; self.stop() }
+            }
+        }
+    }
     /// Fn pulsado mientras el dictado anterior aún se transcribe o se pega: empieza en cuanto termine (si sigues
     /// pulsando o en manos libres). Antes la pulsación se perdía sin decir nada (Diego, 11/11: «al pulsar muchas veces no se activa»).
     private var queuedStart: Bool?

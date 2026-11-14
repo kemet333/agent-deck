@@ -89,7 +89,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case "board", "agents": openBoard()
             case "settings": showDashboard(pane: q.first(where: { $0.name == "pane" })?.value.flatMap(DashPane.init(rawValue:)))
             case "show": panel.orderFrontRegardless(); store.collapsed = false
-            case "dictate": DispatchQueue.main.async { self.store.toggleDictation() }
+            case "dictate": // ?auto=1: escucha y para sola al callar (Diego OS, tras los dos chasquidos)
+                let auto = q.first(where: { $0.name == "auto" })?.value == "1"
+                DispatchQueue.main.async { if auto { self.store.voice.startAuto() } else { self.store.toggleDictation() } }
             case "style":
                 if let n = q.first(where: { $0.name == "name" })?.value, let st = BarStyle(rawValue: n) {
                     store.style = st
