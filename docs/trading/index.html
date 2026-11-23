@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agent Bar for traders · One key. Sized to your risk.</title>
+<meta name="description" content="Agent Bar turns your TradingView orders into single keys, sized to your risk before you press. For futures traders on Mac. Included with an FTMO Futures account.">
+<meta property="og:title" content="Agent Bar for traders · One key. Sized to your risk.">
+<meta property="og:description" content="Execute your plan with one key: buy, sell, limits and DOM in TradingView, with contracts sized to your risk. For futures traders on Mac.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://getagentbar.com/trading/">
+<meta name="theme-color" content="#ebebe8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111112" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='9' width='30' height='14' rx='7' fill='%23111112'/%3E%3Ccircle cx='8' cy='16' r='2' fill='%23ebebe8'/%3E%3Ccircle cx='14' cy='16' r='2' fill='%23ebebe8'/%3E%3Crect x='19' y='12' width='9' height='8' rx='4' fill='%23ff5b1f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="trading.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Main">
+  <a class="mark" href="/" aria-label="Agent Bar, home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect class="bar" x="1" y="9" width="30" height="14" rx="7"/><circle class="dot" cx="8" cy="16" r="2"/><circle class="dot" cx="14" cy="16" r="2"/><rect class="key" x="19" y="12" width="9" height="8" rx="4"/></svg>
+    Agent Bar <span class="muted" style="font-weight:500">for traders</span>
+  </a>
+  <div class="nav__links"><a href="#how">How it works</a><a href="#size">Sizing</a><a href="#access">Access</a><a href="#faq">FAQ</a></div>
+  <a class="btn btn--sm" href="apply/">Apply<span class="ic"><i class="ph ph-arrow-right"></i></span></a>
+</nav>
+
+<main id="main">
+  <section class="thero">
+    <div class="wrap">
+      <div class="thero__top">
+        <div class="eyebrow rv"><i></i>Agent Bar for traders · futures on Mac</div>
+        <h1 class="rv">Your edge is the plan. <span>Let one key execute it.</span></h1>
+        <p class="thero__sub rv">Agent Bar turns your TradingView orders into single keys, and tells you how many contracts fit your risk before you press. No clicking through tickets while price moves.</p>
+        <div class="thero__cta rv">
+          <a class="btn btn--accent" href="apply/">Apply for access<span class="ic"><i class="ph ph-arrow-right"></i></span></a>
+          <a class="btn btn--ghost" href="#how">See how it works<span class="ic"><i class="ph ph-arrow-down"></i></span></a>
+        </div>
+        <div class="thero__fine rv">Included with an FTMO Futures account · Mac with Apple Silicon</div>
+      </div>
+
+      <div class="term rv" aria-label="Demo: press a key to place an order">
+        <div class="term__in">
+          <div class="term__bar"><span class="term__dots"><i></i><i></i><i></i></span><b>MNQ1!</b><span>Micro Nasdaq 100 · 1m</span><span class="sp"></span><span id="px">21,348.25</span><span class="up" id="chg">+0.42%</span></div>
+          <div class="term__chart"><svg id="chart" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="term__toast" id="toast" role="status" aria-live="polite"><i></i><span id="toastTxt"></span></div>
+          </div>
+          <div class="term__keys">
+            <button class="tk tk--buy" data-k="buy"><b>Buy market</b><small>⇧B</small></button>
+            <button class="tk tk--sell" data-k="sell"><b>Sell market</b><small>⇧S</small></button>
+            <button class="tk tk--buy" data-k="blim"><b>Buy limit</b><small>⇧⌥B</small></button>
+            <button class="tk tk--sell" data-k="slim"><b>Sell limit</b><small>⇧⌥S</small></button>
+            <button class="tk" data-k="dom"><b>Center DOM</b><small>⇧⌥C</small></button>
+          </div>
+          <div class="term__note">Demo. In the app each key presses TradingView's own shortcut, with your order preset, only while TradingView is in front.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="prob" id="how">
+    <div class="wrap prob__grid">
+      <div>
+        <h2 class="rv">The trade is decided in a second. Placing it takes five.</h2>
+        <p class="rv">You saw the setup. Now you work out the size, open the ticket, type the quantity, set the stop and click. By then the entry is gone, or you take it late and bigger than planned. Plenty of good analysis loses money right here, in the execution.</p>
+      </div>
+      <ol class="steps">
+        <li class="rv"><span class="t">0.0s</span><span class="d">Setup confirms</span><span class="x"></span></li>
+        <li class="rv"><span class="t">+2.1s</span><span class="d">Mental math: risk ÷ stop ÷ tick value</span><span class="x">size guessed</span></li>
+        <li class="rv"><span class="t">+3.4s</span><span class="d">Open ticket, type quantity, set the bracket</span><span class="x">price moved</span></li>
+        <li class="rv"><span class="t">+5.0s</span><span class="d">Click, chase, second-guess</span><span class="x">late fill</span></li>
+        <li class="rv ok"><span class="t">0.3s</span><span class="d">With Agent Bar: size is ready, you press one key</span><span class="x">your plan, filled</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="feat" id="size">
+    <div class="wrap">
+      <div class="feat__head">
+        <h2 class="rv">Everything between your decision and your fill, on keys.</h2>
+        <p class="rv">Agent Bar is the Mac app that answers AI agents with one key. For traders it does the same thing with orders: the boring, error-prone part becomes a keypress you can't get wrong.</p>
+      </div>
+      <div class="bento">
+        <article class="cell c-keys rv">
+          <span class="tag tag--live">Live · Trader pack</span>
+          <h3>One key, one order.</h3>
+          <p>Buy and sell at market, place limits and center the DOM. Each key goes out with your TradingView order preset, so the quantity, stop and target are already on it. Scaling in is pressing buy again.</p>
+          <div class="sclist">
+            <div class="sc"><span>Buy / sell at market</span><kbd>⇧B · ⇧S</kbd></div>
+            <div class="sc"><span>Buy / sell limit</span><kbd>⇧⌥B · ⇧⌥S</kbd></div>
+            <div class="sc"><span>Center the DOM</span><kbd>⇧⌥C</kbd></div>
+          </div>
+        </article>
+
+        <article class="cell c-calc rv">
+          <span class="tag tag--live">Live · Settings → Trading</span>
+          <h3>Contracts sized to your risk. Never above it.</h3>
+          <p>Say what you're willing to lose and where your stop is. Agent Bar rounds the stop up to whole ticks and the size down to whole contracts, so the real risk is never more than you said. Try it:</p>
+          <div class="calc" id="calc">
+            <div class="calc__row">
+              <label class="fld">Contract<select id="c_sym"></select></label>
+              <label class="fld">Account size ($)<input id="c_bal" inputmode="decimal" value="50000"></label>
+            </div>
+            <div class="calc__row">
+              <label class="fld"><span style="display:flex;justify-content:space-between;align-items:center">Risk per trade <span class="seg" role="group" aria-label="Risk in"><button type="button" id="c_pct" aria-pressed="true">%</button><button type="button" id="c_usd" aria-pressed="false">$</button></span></span><input id="c_risk" inputmode="decimal" value="0.5"></label>
+              <label class="fld">Stop (points)<input id="c_stop" inputmode="decimal" value="20"></label>
+            </div>
+            <div class="calc__out" aria-live="polite">
+              <div class="calc__n" id="c_n">6<small>contracts</small></div>
+              <div class="calc__d" id="c_d"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cell c-front rv">
+          <span class="tag tag--live">Live · built in</span>
+          <h3>Only fires where it should.</h3>
+          <p>Trading keys only work while TradingView is the window in front. Anywhere else they do nothing and tell you so. No stray order because you were typing in another app.</p>
+        </article>
+
+        <article class="cell c-next rv">
+          <span class="tag tag--next">Next update</span>
+          <h3>The brake.</h3>
+          <p>A maximum of entries per day, a pause between entries and an "I'm done for today" key. Closing and cancelling are never blocked.</p>
+        </article>
+        <article class="cell c-next rv">
+          <span class="tag tag--next">Next update</span>
+          <h3>Tradovate keys.</h3>
+          <p>Reverse, close and cancel with one key in Tradovate on the web, the actions TradingView has no shortcut for.</p>
+        </article>
+        <article class="cell c-next rv">
+          <span class="tag tag--next">Next update</span>
+          <h3>One-key risk order.</h3>
+          <p>Press once: it sizes the order to your risk, sets stop and target in the ticket, reads it back, and only sends if it matches.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="safe">
+    <div class="wrap safe__grid">
+      <div class="safe__i rv"><i class="ph ph-hand-pointing"></i><h3>Nothing trades on its own.</h3><p>No bot, no signals, no automation. Every order is a key you press.</p></div>
+      <div class="safe__i rv"><i class="ph ph-lock-key"></i><h3>No broker passwords.</h3><p>It uses TradingView's own keyboard shortcuts. Your logins and API keys never touch Agent Bar.</p></div>
+      <div class="safe__i rv"><i class="ph ph-laptop"></i><h3>Runs on your Mac.</h3><p>No account, no server, no analytics. Your settings and history stay on your machine.</p></div>
+    </div>
+  </section>
+
+  <section class="access" id="access">
+    <div class="wrap">
+      <div class="access__in rv">
+        <div>
+          <div class="eyebrow" style="color:inherit;opacity:.7"><i></i>How to get access</div>
+          <h2 style="margin-top:16px">Free with your FTMO Futures account.</h2>
+          <p>We're partnered with FTMO. Start an FTMO Futures account through our link and Agent Bar for traders comes with it. Apply first: two minutes, and we'll tell you if it fits how you trade.</p>
+          <a class="btn" href="apply/">Apply for access<span class="ic"><i class="ph ph-arrow-right"></i></span></a>
+        </div>
+        <ol class="how">
+          <li><span class="n">1</span><div><b>Apply</b><span>Your email and six quick questions about how you trade. We check that Agent Bar fits your setup.</span></div></li>
+          <li><span class="n">2</span><div><b>Buy an FTMO Futures account</b><span>Pro or Growth, $50K to $150K, straight from the link on your result page.</span></div></li>
+          <li><span class="n">3</span><div><b>Validate your purchase</b><span>Enter your FTMO order number. It takes ten seconds.</span></div></li>
+          <li><span class="n">4</span><div><b>Get the download by email</b><span>Sent to the email you applied with, with a five-minute setup guide.</span></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <h2 class="rv">Questions.</h2>
+      <div class="faq__grid">
+        <div>
+          <details class="rv"><summary>Is this a trading bot?</summary><p>No. Agent Bar never decides or places a trade by itself. It turns the order you already decided into one keypress, sized to the risk you set.</p></details>
+          <details class="rv"><summary>What do I need?</summary><p>A Mac with Apple Silicon and macOS 14 or newer, and TradingView with your broker connected. The Trader pack works with the TradingView desktop app.</p></details>
+          <details class="rv"><summary>Which platform does my FTMO Futures account use?</summary><p>FTMO lists the platforms on its own site, and you pick when you set up the account. Agent Bar works where your orders go through TradingView today, and Tradovate on the web is coming in the next update.</p></details>
+          <details class="rv"><summary>Why do I have to buy FTMO?</summary><p>We're an FTMO partner, and it's how we fund Agent Bar for traders instead of charging you for it. FTMO pays us a commission on accounts bought through our link. You pay FTMO's normal price.</p></details>
+        </div>
+        <div>
+          <details class="rv"><summary>I already have an FTMO account.</summary><p>Access comes with accounts bought through our link, so your next FTMO Futures account through it counts.</p></details>
+          <details class="rv"><summary>Where do I find my order number?</summary><p>In the confirmation email FTMO sends after you pay, and in your FTMO client area under your orders or invoices.</p></details>
+          <details class="rv"><summary>I validated but got no email.</summary><p>Check spam and promotions first. If it isn't there, write to <a class="link" href="mailto:hello@workwithprompted.com">hello@workwithprompted.com</a> from the same address and we'll send it by hand.</p></details>
+          <details class="rv"><summary>Will it pass FTMO's rules?</summary><p>Agent Bar presses keys you'd press yourself; it doesn't automate trading decisions. FTMO's rules are theirs to apply, so read their trading objectives and rules before you start.</p></details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="disc">
+    <div class="wrap">
+      <p>Trading futures involves substantial risk of loss and isn't suitable for everyone. Agent Bar is an execution tool; it gives no investment advice and makes no promise of results. Past performance doesn't guarantee future results.</p>
+      <p>Affiliate disclosure: Prompted is an FTMO partner and receives a commission when you buy through our link. FTMO is a trademark of its owner; Agent Bar is not made or endorsed by FTMO. TradingView and Tradovate are trademarks of their owners.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Agent Bar is made by <a href="https://www.workwithprompted.com">PROMPTED®</a></span>
+    <span><a href="/">Agent Bar</a> · <a href="validate/">Validate a purchase</a></span>
+  </div>
+</footer>
+<script src="landing.js"></script>
+</body>
+</html>
