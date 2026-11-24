@@ -101,4 +101,15 @@
     var btn = document.querySelector('.tk[data-k="' + k + '"]'); btn.classList.add('press'); setTimeout(function () { btn.classList.remove('press'); }, 160);
   });
   if (!reduce) setTimeout(function () { press('buy'); }, 1400);
+
+  // How it works: light up the three steps in turn while the section is on screen.
+  var steps = document.querySelectorAll('.f3__s'), cur = -1, timer = null;
+  function next() { steps.forEach(function (s) { s.classList.remove('on'); }); cur = (cur + 1) % steps.length; steps[cur].classList.add('on'); }
+  new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !timer) { next(); if (!reduce) timer = setInterval(next, 2400); }
+      else if (!e.isIntersecting && timer) { clearInterval(timer); timer = null; }
+    });
+  }, { threshold: 0.35 }).observe(document.getElementById('f3'));
+  steps.forEach(function (s, i) { s.addEventListener('mouseenter', function () { clearInterval(timer); timer = null; steps.forEach(function (x) { x.classList.remove('on'); }); s.classList.add('on'); cur = i; }); });
 })();
