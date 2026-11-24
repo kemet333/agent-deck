@@ -1,4 +1,6 @@
 /* Agent Bar for traders: landing, apply quiz and validation. Builds on base.css (the main page's system). */
+:root{--accent:#12b76a;--accent-ink:#03170c;--accent-soft:rgba(18,183,106,.13)}
+@media (prefers-color-scheme:dark){:root{--accent:#22c55e;--accent-ink:#03170c;--accent-soft:rgba(34,197,94,.16)}}
 :root{--buy:#17a34a;--sell:#e5484d;--term:#0f1012;--term-2:#17181b;--term-line:rgba(255,255,255,.08);--term-ink:#e9e9e6;--term-mute:#8b8b90}
 .nav .nav__links a[aria-current]{color:var(--ink)}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 13px var(--mono);color:var(--ink-2)}
@@ -73,8 +75,8 @@ section{scroll-margin-top:90px}
 .cell p{color:var(--ink-2);max-width:46ch}
 .tag{align-self:flex-start;font:500 12px var(--mono);padding:5px 10px;border-radius:999px;background:var(--bg-2);color:var(--ink-2)}
 .tag--live{background:rgba(23,163,74,.14);color:#15803d}
-.tag--next{background:var(--accent-soft);color:#c2410c}
-@media (prefers-color-scheme:dark){.tag--live{color:#4ade80}.tag--next{color:#ff9a6b}}
+.tag--next{background:var(--bg-2);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line-2)}
+@media (prefers-color-scheme:dark){.tag--live{color:#4ade80}}
 .c-keys{grid-column:span 5}
 .c-calc{grid-column:span 7;grid-row:span 2}
 .c-front{grid-column:span 5}
@@ -98,7 +100,7 @@ section{scroll-margin-top:90px}
 .calc__n small{display:block;font:500 12px var(--mono);letter-spacing:0;color:color-mix(in srgb,var(--bg) 60%,transparent);margin-top:8px}
 .calc__d{display:grid;gap:6px;font:500 13px var(--mono);color:color-mix(in srgb,var(--bg) 78%,transparent)}
 .calc__d b{color:var(--bg);font-weight:500}
-.calc__warn{color:#ffb38f}
+.calc__warn{color:#ff9a9c}
 
 /* Safety strip */
 .safe{padding:90px 0 30px}
@@ -184,3 +186,4 @@ section{scroll-margin-top:90px}
 @media (max-width:520px){.calc__row,.row2{grid-template-columns:1fr}.calc__out{grid-template-columns:1fr}.cell{padding:22px}}
 .c-calc .calc{margin-top:auto}
 @media (max-width:520px){.term__bar>span:not(.term__dots):not(.sp):not(#px){display:none}}
+@media (max-width:520px){.term__toast{width:calc(100% - 24px);white-space:normal;justify-content:center;text-align:center;font-size:11.5px}}
